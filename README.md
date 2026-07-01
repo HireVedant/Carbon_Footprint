@@ -75,7 +75,7 @@ Follow the instructions below to set up EcoTrack AI on your local machine.
 #### Windows
 
 ```cmd
-git clone <repository-url>
+git clone https://github.com/HireVedant/Carbon_Footprint
 cd Carbon_Footprint
 npm install
 npm run dev
@@ -84,7 +84,7 @@ npm run dev
 #### Linux
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/HireVedant/Carbon_Footprint
 cd Carbon_Footprint
 npm install
 npm run dev
@@ -93,7 +93,7 @@ npm run dev
 #### macOS
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/HireVedant/Carbon_Footprint
 cd Carbon_Footprint
 npm install
 npm run dev
