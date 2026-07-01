@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useCalculator } from '../../context/CalculatorContext';
+import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { saveCalculation } from '../../firebase/firestore';
 import {
   TrendingDown,
   TreePine,
@@ -12,11 +14,19 @@ import {
   Utensils,
   Trash2,
   AlertTriangle,
+  Loader,
+  CheckCircle2,
+  AlertCircle,
 } from 'lucide-react';
 import Button from '../ui/Button';
 
 export const CalculationSummary: React.FC = () => {
   const { results, resetCalculator } = useCalculator();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saved, setSaved] = useState(false);
 
   if (!results) return null;
 
@@ -85,6 +95,28 @@ export const CalculationSummary: React.FC = () => {
   // Reference comparison (Global average is about 4.5 tons CO2/year)
   const comparisonPercent = Math.abs(Math.round(((annualEstimate - 4.5) / 4.5) * 100));
   const isBelowAverage = annualEstimate <= 4.5;
+
+  const handleSave = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    setSaving(true);
+    setSaveError('');
+    try {
+      await saveCalculation(user.uid, results);
+      setSaved(true);
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1000);
+    } catch (err: any) {
+      console.error('Error saving calculation:', err);
+      setSaveError('Failed to save calculation. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <motion.div

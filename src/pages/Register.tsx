@@ -1,27 +1,122 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, Leaf, ArrowRight, Chrome, User, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Leaf, ArrowRight, Chrome, User, CheckCircle2, AlertCircle } from 'lucide-react';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import { useAuth } from '../context/AuthContext';
+
+const REGISTER_ERROR_MESSAGES: Record<string, string> = {
+  'auth/email-already-in-use': 'This email is already registered. Please log in or use a different email.',
+  'auth/invalid-email': 'Please enter a valid email address.',
+  'auth/weak-password': 'Password must be at least 6 characters.',
+  'auth/operation-not-allowed': 'Registration is temporarily disabled. Please try again later.',
+  'auth/network-request-failed': 'Network error. Please check your connection.',
+};
 
 export default function Register() {
+  const navigate = useNavigate();
+  const { signUp, loginWithGoogle } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Placeholder — no backend
-  };
+  // Email validation
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const passwordStrength = (() => {
     if (password.length === 0) return { level: 0, text: '', color: '' };
     if (password.length < 6) return { level: 1, text: 'Weak', color: 'bg-red-500' };
     if (password.length < 10) return { level: 2, text: 'Fair', color: 'bg-amber-500' };
-    return { level: 3, text: 'Strong', color: 'bg-green-500' };
+    if (/[A-Z]/.test(password) && /[0-9]/.test(password)) {
+      return { level: 3, text: 'Strong', color: 'bg-green-500' };
+    }
+    return { level: 2, text: 'Fair', color: 'bg-amber-500' };
   })();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess(false);
+
+    // Validation
+    if (!name.trim()) {
+      setError('Please enter your full name.');
+      return;
+    }
+    if (name.trim().length < 2) {
+      setError('Name must be at least 2 characters.');
+      return;
+    }
+    if (!email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
+    if (!isEmailValid) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    if (!password) {
+      setError('Please enter a password.');
+      return;
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    if (!confirmPassword) {
+      setError('Please confirm your password.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    if (!termsAccepted) {
+      setError('Please accept the Terms of Service and Privacy Policy.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await signUp(email, password, name);
+      setSuccess(true);
+
+      // Redirect to calculator after short delay
+      setTimeout(() => {
+        navigate('/calculator');
+      }, 500);
+    } catch (err: any) {
+      const errorCode = err?.code || '';
+      const errorMessage = REGISTER_ERROR_MESSAGES[errorCode] || err?.message || 'Registration failed. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await loginWithGoogle();
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/calculator');
+      }, 500);
+    } catch (err: any) {
+      setError('Google sign-up failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-20 relative">
@@ -60,7 +155,10 @@ export default function Register() {
 
           {/* Social */}
           <button
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 mb-6"
+            type="button"
+            onClick={handleGoogleSignUp}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-white hover:bg-white/10 hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 mb-6"
             id="register-google-btn"
           >
             <Chrome className="w-5 h-5" />
@@ -79,6 +177,32 @@ export default function Register() {
             </div>
           </div>
 
+          {/* Error Message */}
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30 flex items-start gap-2"
+            >
+              <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-400">{error}</p>
+            </motion.div>
+          )}
+
+          {/* Success Message */}
+          {success && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-4 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-emerald-400">Account created! Redirecting...</p>
+            </motion.div>
+          )}
+
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
@@ -89,6 +213,8 @@ export default function Register() {
               icon={User}
               value={name}
               onChange={(e) => setName(e.target.value)}
+              disabled={loading}
+              required
             />
 
             <Input
@@ -99,6 +225,8 @@ export default function Register() {
               icon={Mail}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={loading}
+              required
             />
 
             <div className="relative">
@@ -110,11 +238,14 @@ export default function Register() {
                 icon={Lock}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={loading}
+                required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[38px] text-dark-400 hover:text-white transition-colors"
+                disabled={loading}
+                className="absolute right-3 top-[38px] text-dark-400 hover:text-white disabled:opacity-50 transition-colors"
                 id="register-toggle-password"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -144,12 +275,37 @@ export default function Register() {
               </motion.div>
             )}
 
+            {/* Confirm Password */}
+            <div className="relative">
+              <Input
+                id="register-confirm-password"
+                type={showPassword ? 'text' : 'password'}
+                label="Confirm password"
+                placeholder="Re-enter your password"
+                icon={Lock}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={loading}
+                required
+              />
+              {confirmPassword && password !== confirmPassword && (
+                <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
+              )}
+              {confirmPassword && password === confirmPassword && (
+                <p className="text-xs text-emerald-400 mt-1">Passwords match ✓</p>
+              )}
+            </div>
+
             {/* Terms */}
             <label className="flex items-start gap-2 cursor-pointer">
               <input
                 type="checkbox"
                 id="register-terms"
-                className="mt-0.5 w-4 h-4 rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500/50 focus:ring-offset-0"
+                className="mt-0.5 w-4 h-4 rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500/50 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+                disabled={loading}
+                required
               />
               <span className="text-xs text-dark-400 leading-relaxed">
                 I agree to the{' '}
@@ -165,9 +321,19 @@ export default function Register() {
               size="lg"
               className="w-full mt-2"
               id="register-submit-btn"
+              disabled={loading || !name || !email || !password || !confirmPassword || !termsAccepted}
             >
-              Create Account
-              <ArrowRight className="w-4 h-4" />
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Creating Account...
+                </span>
+              ) : (
+                <>
+                  Create Account
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </Button>
           </form>
 
