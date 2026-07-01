@@ -1,21 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LogOut, User as UserIcon, BarChart3, Calendar, Settings } from 'lucide-react';
+import { LogOut, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Toast, { ToastProps } from '../ui/Toast';
 
 export const UserMenu: React.FC = () => {
   const { userProfile, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [toast, setToast] = useState<ToastProps | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
+      setIsLoggingOut(true);
       await logout();
       navigate('/');
     } catch (error) {
-      console.error('Logout error:', error);
+      setToast({ type: 'error', message: 'Logout failed. Please try again.' });
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -34,6 +41,14 @@ export const UserMenu: React.FC = () => {
 
   return (
     <div className="relative z-50" ref={dropdownRef}>
+      <AnimatePresence>
+        {toast && (
+          <div className="absolute top-12 right-0 w-64 z-[60]">
+            <Toast type={toast.type} message={toast.message} />
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -75,35 +90,21 @@ export const UserMenu: React.FC = () => {
                 <BarChart3 className="w-4 h-4 text-dark-400" />
                 Console Dashboard
               </Link>
-              <Link
-                to="/history"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-dark-300 hover:text-white hover:bg-white/5 transition-all"
-              >
-                <Calendar className="w-4 h-4 text-dark-400" />
-                Calculation Logs
-              </Link>
-              <Link
-                to="/profile"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-dark-300 hover:text-white hover:bg-white/5 transition-all"
-              >
-                <UserIcon className="w-4 h-4 text-dark-400" />
-                My Profile
-              </Link>
             </div>
 
             {/* Logout section */}
             <div className="border-t border-white/5 mt-2 pt-1.5">
               <button
                 onClick={() => {
+                  if (isLoggingOut) return;
                   setIsOpen(false);
                   handleLogout();
                 }}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all text-left"
+                disabled={isLoggingOut}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all text-left disabled:opacity-50"
               >
                 <LogOut className="w-4 h-4" />
-                Logout
+                {isLoggingOut ? 'Logging out...' : 'Logout'}
               </button>
             </div>
           </motion.div>

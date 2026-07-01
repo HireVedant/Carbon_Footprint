@@ -7,8 +7,6 @@ import Register from './pages/Register';
 import Calculator from './pages/Calculator';
 import Dashboard from './pages/Dashboard';
 import About from './pages/About';
-import History from './pages/History';
-import Profile from './pages/Profile';
 import { CalculatorProvider } from './context/CalculatorContext';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -41,22 +39,6 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/history"
-                  element={
-                    <ProtectedRoute>
-                      <History />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
                     </ProtectedRoute>
                   }
                 />

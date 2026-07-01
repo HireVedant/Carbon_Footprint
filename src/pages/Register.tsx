@@ -1,19 +1,46 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, Leaf, ArrowRight, Chrome, User, CheckCircle2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Mail, Lock, Eye, EyeOff, Leaf, ArrowRight, User, CheckCircle2 } from 'lucide-react';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import { useAuth } from '../context/AuthContext';
+
+function getSignupErrorMessage(code: string): string {
+  switch (code) {
+    case 'auth/email-already-in-use':
+      return 'An account with this email already exists. Please sign in instead.';
+    case 'auth/weak-password':
+      return 'Password is too weak. Please use at least 6 characters.';
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    case 'auth/network-request-failed':
+      return 'Network error. Please check your connection and try again.';
+    case 'auth/too-many-requests':
+      return 'Too many attempts. Please wait a moment and try again.';
+    default:
+      return 'Account creation failed. Please try again.';
+  }
+}
+
+import Toast, { ToastProps } from '../components/ui/Toast';
 
 export default function Register() {
+  const navigate = useNavigate();
+  const { signUp } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState<ToastProps | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Placeholder — no backend
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ type, message });
+    if (type === 'success') {
+      setTimeout(() => setToast(null), 3000);
+    }
   };
 
   const passwordStrength = (() => {
@@ -22,6 +49,37 @@ export default function Register() {
     if (password.length < 10) return { level: 2, text: 'Fair', color: 'bg-amber-500' };
     return { level: 3, text: 'Strong', color: 'bg-green-500' };
   })();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!name.trim()) {
+      showToast('error', 'Please enter your full name.');
+      return;
+    }
+    if (!email.trim()) {
+      showToast('error', 'Please enter your email address.');
+      return;
+    }
+    if (password.length < 6) {
+      showToast('error', 'Password must be at least 6 characters.');
+      return;
+    }
+
+    setIsLoading(true);
+    setToast(null);
+
+    try {
+      await signUp(email, password, name.trim());
+      showToast('success', 'Account created! Redirecting to your dashboard…');
+      setTimeout(() => navigate('/dashboard'), 1200);
+    } catch (err: any) {
+      const code = err?.code || '';
+      showToast('error', getSignupErrorMessage(code));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-20 relative">
@@ -58,47 +116,33 @@ export default function Register() {
             </p>
           </div>
 
-          {/* Social */}
-          <button
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 mb-6"
-            id="register-google-btn"
-          >
-            <Chrome className="w-5 h-5" />
-            Sign up with Google
-          </button>
-
-          {/* Divider */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10" />
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="px-3 bg-dark-900/50 text-dark-400 backdrop-blur-sm">
-                or register with email
-              </span>
-            </div>
-          </div>
+          {/* Toast */}
+          <AnimatePresence>
+            {toast && <Toast type={toast.type} message={toast.message} />}
+          </AnimatePresence>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" id="register-form">
             <Input
               id="register-name"
               type="text"
-              label="Full name"
+              label="Full Name"
               placeholder="John Doe"
               icon={User}
               value={name}
               onChange={(e) => setName(e.target.value)}
+              required
             />
 
             <Input
               id="register-email"
               type="email"
-              label="Email address"
+              label="Email Address"
               placeholder="you@example.com"
               icon={Mail}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
             />
 
             <div className="relative">
@@ -110,12 +154,14 @@ export default function Register() {
                 icon={Lock}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-[38px] text-dark-400 hover:text-white transition-colors"
                 id="register-toggle-password"
+                aria-label="Toggle password visibility"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -139,41 +185,33 @@ export default function Register() {
                   ))}
                 </div>
                 <p className="text-xs text-dark-400">
-                  Password strength: <span className="font-medium text-white">{passwordStrength.text}</span>
+                  Password strength:{' '}
+                  <span className="font-medium text-white">{passwordStrength.text}</span>
                 </p>
               </motion.div>
             )}
-
-            {/* Terms */}
-            <label className="flex items-start gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                id="register-terms"
-                className="mt-0.5 w-4 h-4 rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500/50 focus:ring-offset-0"
-              />
-              <span className="text-xs text-dark-400 leading-relaxed">
-                I agree to the{' '}
-                <Link to="#" className="text-primary-400 hover:text-primary-300">Terms of Service</Link>
-                {' '}and{' '}
-                <Link to="#" className="text-primary-400 hover:text-primary-300">Privacy Policy</Link>
-              </span>
-            </label>
 
             <Button
               type="submit"
               variant="primary"
               size="lg"
               className="w-full mt-2"
+              disabled={isLoading}
+              isLoading={isLoading}
               id="register-submit-btn"
             >
-              Create Account
-              <ArrowRight className="w-4 h-4" />
+              {!isLoading && (
+                <>
+                  Create Account
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </Button>
           </form>
 
           {/* Benefits */}
           <div className="mt-6 space-y-2">
-            {['AI-powered carbon tracking', 'Personalized insights', 'Community challenges'].map((benefit) => (
+            {['AI-powered carbon tracking', 'Personalized insights', 'Gemini AI recommendations'].map((benefit) => (
               <div key={benefit} className="flex items-center gap-2 text-xs text-dark-400">
                 <CheckCircle2 className="w-3.5 h-3.5 text-primary-500 flex-shrink-0" />
                 {benefit}

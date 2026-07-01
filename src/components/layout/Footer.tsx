@@ -1,40 +1,103 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Leaf, Github, Twitter, Linkedin, Mail, Heart, ArrowUpRight } from 'lucide-react';
+import { Leaf, Github, Twitter, Linkedin, Mail, Heart, ArrowUpRight, Loader2 } from 'lucide-react';
+import { db } from '../../firebase/firebase';
+import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import Toast, { ToastProps } from '../ui/Toast';
+import { AnimatePresence } from 'framer-motion';
 
 const footerLinks = {
   Product: [
     { name: 'Calculator', path: '/calculator' },
     { name: 'Dashboard', path: '/dashboard' },
-    { name: 'API Access', path: '#' },
-    { name: 'Pricing', path: '#' },
   ],
   Company: [
     { name: 'About', path: '/about' },
-    { name: 'Blog', path: '#' },
-    { name: 'Careers', path: '#' },
-    { name: 'Contact', path: '#' },
-  ],
-  Resources: [
-    { name: 'Documentation', path: '#' },
-    { name: 'Community', path: '#' },
-    { name: 'Support', path: '#' },
-    { name: 'Status', path: '#' },
   ],
   Legal: [
     { name: 'Privacy Policy', path: '#' },
     { name: 'Terms of Service', path: '#' },
-    { name: 'Cookie Policy', path: '#' },
   ],
 };
 
 const socialLinks = [
-  { icon: Github, href: '#', label: 'GitHub' },
-  { icon: Twitter, href: '#', label: 'Twitter' },
+  { icon: Github,   href: '#', label: 'GitHub' },
+  { icon: Twitter,  href: '#', label: 'Twitter' },
   { icon: Linkedin, href: '#', label: 'LinkedIn' },
-  { icon: Mail, href: '#', label: 'Email' },
+  { icon: Mail,     href: '#', label: 'Email' },
 ];
 
+// ── Newsletter helpers ────────────────────────────────────────────────────────
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+async function subscribeToNewsletter(email: string): Promise<{ success: boolean; message: string }> {
+  const trimmed = email.trim().toLowerCase();
+
+  if (!trimmed) {
+    return { success: false, message: 'Please enter your email address.' };
+  }
+  if (!isValidEmail(trimmed)) {
+    return { success: false, message: 'Please enter a valid email address.' };
+  }
+
+  try {
+    // Check for duplicate
+    const newsletterRef = collection(db, 'newsletter');
+    const dupQuery = query(newsletterRef, where('email', '==', trimmed));
+    const dupSnap = await getDocs(dupQuery);
+
+    if (!dupSnap.empty) {
+      return { success: false, message: 'This email is already subscribed!' };
+    }
+
+    await addDoc(newsletterRef, {
+      email: trimmed,
+      timestamp: serverTimestamp(),
+    });
+
+    return { success: true, message: 'You\'re subscribed! Thank you for joining.' };
+  } catch (err: any) {
+    // Firestore unavailable — fall back to localStorage
+    const stored: string[] = JSON.parse(localStorage.getItem('newsletter_subscribers') || '[]');
+    if (stored.includes(trimmed)) {
+      return { success: false, message: 'This email is already subscribed!' };
+    }
+    stored.push(trimmed);
+    localStorage.setItem('newsletter_subscribers', JSON.stringify(stored));
+    return { success: true, message: 'You\'re subscribed! (Saved locally)' };
+  }
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
+
 export default function Footer() {
+  const [emailInput, setEmailInput]   = useState('');
+  const [isLoading, setIsLoading]     = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const handleSubscribe = async () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    setFeedbackMsg(null);
+
+    const result = await subscribeToNewsletter(emailInput);
+    setFeedbackMsg({ type: result.success ? 'success' : 'error', text: result.message });
+
+    if (result.success) {
+      setEmailInput('');
+    }
+    setTimeout(() => setFeedbackMsg(null), 3000);
+
+    setIsLoading(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleSubscribe();
+  };
+
   return (
     <footer className="relative border-t border-white/5 bg-dark-950" id="footer">
       {/* Gradient top border effect */}
@@ -53,23 +116,50 @@ export default function Footer() {
                 Get weekly insights on reducing your carbon footprint with AI-powered tips.
               </p>
             </div>
-            <div className="flex w-full lg:w-auto gap-3">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                id="footer-email-input"
-                className="input-field flex-1 lg:w-72"
-              />
-              <button className="btn-primary whitespace-nowrap" id="footer-subscribe-btn">
-                Subscribe
-                <ArrowUpRight className="w-4 h-4" />
-              </button>
+            <div className="w-full lg:w-auto">
+              <div className="flex gap-3">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  id="footer-email-input"
+                  className="input-field flex-1 lg:w-72"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isLoading}
+                  aria-label="Newsletter email"
+                />
+                <button
+                  className="btn-primary whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
+                  id="footer-subscribe-btn"
+                  onClick={handleSubscribe}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      Subscribe
+                      <ArrowUpRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Feedback message */}
+              <AnimatePresence>
+                {feedbackMsg && (
+                  <div className="mt-3">
+                    <Toast type={feedbackMsg.type} message={feedbackMsg.text} />
+                  </div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
 
         {/* Links Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-8 lg:gap-12 mb-16">
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
               <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
@@ -99,7 +189,7 @@ export default function Footer() {
               <Leaf className="w-4 h-4 text-white" />
             </div>
             <span className="text-sm text-dark-400">
-              © {new Date().getFullYear()} EcoTrack AI. Built with{' '}
+              © {new Date().getFullYear()} EcoTrack AI — Software Engineering Mini Project 2026. Built with{' '}
               <Heart className="w-3 h-3 inline text-red-400" /> for the planet.
             </span>
           </div>

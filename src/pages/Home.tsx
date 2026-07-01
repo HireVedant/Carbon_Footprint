@@ -70,10 +70,10 @@ const features = [
 ];
 
 const stats = [
-  { icon: Users, value: '50K+', label: 'Active Users' },
-  { icon: TrendingDown, value: '2.3M', label: 'Tons CO₂ Tracked' },
-  { icon: TreePine, value: '150K+', label: 'Trees Equivalent' },
-  { icon: Globe2, value: '120+', label: 'Countries' },
+  { icon: Users,       value: '250+',     label: 'Registered Users' },
+  { icon: TrendingDown, value: '1,420 kg', label: 'CO₂ Tracked' },
+  { icon: TreePine,    value: '85',       label: 'Reports Generated' },
+  { icon: Globe2,      value: '3',        label: 'Team Members' },
 ];
 
 const steps = [

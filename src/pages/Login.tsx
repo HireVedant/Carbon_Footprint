@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Mail,
   Lock,
@@ -8,46 +8,71 @@ import {
   EyeOff,
   Leaf,
   ArrowRight,
-  Chrome,
 } from 'lucide-react';
 
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
 
+function getLoginErrorMessage(code: string): string {
+  switch (code) {
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      return 'Incorrect password. Please try again.';
+    case 'auth/user-not-found':
+      return 'No account found with this email address.';
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    case 'auth/too-many-requests':
+      return 'Too many failed attempts. Please wait a moment and try again.';
+    case 'auth/network-request-failed':
+      return 'Network error. Please check your connection and try again.';
+    case 'auth/user-disabled':
+      return 'This account has been disabled. Please contact support.';
+    default:
+      return 'Sign in failed. Please check your credentials and try again.';
+  }
+}
+
+import Toast, { ToastProps } from '../components/ui/Toast';
+
 export default function Login() {
   const navigate = useNavigate();
-
-  const { login, loginWithGoogle, loading } = useAuth();
+  const { login } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [toast, setToast] = useState<ToastProps | null>(null);
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ type, message });
+    if (type === 'success') {
+      setTimeout(() => setToast(null), 3000);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    setError('');
+    if (!email.trim() || !password.trim()) {
+      showToast('error', 'Please fill in all fields.');
+      return;
+    }
+
+    setIsLoading(true);
+    setToast(null);
 
     try {
       await login(email, password);
-      navigate('/dashboard');
+      showToast('success', 'Signed in successfully! Redirecting…');
+      setTimeout(() => navigate('/dashboard'), 1000);
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Failed to sign in.');
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    setError('');
-
-    try {
-      await loginWithGoogle();
-      navigate('/dashboard');
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'Google sign in failed.');
+      const code = err?.code || '';
+      showToast('error', getLoginErrorMessage(code));
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -70,7 +95,6 @@ export default function Login() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
               <Leaf className="w-5 h-5 text-white" />
             </div>
-
             <span className="text-xl font-display font-bold">
               Eco<span className="gradient-text">Track</span>
               <span className="text-dark-400 font-light ml-1">AI</span>
@@ -82,45 +106,18 @@ export default function Login() {
             <h1 className="text-2xl font-display font-bold text-white mb-2">
               Welcome Back
             </h1>
-
             <p className="text-sm text-dark-400">
               Sign in to continue tracking your carbon footprint.
             </p>
           </div>
 
-          {/* Error */}
-          {error && (
-            <div className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
-              {error}
-            </div>
-          )}
-
-          {/* Google Login */}
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300 mb-6 disabled:opacity-60"
-          >
-            <Chrome className="w-5 h-5" />
-            Continue with Google
-          </button>
-
-          {/* Divider */}
-          <div className="relative mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10" />
-            </div>
-
-            <div className="relative flex justify-center text-xs">
-              <span className="px-3 bg-dark-900/50 text-dark-400 backdrop-blur-sm">
-                or continue with email
-              </span>
-            </div>
-          </div>
+          {/* Toast */}
+          <AnimatePresence>
+            {toast && <Toast type={toast.type} message={toast.message} />}
+          </AnimatePresence>
 
           {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" id="login-form">
             <Input
               id="login-email"
               type="email"
@@ -148,6 +145,7 @@ export default function Login() {
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 className="absolute right-3 top-[38px] text-dark-400 hover:text-white"
+                aria-label="Toggle password visibility"
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -160,17 +158,15 @@ export default function Login() {
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2">
                 <input type="checkbox" className="w-4 h-4" />
-                <span className="text-xs text-dark-400">
-                  Remember me
-                </span>
+                <span className="text-xs text-dark-400">Remember me</span>
               </label>
 
-              <Link
-                to="/forgot-password"
-                className="text-xs text-primary-400 hover:text-primary-300"
+              <span
+                className="text-xs text-dark-500 cursor-default"
+                title="Password reset is available via Firebase console"
               >
                 Forgot password?
-              </Link>
+              </span>
             </div>
 
             <Button
@@ -178,10 +174,16 @@ export default function Login() {
               variant="primary"
               size="lg"
               className="w-full"
-              disabled={loading}
+              disabled={isLoading}
+              isLoading={isLoading}
+              id="login-submit-btn"
             >
-              {loading ? 'Signing In...' : 'Sign In'}
-              {!loading && <ArrowRight className="w-4 h-4" />}
+              {!isLoading && (
+                <>
+                  Sign In
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </Button>
           </form>
 
@@ -190,6 +192,7 @@ export default function Login() {
             <Link
               to="/register"
               className="text-primary-400 hover:text-primary-300 font-medium"
+              id="login-register-link"
             >
               Create one free
             </Link>

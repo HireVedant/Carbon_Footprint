@@ -14,24 +14,40 @@ const CalculatorContext = createContext<CalculatorContextType | undefined>(undef
 
 export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [inputs, setInputs] = useState<CalculatorInputs>(() => {
-    const saved = localStorage.getItem('ecotrack_inputs');
-    return saved ? JSON.parse(saved) : initialInputs;
+    try {
+      const saved = localStorage.getItem('ecotrack_inputs');
+      return saved ? JSON.parse(saved) : initialInputs;
+    } catch (error) {
+      return initialInputs;
+    }
   });
 
   const [results, setResults] = useState<CalculationResult | null>(() => {
-    const saved = localStorage.getItem('ecotrack_results');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('ecotrack_results');
+      return saved ? JSON.parse(saved) : null;
+    } catch (error) {
+      return null;
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('ecotrack_inputs', JSON.stringify(inputs));
+    try {
+      localStorage.setItem('ecotrack_inputs', JSON.stringify(inputs));
+    } catch (error) {
+      // Ignore local storage errors quietly
+    }
   }, [inputs]);
 
   useEffect(() => {
-    if (results) {
-      localStorage.setItem('ecotrack_results', JSON.stringify(results));
-    } else {
-      localStorage.removeItem('ecotrack_results');
+    try {
+      if (results) {
+        localStorage.setItem('ecotrack_results', JSON.stringify(results));
+      } else {
+        localStorage.removeItem('ecotrack_results');
+      }
+    } catch (error) {
+      // Ignore local storage errors quietly
     }
   }, [results]);
 
@@ -48,8 +64,12 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
   const resetCalculator = () => {
     setInputs(initialInputs);
     setResults(null);
-    localStorage.removeItem('ecotrack_inputs');
-    localStorage.removeItem('ecotrack_results');
+    try {
+      localStorage.removeItem('ecotrack_inputs');
+      localStorage.removeItem('ecotrack_results');
+    } catch (error) {
+      // Ignore
+    }
   };
 
   return (

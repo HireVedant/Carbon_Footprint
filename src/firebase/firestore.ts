@@ -135,7 +135,6 @@ export async function getUserCalculations(userId: string): Promise<SavedCalculat
     });
     return calculations;
   } catch (error) {
-    console.error('Error fetching calculations:', error);
     // Fallback if index is building or query fails (e.g. mock data or empty list)
     return [];
   }
@@ -144,6 +143,6 @@ export async function getUserCalculations(userId: string): Promise<SavedCalculat
 /**
  * Placeholder for deleting a calculation (doesn't permanently delete yet, just prints alert/logs).
  */
-export async function deleteCalculationPlaceholder(calculationId: string): Promise<void> {
-  console.log(`Placeholder: Requested deletion for calculationId: ${calculationId}. Permanent deletion is disabled for safety.`);
+export async function deleteCalculationPlaceholder(_calculationId: string): Promise<void> {
+  // Placeholder: Requested deletion for calculationId. Permanent deletion is disabled for safety.
 }

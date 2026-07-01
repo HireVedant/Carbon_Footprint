@@ -5,14 +5,9 @@ import {
   signOut,
   sendPasswordResetEmail,
   sendEmailVerification,
-  signInWithPopup,
-  GoogleAuthProvider,
   updateProfile,
 } from 'firebase/auth';
 import { createUserDocument } from './firestore';
-
-// ---------------- Google Auth Provider ----------------
-const googleProvider = new GoogleAuthProvider();
 
 // ---------------- Authentication Services ----------------
 
@@ -22,25 +17,24 @@ const googleProvider = new GoogleAuthProvider();
 export async function signUpWithEmail(email: string, password: string, name: string) {
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
-  
+
   // Update Auth Display Name
   await updateProfile(user, {
     displayName: name,
-    photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'
   });
 
   // Sync to Firestore user profile collection
   await createUserDocument(user.uid, {
     name,
     email,
-    photo: user.photoURL || '',
+    photo: '',
   });
 
   // Optional: Send verification email
   try {
     await sendEmailVerification(user);
   } catch (error) {
-    console.error("Error sending verification email on signup:", error);
+    // Ignore verification email errors
   }
 
   return user;
@@ -54,23 +48,6 @@ export async function loginWithEmail(email: string, password: string) {
   const user = userCredential.user;
 
   // Update last login timestamp in Firestore
-  await createUserDocument(user.uid, {
-    name: user.displayName || 'Eco User',
-    email: user.email || '',
-    photo: user.photoURL || '',
-  });
-
-  return user;
-}
-
-/**
- * Logs in a user using Google OAuth popups.
- */
-export async function loginWithGoogle() {
-  const userCredential = await signInWithPopup(auth, googleProvider);
-  const user = userCredential.user;
-
-  // Sync user profile to Firestore
   await createUserDocument(user.uid, {
     name: user.displayName || 'Eco User',
     email: user.email || '',

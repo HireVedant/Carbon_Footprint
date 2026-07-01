@@ -8,15 +8,13 @@ import {
   Target,
   Lightbulb,
   Shield,
-  Zap,
   ArrowRight,
-  Github,
-  Twitter,
-  Linkedin,
   CheckCircle2,
 } from 'lucide-react';
 import SectionHeading from '../components/ui/SectionHeading';
 import Card from '../components/ui/Card';
+import StatCard from '../components/ui/StatCard';
+import { TrendingDown, FileText } from 'lucide-react';
 
 const values = [
   {
@@ -38,25 +36,62 @@ const values = [
     color: 'from-amber-500 to-orange-500',
   },
   {
-    icon: Users,
+    icon: Target,
     title: 'Community Driven',
     description: 'Real change happens together. We build tools that connect and empower communities for collective impact.',
     color: 'from-primary-500 to-accent-500',
   },
 ];
 
+// ── Task 2: Updated team members ──────────────────────────────────────────────
 const team = [
-  { name: 'Alex Rivera', role: 'Founder & CEO', emoji: '🌿' },
-  { name: 'Sarah Chen', role: 'Head of AI', emoji: '🧠' },
-  { name: 'Marcus Johnson', role: 'Lead Engineer', emoji: '⚡' },
-  { name: 'Priya Patel', role: 'Head of Design', emoji: '🎨' },
+  {
+    name: 'Tanay Daware',
+    role: 'Project Lead & Full Stack Developer',
+    emoji: '🚀',
+  },
+  {
+    name: 'Vedant Hire',
+    role: 'Frontend Developer & UI Designer',
+    emoji: '🎨',
+  },
+  {
+    name: 'Jeevan Sagale',
+    role: 'Backend Developer & Firebase Integration',
+    emoji: '🔥',
+  },
 ];
 
+// ── Task 3: Updated statistics ────────────────────────────────────────────────
+const stats = [
+  { icon: Users,       value: '250+',     label: 'Registered Users' },
+  { icon: TrendingDown, value: '1,420 kg', label: 'CO₂ Tracked' },
+  { icon: FileText,    value: '85',       label: 'Reports Generated' },
+  { icon: Leaf,        value: '3',        label: 'Team Members' },
+];
+
+// ── Task 4: Updated timeline ──────────────────────────────────────────────────
 const milestones = [
-  { year: '2024', title: 'Founded', description: 'EcoTrack AI was born from a vision to democratize carbon tracking' },
-  { year: '2024', title: 'Beta Launch', description: 'Launched to 1,000 early adopters with core tracking features' },
-  { year: '2025', title: 'AI Integration', description: 'Introduced machine learning for personalized recommendations' },
-  { year: '2025', title: '50K Users', description: 'Reached 50,000 active users across 120 countries' },
+  {
+    year: '2026',
+    title: 'Project Started',
+    description: 'Started as a Software Engineering Mini Project focused on carbon footprint awareness.',
+  },
+  {
+    year: '2026',
+    title: 'Carbon Calculator',
+    description: 'Implemented emission calculation for transportation, household energy, food and waste.',
+  },
+  {
+    year: '2026',
+    title: 'AI Integration',
+    description: 'Integrated Gemini AI to generate sustainability recommendations.',
+  },
+  {
+    year: '2026',
+    title: 'Prototype Completed',
+    description: 'Prepared the application for Software Engineering presentation.',
+  },
 ];
 
 const fadeUp = {
@@ -102,10 +137,21 @@ export default function About() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="text-lg text-dark-400 leading-relaxed max-w-2xl mx-auto"
             >
-              We believe every individual has the power to fight climate change. 
-              EcoTrack AI empowers you with the tools and intelligence to understand 
+              We believe every individual has the power to fight climate change.
+              EcoTrack AI empowers you with the tools and intelligence to understand
               and reduce your environmental footprint.
             </motion.p>
+          </div>
+        </div>
+      </section>
+
+      {/* ========== STATISTICS ========== */}
+      <section className="section-padding relative" id="stats-section">
+        <div className="container-max mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {stats.map((stat, i) => (
+              <StatCard key={stat.label} {...stat} delay={i * 0.1} />
+            ))}
           </div>
         </div>
       </section>
@@ -149,10 +195,11 @@ export default function About() {
             badge="Our Team"
             title="Meet the people"
             highlight="behind EcoTrack"
-            description="A passionate team of engineers, scientists, and designers united by sustainability."
+            description="A passionate team of developers united by sustainability and innovation."
           />
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {/* Three-column grid, centred */}
+          <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
             {team.map((member, i) => (
               <motion.div
                 key={member.name}
@@ -160,7 +207,7 @@ export default function About() {
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className="card text-center group"
+                className="card text-center group w-full sm:w-64"
               >
                 <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-primary-500/20 to-accent-500/10 border border-primary-500/20 flex items-center justify-center mx-auto mb-4 text-3xl sm:text-4xl group-hover:border-primary-500/40 transition-colors duration-300">
                   {member.emoji}
@@ -168,18 +215,7 @@ export default function About() {
                 <h3 className="text-sm sm:text-base font-display font-semibold text-white mb-1">
                   {member.name}
                 </h3>
-                <p className="text-xs text-dark-400">{member.role}</p>
-                <div className="flex items-center justify-center gap-2 mt-4">
-                  {[Twitter, Linkedin, Github].map((Icon, j) => (
-                    <a
-                      key={j}
-                      href="#"
-                      className="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-dark-400 hover:text-primary-400 hover:bg-white/10 transition-all duration-300"
-                    >
-                      <Icon className="w-3 h-3" />
-                    </a>
-                  ))}
-                </div>
+                <p className="text-xs text-dark-400 leading-relaxed">{member.role}</p>
               </motion.div>
             ))}
           </div>

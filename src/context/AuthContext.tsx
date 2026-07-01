@@ -9,7 +9,6 @@ import {
 import {
   signUpWithEmail as authSignUp,
   loginWithEmail as authLogin,
-  loginWithGoogle as authGoogleLogin,
   resetPassword as authResetPassword,
   logoutUser as authLogout,
   sendEmailVerificationLink as authSendVerify,
@@ -21,7 +20,6 @@ interface AuthContextType {
   loading: boolean;
   signUp: (email: string, password: string, name: string) => Promise<User>;
   login: (email: string, password: string) => Promise<User>;
-  loginWithGoogle: () => Promise<User>;
   resetPassword: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   sendEmailVerification: () => Promise<void>;
@@ -39,14 +37,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      
+
       if (currentUser) {
         // Fetch custom Firestore user profile document
         try {
           const profile = await getUserDocument(currentUser.uid);
           setUserProfile(profile);
         } catch (error) {
-          console.error("Error fetching Firestore user profile:", error);
+          // Fallback or ignore profile fetch errors quietly
         }
       } else {
         setUserProfile(null);
@@ -71,16 +69,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setLoading(true);
     try {
       const loggedUser = await authLogin(email, password);
-      return loggedUser;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loginWithGoogle = async () => {
-    setLoading(true);
-    try {
-      const loggedUser = await authGoogleLogin();
       return loggedUser;
     } finally {
       setLoading(false);
@@ -136,7 +124,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loading,
         signUp,
         login,
-        loginWithGoogle,
         resetPassword,
         logout,
         sendEmailVerification,

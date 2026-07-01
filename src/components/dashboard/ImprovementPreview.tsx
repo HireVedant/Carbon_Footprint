@@ -1,6 +1,9 @@
 import React from 'react';
 import { ArrowRight, Sparkles, Footprints, Flame, Plus } from 'lucide-react';
 import { CalculationResult } from '../../utils/carbonCalculator';
+import { useState } from 'react';
+import Toast, { ToastProps } from '../ui/Toast';
+import { AnimatePresence } from 'framer-motion';
 
 interface ImprovementPreviewProps {
   results: CalculationResult;
@@ -8,6 +11,12 @@ interface ImprovementPreviewProps {
 
 export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results }) => {
   const { totalEmissions } = results;
+  const [toast, setToast] = useState<ToastProps | null>(null);
+
+  const showToast = (type: 'success' | 'error' | 'info', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Compute placeholder carbon savings relative to the actual emissions size
   const transportSavings = Math.round(totalEmissions * 0.12); // e.g. 12% savings by swapping commutes
@@ -42,7 +51,14 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results 
   ];
 
   return (
-    <div className="glass p-6 hover:border-white/15 transition-all duration-300 h-full flex flex-col justify-between">
+    <div className="glass p-6 hover:border-white/15 transition-all duration-300 h-full flex flex-col justify-between relative">
+      <AnimatePresence>
+        {toast && (
+          <div className="absolute top-4 left-4 right-4 z-50">
+            <Toast type={toast.type} message={toast.message} />
+          </div>
+        )}
+      </AnimatePresence>
       <div>
         <div className="flex items-center gap-2 mb-4">
           <Sparkles className="w-5 h-5 text-primary-400" />
@@ -82,7 +98,7 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results 
       <div className="mt-6 flex justify-end">
         <button
           className="text-xs font-semibold text-primary-400 hover:text-white flex items-center gap-1.5 transition-colors group"
-          onClick={() => alert('AI Coach module is being developed in Day 5.')}
+          onClick={() => showToast('info', 'AI Coach module is being developed in Day 5.')}
         >
           Explore Detailed Recommendations
           <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />

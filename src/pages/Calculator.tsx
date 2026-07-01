@@ -12,6 +12,7 @@ import { NavigationButtons } from '../components/calculator/NavigationButtons';
 import { CalculationSummary } from '../components/calculator/CalculationSummary';
 import { Sparkles, Leaf } from 'lucide-react';
 import SectionHeading from '../components/ui/SectionHeading';
+import Toast, { ToastProps } from '../components/ui/Toast';
 
 const stepDetails = [
   {
@@ -41,6 +42,7 @@ export default function Calculator() {
   const [step, setStep] = useState(1);
   const [isValid, setIsValid] = useState(false);
   const [calculating, setCalculating] = useState(false);
+  const [toast, setToast] = useState<ToastProps | null>(null);
 
   const handleNext = () => {
     if (step < 5) {
@@ -48,9 +50,16 @@ export default function Calculator() {
     } else {
       // Step 5: Trigger calculation
       setCalculating(true);
+      setToast(null);
       setTimeout(() => {
-        calculate();
-        setCalculating(false);
+        try {
+          calculate();
+        } catch (error) {
+          setToast({ type: 'error', message: 'Calculation failed. Please try again.' });
+          setTimeout(() => setToast(null), 3000);
+        } finally {
+          setCalculating(false);
+        }
       }, 1500); // Premium calculation delay animation
     }
   };
@@ -90,6 +99,14 @@ export default function Calculator() {
       {/* Glow ambient lights */}
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary-500/5 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-accent-500/5 rounded-full blur-[100px] pointer-events-none" />
+
+      <AnimatePresence>
+        {toast && (
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50">
+            <Toast type={toast.type} message={toast.message} />
+          </div>
+        )}
+      </AnimatePresence>
 
       <div className="container-max mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
         {!isCalculated && (
