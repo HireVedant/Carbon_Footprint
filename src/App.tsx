@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Calculator from './pages/Calculator';
 import Dashboard from './pages/Dashboard';
+import History from './pages/History';
 import About from './pages/About';
 import { CalculatorProvider } from './context/CalculatorContext';
 import { AuthProvider } from './context/AuthContext';
@@ -39,6 +40,14 @@ function App() {
                   element={
                     <ProtectedRoute>
                       <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/history"
+                  element={
+                    <ProtectedRoute>
+                      <History />
                     </ProtectedRoute>
                   }
                 />

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { CalculatorInputs, CalculationResult, calculateCarbonFootprint, initialInputs } from '../utils/carbonCalculator';
+import { useAuth } from './AuthContext';
+import { saveCalculation, getUserCalculations } from '../firebase/firestore';
 
 interface CalculatorContextType {
   inputs: CalculatorInputs;
@@ -13,43 +15,104 @@ interface CalculatorContextType {
 const CalculatorContext = createContext<CalculatorContextType | undefined>(undefined);
 
 export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [inputs, setInputs] = useState<CalculatorInputs>(() => {
-    try {
-      const saved = localStorage.getItem('ecotrack_inputs');
-      return saved ? JSON.parse(saved) : initialInputs;
-    } catch (error) {
-      return initialInputs;
-    }
-  });
+  const { user } = useAuth();
+  const [inputs, setInputs] = useState<CalculatorInputs>(initialInputs);
+  const [results, setResults] = useState<CalculationResult | null>(null);
 
-  const [results, setResults] = useState<CalculationResult | null>(() => {
-    try {
-      const saved = localStorage.getItem('ecotrack_results');
-      return saved ? JSON.parse(saved) : null;
-    } catch (error) {
-      return null;
-    }
-  });
-
+  // Sync state with logged in user
   useEffect(() => {
+    if (!user) {
+      setInputs(initialInputs);
+      setResults(null);
+      return;
+    }
+
+    const loadUserData = async () => {
+      try {
+        const uid = user.uid;
+        
+        // Load inputs from local storage (uid-specific)
+        const savedInputs = localStorage.getItem(`ecotrack_inputs_${uid}`);
+        if (savedInputs) {
+          setInputs(JSON.parse(savedInputs));
+        } else {
+          setInputs(initialInputs);
+        }
+
+        // Load results from local storage (uid-specific) first for speed
+        const savedResults = localStorage.getItem(`ecotrack_results_${uid}`);
+        if (savedResults) {
+          setResults(JSON.parse(savedResults));
+        } else {
+          // Fallback to firestore if no local results
+          const history = await getUserCalculations(uid);
+          if (history.length > 0) {
+            const latest = history[0];
+            // Compute ecoColor from score using dummy input just for color logic if needed,
+            // or just reconstruct result. We can recalculate or just assign.
+            // But we actually only need to reconstruct the CalculationResult.
+            // Since calculateCarbonFootprint doesn't depend on inputs for the score label assignment logic directly,
+            // we'll just reconstruct the missing fields.
+            
+            let ecoColor = '';
+            if (latest.ecoScore >= 85) {
+              ecoColor = 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
+            } else if (latest.ecoScore >= 70) {
+              ecoColor = 'text-green-400 border-green-500/30 bg-green-500/10';
+            } else if (latest.ecoScore >= 50) {
+              ecoColor = 'text-amber-400 border-amber-500/30 bg-amber-500/10';
+            } else if (latest.ecoScore >= 30) {
+              ecoColor = 'text-orange-400 border-orange-500/30 bg-orange-500/10';
+            } else {
+              ecoColor = 'text-red-400 border-red-500/30 bg-red-500/10';
+            }
+
+            setResults({
+              transportEmissions: latest.transportEmission,
+              energyEmissions: latest.energyEmission,
+              foodEmissions: latest.foodEmission,
+              wasteEmissions: latest.wasteEmission,
+              totalEmissions: latest.totalEmission,
+              annualEstimate: latest.annualEstimate,
+              ecoScore: latest.ecoScore,
+              ecoLabel: latest.ecoLabel,
+              ecoColor,
+            });
+          } else {
+            setResults(null);
+          }
+        }
+      } catch (e) {
+        console.error('Error loading user data', e);
+      }
+    };
+    
+    loadUserData();
+  }, [user]);
+
+  // Save inputs locally for this user
+  useEffect(() => {
+    if (!user) return;
     try {
-      localStorage.setItem('ecotrack_inputs', JSON.stringify(inputs));
+      localStorage.setItem(`ecotrack_inputs_${user.uid}`, JSON.stringify(inputs));
     } catch (error) {
       // Ignore local storage errors quietly
     }
-  }, [inputs]);
+  }, [inputs, user]);
 
+  // Save results locally for this user
   useEffect(() => {
+    if (!user) return;
     try {
       if (results) {
-        localStorage.setItem('ecotrack_results', JSON.stringify(results));
+        localStorage.setItem(`ecotrack_results_${user.uid}`, JSON.stringify(results));
       } else {
-        localStorage.removeItem('ecotrack_results');
+        localStorage.removeItem(`ecotrack_results_${user.uid}`);
       }
     } catch (error) {
       // Ignore local storage errors quietly
     }
-  }, [results]);
+  }, [results, user]);
 
   const updateInputs = (updates: Partial<CalculatorInputs>) => {
     setInputs((prev) => ({ ...prev, ...updates }));
@@ -58,17 +121,27 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
   const calculate = () => {
     const computedResults = calculateCarbonFootprint(inputs);
     setResults(computedResults);
+    
+    if (user) {
+      // Asynchronously save to Firestore
+      saveCalculation(user.uid, computedResults).catch(err => {
+        console.error('Failed to save calculation to firestore', err);
+      });
+    }
+    
     return computedResults;
   };
 
   const resetCalculator = () => {
     setInputs(initialInputs);
     setResults(null);
-    try {
-      localStorage.removeItem('ecotrack_inputs');
-      localStorage.removeItem('ecotrack_results');
-    } catch (error) {
-      // Ignore
+    if (user) {
+      try {
+        localStorage.removeItem(`ecotrack_inputs_${user.uid}`);
+        localStorage.removeItem(`ecotrack_results_${user.uid}`);
+      } catch (error) {
+        // Ignore
+      }
     }
   };
 

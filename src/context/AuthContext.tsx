@@ -85,6 +85,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await authLogout();
       setUser(null);
       setUserProfile(null);
+      localStorage.clear();
+      sessionStorage.clear();
     } finally {
       setLoading(false);
     }

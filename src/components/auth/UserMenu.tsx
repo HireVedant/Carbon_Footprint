@@ -49,16 +49,28 @@ export const UserMenu: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 focus:outline-none group p-1 rounded-full border border-white/5 bg-white/5 hover:border-white/10 transition-all duration-300"
+        className="flex items-center justify-center gap-2 focus:outline-none group p-1 rounded-full border border-white/5 bg-white/5 hover:border-white/10 transition-all duration-300 w-10 h-10"
       >
-        <img
-          src={userProfile.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'}
-          alt={userProfile.name}
-          className="w-8 h-8 rounded-full object-cover border border-white/10 group-hover:scale-105 transition-transform"
-        />
+        {userProfile.photo ? (
+          <img
+            src={userProfile.photo}
+            alt={userProfile.name}
+            className="w-full h-full rounded-full object-cover border border-white/10 group-hover:scale-105 transition-transform"
+          />
+        ) : (
+          <div className="w-full h-full rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white font-bold text-sm border border-white/10 group-hover:scale-105 transition-transform">
+            {userProfile.name
+              ? userProfile.name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .substring(0, 2)
+                  .toUpperCase()
+              : 'U'}
+          </div>
+        )}
       </button>
 
       {/* Dropdown Menu */}

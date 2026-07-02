@@ -54,7 +54,7 @@ export async function createUserDocument(uid: string, profile: Partial<UserProfi
       uid,
       name: profile.name || 'Eco User',
       email: profile.email || '',
-      photo: profile.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200',
+      photo: profile.photo || '',
       userType: profile.userType || 'Individual',
       createdAt: serverTimestamp(),
       lastLogin: serverTimestamp(),
