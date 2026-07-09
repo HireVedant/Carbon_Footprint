@@ -4,8 +4,9 @@ An AI-powered Carbon Footprint Tracking and Sustainability Recommendation Platfo
 ---
 
 ## Link 
-https://carbon-footprint-pccoe-sei.vercel.app/
+https://carbon-footprint-pccoe.vercel.app/
 
+---
 
 ## Project Overview
 
