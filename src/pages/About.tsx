@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import {
   Leaf,
   Globe2,
@@ -15,6 +16,7 @@ import SectionHeading from '../components/ui/SectionHeading';
 import Card from '../components/ui/Card';
 import StatCard from '../components/ui/StatCard';
 import { TrendingDown, FileText } from 'lucide-react';
+import { getSEIAboutStats } from '../services/seiDatasetService';
 
 const values = [
   {
@@ -63,12 +65,7 @@ const team = [
 ];
 
 // ── Task 3: Updated statistics ────────────────────────────────────────────────
-const stats = [
-  { icon: Users,       value: '250+',     label: 'Registered Users' },
-  { icon: TrendingDown, value: '1,420 kg', label: 'CO₂ Tracked' },
-  { icon: FileText,    value: '85',       label: 'Reports Generated' },
-  { icon: Leaf,        value: '3',        label: 'Team Members' },
-];
+// Real statistics from SEI report used instead of hardcoded arrays.
 
 // ── Task 4: Updated timeline ──────────────────────────────────────────────────
 const milestones = [
@@ -101,6 +98,9 @@ const fadeUp = {
 };
 
 export default function About() {
+  const { user, loading } = useAuth();
+  const stats = getSEIAboutStats();
+  
   return (
     <div className="overflow-hidden">
       {/* ========== HERO ========== */}
@@ -280,8 +280,12 @@ export default function About() {
                 Be part of the community that's redefining how we track and reduce our environmental impact.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link to="/register" className="btn-primary text-base w-full sm:w-auto" id="about-cta-register">
-                  Join EcoTrack AI
+                <Link 
+                  to={loading ? '#' : (user ? '/dashboard' : '/register')} 
+                  className={`btn-primary text-base w-full sm:w-auto ${loading ? 'opacity-70 pointer-events-none' : ''}`} 
+                  id="about-cta-register"
+                >
+                  {user ? 'Go to Dashboard' : 'Join EcoTrack AI'}
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <Link to="/calculator" className="btn-secondary text-base w-full sm:w-auto" id="about-cta-calc">

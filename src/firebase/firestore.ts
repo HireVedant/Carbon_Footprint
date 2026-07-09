@@ -4,6 +4,7 @@ import {
   setDoc,
   getDoc,
   updateDoc,
+  deleteDoc,
   collection,
   addDoc,
   getDocs,
@@ -11,8 +12,10 @@ import {
   where,
   orderBy,
   serverTimestamp,
+  limit,
 } from 'firebase/firestore';
 import { CalculationResult } from '../utils/carbonCalculator';
+import { removeCommunityEntry } from '../services/communityAnalyticsService';
 
 export interface UserProfile {
   uid: string;
@@ -141,8 +144,37 @@ export async function getUserCalculations(userId: string): Promise<SavedCalculat
 }
 
 /**
- * Placeholder for deleting a calculation (doesn't permanently delete yet, just prints alert/logs).
+ * Permanently deletes a calculation document from Firestore and updates community stats.
  */
-export async function deleteCalculationPlaceholder(_calculationId: string): Promise<void> {
-  // Placeholder: Requested deletion for calculationId. Permanent deletion is disabled for safety.
+export async function deleteCalculation(calculationId: string, userId: string): Promise<void> {
+  const calcRef = doc(db, 'calculations', calculationId);
+  const snap = await getDoc(calcRef);
+  
+  if (!snap.exists()) return;
+  
+  const data = snap.data();
+  
+  // 1. Delete the user's calculation document
+  await deleteDoc(calcRef);
+
+  // 2. Check if the user has any other calculations left
+  const userCalcsRef = collection(db, 'calculations');
+  const q = query(userCalcsRef, where('userId', '==', userId), limit(1));
+  const remainingSnap = await getDocs(q);
+  const hasRemaining = !remainingSnap.empty;
+
+  // 3. Update community aggregates via transaction
+  await removeCommunityEntry({
+    calculationId,
+    userId,
+    hasRemaining,
+    removedEmission: data.totalEmission ?? 0,
+    removedScore: data.ecoScore ?? 0,
+    removedBreakdown: {
+      transport: data.transportEmission ?? 0,
+      energy: data.energyEmission ?? 0,
+      food: data.foodEmission ?? 0,
+      waste: data.wasteEmission ?? 0,
+    }
+  });
 }

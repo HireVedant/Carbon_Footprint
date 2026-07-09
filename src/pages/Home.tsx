@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -19,6 +20,7 @@ import {
 import SectionHeading from '../components/ui/SectionHeading';
 import Card from '../components/ui/Card';
 import StatCard from '../components/ui/StatCard';
+import { getSEIHomeStats, getSEIHeroStats } from '../services/seiDatasetService';
 
 const fadeUp = {
   initial: { opacity: 0, y: 30 },
@@ -69,12 +71,7 @@ const features = [
   },
 ];
 
-const stats = [
-  { icon: Users,       value: '250+',     label: 'Registered Users' },
-  { icon: TrendingDown, value: '1,420 kg', label: 'CO₂ Tracked' },
-  { icon: TreePine,    value: '85',       label: 'Reports Generated' },
-  { icon: Globe2,      value: '3',        label: 'Team Members' },
-];
+// Real statistics from SEI report used instead of hardcoded arrays.
 
 const steps = [
   {
@@ -95,6 +92,10 @@ const steps = [
 ];
 
 export default function Home() {
+  const { user, loading } = useAuth();
+  const stats = getSEIHomeStats();
+  const heroStats = getSEIHeroStats();
+
   return (
     <div className="overflow-hidden">
       {/* ========== HERO ========== */}
@@ -158,8 +159,12 @@ export default function Home() {
               transition={{ duration: 0.6, delay: 0.5 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
-              <Link to="/register" className="btn-primary text-base w-full sm:w-auto" id="hero-cta-primary">
-                Start Tracking Free
+              <Link 
+                to={loading ? '#' : (user ? '/calculator' : '/register')} 
+                className={`btn-primary text-base w-full sm:w-auto ${loading ? 'opacity-70 pointer-events-none' : ''}`} 
+                id="hero-cta-primary"
+              >
+                {user ? 'Continue to Calculator' : 'Start Tracking Free'}
                 <ArrowRight className="w-5 h-5" />
               </Link>
               <Link to="/calculator" className="btn-secondary text-base w-full sm:w-auto" id="hero-cta-secondary">
@@ -196,27 +201,27 @@ export default function Home() {
           >
             <div className="glass-strong p-4 sm:p-6 rounded-2xl sm:rounded-3xl overflow-hidden">
               <div className="bg-dark-900/50 rounded-xl sm:rounded-2xl p-6 sm:p-8 min-h-[300px] sm:min-h-[400px] flex items-center justify-center relative">
-                {/* Mock Dashboard UI */}
+                {/* Hero Dashboard Stats (from SEI) */}
                 <div className="w-full grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                   <div className="glass p-4 text-center">
                     <Wind className="w-6 h-6 text-primary-400 mx-auto mb-2" />
-                    <p className="text-xl sm:text-2xl font-bold font-display">2.4</p>
-                    <p className="text-xs text-dark-400">Tons CO₂/yr</p>
+                    <p className="text-xl sm:text-2xl font-bold font-display">{heroStats[0].value}</p>
+                    <p className="text-[11px] text-dark-400 mt-1">{heroStats[0].label}</p>
                   </div>
                   <div className="glass p-4 text-center">
                     <TrendingDown className="w-6 h-6 text-green-400 mx-auto mb-2" />
-                    <p className="text-xl sm:text-2xl font-bold font-display text-green-400">-18%</p>
-                    <p className="text-xs text-dark-400">vs. Last Month</p>
+                    <p className="text-xl sm:text-2xl font-bold font-display text-green-400">{heroStats[1].value}</p>
+                    <p className="text-[11px] text-dark-400 mt-1">{heroStats[1].label}</p>
                   </div>
                   <div className="glass p-4 text-center">
                     <TreePine className="w-6 h-6 text-emerald-400 mx-auto mb-2" />
-                    <p className="text-xl sm:text-2xl font-bold font-display">127</p>
-                    <p className="text-xs text-dark-400">Trees Saved</p>
+                    <p className="text-xl sm:text-2xl font-bold font-display">{heroStats[2].value}</p>
+                    <p className="text-[11px] text-dark-400 mt-1">{heroStats[2].label}</p>
                   </div>
                   <div className="glass p-4 text-center">
                     <Zap className="w-6 h-6 text-amber-400 mx-auto mb-2" />
-                    <p className="text-xl sm:text-2xl font-bold font-display">A+</p>
-                    <p className="text-xs text-dark-400">Eco Score</p>
+                    <p className="text-xl sm:text-2xl font-bold font-display">{heroStats[3].value}</p>
+                    <p className="text-[11px] text-dark-400 mt-1">{heroStats[3].label}</p>
                   </div>
                 </div>
 
@@ -340,8 +345,12 @@ export default function Home() {
                 Join thousands of eco-conscious individuals using AI to build a sustainable future.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link to="/register" className="btn-primary text-base w-full sm:w-auto" id="cta-register">
-                  Get Started — It's Free
+                <Link 
+                  to={loading ? '#' : (user ? '/dashboard' : '/register')} 
+                  className={`btn-primary text-base w-full sm:w-auto ${loading ? 'opacity-70 pointer-events-none' : ''}`} 
+                  id="cta-register"
+                >
+                  {user ? 'Go to Dashboard' : "Get Started — It's Free"}
                   <ChevronRight className="w-5 h-5" />
                 </Link>
                 <Link to="/about" className="btn-secondary text-base w-full sm:w-auto" id="cta-learn-more">

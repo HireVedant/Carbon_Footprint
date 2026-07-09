@@ -19,6 +19,7 @@ export default function Navbar() {
   const navLinks = user
     ? [
         { name: 'Home', path: '/' },
+        { name: 'Community', path: '/community' },
         { name: 'Calculator', path: '/calculator' },
         { name: 'Dashboard', path: '/dashboard' },
         { name: 'History', path: '/history' },
@@ -26,6 +27,7 @@ export default function Navbar() {
       ]
     : [
         { name: 'Home', path: '/' },
+        { name: 'Community', path: '/community' },
         { name: 'About', path: '/about' },
       ];
 

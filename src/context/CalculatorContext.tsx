@@ -2,6 +2,9 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { CalculatorInputs, CalculationResult, calculateCarbonFootprint, initialInputs } from '../utils/carbonCalculator';
 import { useAuth } from './AuthContext';
 import { saveCalculation, getUserCalculations } from '../firebase/firestore';
+import { updateCommunityAggregates } from '../services/communityAnalyticsService';
+import { collection, getCountFromServer } from 'firebase/firestore';
+import { db } from '../firebase/firebase';
 
 interface CalculatorContextType {
   inputs: CalculatorInputs;
@@ -123,10 +126,37 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
     setResults(computedResults);
     
     if (user) {
-      // Asynchronously save to Firestore
-      saveCalculation(user.uid, computedResults).catch(err => {
-        console.error('Failed to save calculation to firestore', err);
-      });
+      // Asynchronously save to Firestore then update community aggregates
+      saveCalculation(user.uid, computedResults)
+        .then(async (calculationId) => {
+          // Fetch current total user count for the community stats doc
+          let totalUsers = 1;
+          try {
+            const usersCol = collection(db, 'users');
+            const countSnap = await getCountFromServer(usersCol);
+            totalUsers = countSnap.data().count;
+          } catch {
+            // Non-fatal — use fallback of 1
+          }
+
+          await updateCommunityAggregates({
+            userId: user.uid,
+            calculationId,
+            displayName: user.displayName ?? '',
+            transportEmission: computedResults.transportEmissions,
+            energyEmission: computedResults.energyEmissions,
+            foodEmission: computedResults.foodEmissions,
+            wasteEmission: computedResults.wasteEmissions,
+            totalEmission: computedResults.totalEmissions,
+            ecoScore: computedResults.ecoScore,
+            ecoLabel: computedResults.ecoLabel,
+            annualEstimate: computedResults.annualEstimate,
+            totalUsers,
+          });
+        })
+        .catch(err => {
+          console.error('Failed to save calculation to firestore', err);
+        });
     }
     
     return computedResults;

@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { getUserCalculations, SavedCalculation } from '../firebase/firestore';
-import { History as HistoryIcon, Calendar, Leaf, AlertTriangle, Loader2 } from 'lucide-react';
+import { getUserCalculations, SavedCalculation, deleteCalculation } from '../firebase/firestore';
+import { History as HistoryIcon, Calendar, Leaf, AlertTriangle, Loader2, Trash2 } from 'lucide-react';
 
 export default function History() {
   const { user } = useAuth();
   const [history, setHistory] = useState<SavedCalculation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchHistory = () => {
     if (user) {
+      setLoading(true);
       getUserCalculations(user.uid)
         .then(data => setHistory(data))
         .catch(err => console.error(err))
@@ -17,7 +18,23 @@ export default function History() {
     } else {
       setLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchHistory();
   }, [user]);
+
+  const handleDelete = async (calculationId: string | undefined) => {
+    if (!calculationId || !user) return;
+    if (confirm('Are you sure you want to delete this report?')) {
+      try {
+        await deleteCalculation(calculationId, user.uid);
+        fetchHistory();
+      } catch (err) {
+        console.error('Failed to delete report', err);
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen pt-24 pb-16 relative">
@@ -65,9 +82,18 @@ export default function History() {
                   </span>
                 </div>
                 
-                <h3 className="text-3xl font-display font-bold text-white mb-1">
-                  {calc.annualEstimate} <span className="text-lg text-dark-400">Tons</span>
-                </h3>
+                <div className="flex items-center justify-between mb-1">
+                  <h3 className="text-3xl font-display font-bold text-white">
+                    {calc.annualEstimate} <span className="text-lg text-dark-400">Tons</span>
+                  </h3>
+                  <button 
+                    onClick={() => handleDelete(calc.calculationId)}
+                    className="p-2 text-dark-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                    title="Delete Report"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
                 
                 <div className="mt-auto pt-4 border-t border-white/10 space-y-2 text-sm text-dark-300">
                   <div className="flex justify-between">
