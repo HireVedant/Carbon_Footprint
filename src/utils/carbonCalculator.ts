@@ -1,5 +1,16 @@
 import { EMISSION_FACTORS } from '../constants/emissionFactors';
 
+/**
+ * Calculator version 1 assumptions:
+ * - Flights use a fixed prototype per-flight estimate.
+ * - LPG uses a one-cylinder-per-month prototype assumption.
+ * - Electricity bill mode uses the prototype bill-to-emissions estimate.
+ *
+ * Historical reports and leaderboard entries depend on these assumptions.
+ * Changing formulas requires a future versioned calculator path and migration plan.
+ * This constant is documentation only and is not written to Firestore reports.
+ */
+export const CALCULATOR_VERSION = 1;
 export interface CalculatorInputs {
   // Step 1: Transportation
   primaryTransport: 'walk' | 'cycle' | 'bus' | 'train' | 'bike' | 'car' | 'auto';
@@ -43,12 +54,26 @@ export interface CalculationResult {
   ecoColor: string;
 }
 
+/** Transport modes that consume personal vehicle fuel. */
+export function transportRequiresFuel(
+  transport: CalculatorInputs['primaryTransport']
+): boolean {
+  return transport === 'car' || transport === 'bike' || transport === 'auto';
+}
+
+/** Clamp invalid numeric input to a safe non-negative finite value. */
+export function sanitizeNumber(value: unknown, fallback = 0): number {
+  const numericValue = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numericValue)) return Math.max(0, fallback);
+  return Math.max(0, numericValue);
+}
+
 export const initialInputs: CalculatorInputs = {
   primaryTransport: 'car',
   distanceTravelled: 15,
   fuelType: 'petrol',
-  flightsPerYear: 1,
-  
+  flightsPerYear: 0,
+
   electricityType: 'units',
   electricityValue: 150,
   cookingFuel: 'lpg',
@@ -56,13 +81,13 @@ export const initialInputs: CalculatorInputs = {
   acHours: 0,
   heaterUsage: 1,
   electronicDevices: 5,
-  
+
   diet: 'vegetarian',
   meatFrequency: 'never',
   beefMuttonFrequency: 'never',
   foodWaste: 'medium',
   localFood: 'mostly',
-  
+
   dailyWaste: 'medium',
   wasteSegregation: 'yes',
   recycling: 'yes',
@@ -70,89 +95,124 @@ export const initialInputs: CalculatorInputs = {
   clothesFrequency: 'quarterly',
 };
 
-export function calculateCarbonFootprint(inputs: CalculatorInputs): CalculationResult {
-  // 1. Transportation
-  let transportFactor = 0;
+export function mergeCalculatorInputs(
+  storedInputs: Partial<CalculatorInputs> | null | undefined
+): CalculatorInputs {
+  return { ...initialInputs, ...(storedInputs ?? {}) };
+}
+
+function resolveTransportFactor(inputs: CalculatorInputs): number {
   const transportType = inputs.primaryTransport;
+  const distance = sanitizeNumber(inputs.distanceTravelled);
+
+  if (distance === 0) return 0;
 
   if (transportType === 'walk' || transportType === 'cycle') {
-    transportFactor = EMISSION_FACTORS.transport.walk;
-  } else if (transportType === 'bus' || transportType === 'train') {
-    transportFactor = EMISSION_FACTORS.transport[transportType];
-  } else {
-    // bike, car, auto
-    const typeFactors = EMISSION_FACTORS.transport[transportType];
-    transportFactor = typeFactors[inputs.fuelType] || 0;
+    return EMISSION_FACTORS.transport.walk;
   }
 
-  const annualCommuteEmissions = inputs.distanceTravelled * 365 * transportFactor;
-  const annualFlightEmissions = inputs.flightsPerYear * EMISSION_FACTORS.flight;
-  const transportEmissions = annualCommuteEmissions + annualFlightEmissions;
+  if (transportType === 'bus' || transportType === 'train') {
+    return EMISSION_FACTORS.transport[transportType];
+  }
 
-  // 2. Energy
+  if (transportRequiresFuel(transportType)) {
+    const typeFactors = EMISSION_FACTORS.transport[transportType];
+    return typeFactors[inputs.fuelType] ?? typeFactors.petrol;
+  }
+
+  return 0;
+}
+
+export function calculateCarbonFootprint(inputs: CalculatorInputs): CalculationResult {
+  const distanceTravelled = sanitizeNumber(inputs.distanceTravelled);
+  const flightsPerYear = sanitizeNumber(inputs.flightsPerYear);
+  const electricityValue = sanitizeNumber(inputs.electricityValue);
+  const acHours = sanitizeNumber(inputs.acHours);
+  const heaterUsage = sanitizeNumber(inputs.heaterUsage);
+  const electronicDevices = sanitizeNumber(inputs.electronicDevices);
+  // 1. Transportation - km/day * 365 * kg CO2/km + flights/year * kg CO2/flight
+  const transportFactor = resolveTransportFactor({ ...inputs, distanceTravelled });
+  const annualCommuteEmissions = distanceTravelled * 365 * transportFactor;
+  const annualFlightEmissions = flightsPerYear * EMISSION_FACTORS.flight;
+  const transportEmissions = annualCommuteEmissions + annualFlightEmissions;
+  // Prototype assumption:
+  // Electricity units are monthly kWh. Bill mode treats the entered monthly bill
+  // amount as an estimated emissions proxy through perRupee.
+  // Historical calculations depend on this assumption; do not change without versioning.
   let electricityEmissions = 0;
   if (inputs.electricityType === 'units') {
-    electricityEmissions = inputs.electricityValue * 12 * EMISSION_FACTORS.electricity.perUnit;
+    electricityEmissions = electricityValue * 12 * EMISSION_FACTORS.electricity.perUnit;
   } else {
-    electricityEmissions = inputs.electricityValue * 12 * EMISSION_FACTORS.electricity.perRupee;
+    electricityEmissions = electricityValue * 12 * EMISSION_FACTORS.electricity.perRupee;
   }
 
   let cookingEmissions = 0;
   if (inputs.cookingFuel === 'lpg') {
-    cookingEmissions = EMISSION_FACTORS.cookingFuel.lpg * 12; // 12 cylinders/year
+    // Prototype assumption:
+    // LPG usage is approximated as one cylinder per month.
+    // Historical reports rely on this assumption; do not modify without versioning.
+    cookingEmissions = EMISSION_FACTORS.cookingFuel.lpg * 12;
   } else if (inputs.cookingFuel === 'png') {
-    cookingEmissions = EMISSION_FACTORS.cookingFuel.png * 25 * 12; // average 25 m3/month
+    // Prototype assumption: about 25 cubic meters/month * 12 months * kg CO2/cubic meter
+    cookingEmissions = EMISSION_FACTORS.cookingFuel.png * 25 * 12;
   } else if (inputs.cookingFuel === 'electric') {
     cookingEmissions = EMISSION_FACTORS.cookingFuel.electric * 365;
   } else {
     cookingEmissions = EMISSION_FACTORS.cookingFuel.biomass * 365;
   }
 
-  const acEmissions = inputs.acUsage === 'yes' ? inputs.acHours * 365 * EMISSION_FACTORS.appliances.acPerHour : 0;
-  const heaterEmissions = inputs.heaterUsage * 365 * EMISSION_FACTORS.appliances.heaterPerHour;
-  const deviceEmissions = inputs.electronicDevices * 365 * EMISSION_FACTORS.appliances.devicePerDay;
+  const acEmissions =
+    inputs.acUsage === 'yes' ? acHours * 365 * EMISSION_FACTORS.appliances.acPerHour : 0;
+  const heaterEmissions = heaterUsage * 365 * EMISSION_FACTORS.appliances.heaterPerHour;
+  const deviceEmissions = electronicDevices * 365 * EMISSION_FACTORS.appliances.devicePerDay;
 
-  const energyEmissions = electricityEmissions + cookingEmissions + acEmissions + heaterEmissions + deviceEmissions;
-
-  // 3. Food
-  const baseFoodEmissions = EMISSION_FACTORS.food.diet[inputs.diet];
+  const energyEmissions =
+    electricityEmissions + cookingEmissions + acEmissions + heaterEmissions + deviceEmissions;
+  // 3. Food - daily kg CO2 * 365
+  const baseFoodEmissions = EMISSION_FACTORS.food.diet[inputs.diet] ?? EMISSION_FACTORS.food.diet.vegetarian;
   let meatMultiplier = 1.0;
   let beefMultiplier = 1.0;
 
   if (inputs.diet === 'non-vegetarian') {
-    meatMultiplier = EMISSION_FACTORS.food.meatFrequencyMultiplier[inputs.meatFrequency] || 1.0;
-    beefMultiplier = EMISSION_FACTORS.food.beefMuttonFrequencyMultiplier[inputs.beefMuttonFrequency] || 1.0;
+    meatMultiplier = EMISSION_FACTORS.food.meatFrequencyMultiplier[inputs.meatFrequency] ?? 1.0;
+    beefMultiplier =
+      EMISSION_FACTORS.food.beefMuttonFrequencyMultiplier[inputs.beefMuttonFrequency] ?? 1.0;
   }
 
-  const foodWasteEmissions = EMISSION_FACTORS.food.foodWaste[inputs.foodWaste] || 0.5;
-  const localFoodBonus = EMISSION_FACTORS.food.localFoodBonus[inputs.localFood] || 0;
+  const foodWasteEmissions = EMISSION_FACTORS.food.foodWaste[inputs.foodWaste] ?? 0.5;
+  const localFoodBonus = EMISSION_FACTORS.food.localFoodBonus[inputs.localFood] ?? 0;
 
-  const dailyFoodEmissions = Math.max(0.5, (baseFoodEmissions * meatMultiplier * beefMultiplier) + foodWasteEmissions + localFoodBonus);
+  const dailyFoodEmissions = Math.max(
+    0.5,
+    baseFoodEmissions * meatMultiplier * beefMultiplier + foodWasteEmissions + localFoodBonus
+  );
   const foodEmissions = dailyFoodEmissions * 365;
+  // 4. Waste - daily kg CO2 * 365
+  const baseWasteEmissions = EMISSION_FACTORS.waste.dailyGeneration[inputs.dailyWaste] ?? 1.2;
 
-  // 4. Waste
-  const baseWasteEmissions = EMISSION_FACTORS.waste.dailyGeneration[inputs.dailyWaste] || 1.2;
-  
   let wasteDiscountMultiplier = 1.0;
-  if (inputs.wasteSegregation === 'yes') wasteDiscountMultiplier += EMISSION_FACTORS.waste.segregationDiscount;
-  if (inputs.recycling === 'yes') wasteDiscountMultiplier += EMISSION_FACTORS.waste.recyclingDiscount;
-  if (inputs.composting === 'yes') wasteDiscountMultiplier += EMISSION_FACTORS.waste.compostingDiscount;
-  
-  wasteDiscountMultiplier = Math.max(0.3, wasteDiscountMultiplier); // limit max discounts to 70% reduction
+  if (inputs.wasteSegregation === 'yes') {
+    wasteDiscountMultiplier += EMISSION_FACTORS.waste.segregationDiscount;
+  }
+  if (inputs.recycling === 'yes') {
+    wasteDiscountMultiplier += EMISSION_FACTORS.waste.recyclingDiscount;
+  }
+  if (inputs.composting === 'yes') {
+    wasteDiscountMultiplier += EMISSION_FACTORS.waste.compostingDiscount;
+  }
 
-  const clothingEmissions = EMISSION_FACTORS.waste.clothesPurchasing[inputs.clothesFrequency] || 1.5;
+  wasteDiscountMultiplier = Math.max(0.3, wasteDiscountMultiplier);
 
-  const dailyWasteEmissions = (baseWasteEmissions * wasteDiscountMultiplier) + clothingEmissions;
+  const clothingEmissions =
+    EMISSION_FACTORS.waste.clothesPurchasing[inputs.clothesFrequency] ?? 1.5;
+
+  const dailyWasteEmissions = baseWasteEmissions * wasteDiscountMultiplier + clothingEmissions;
   const wasteEmissions = dailyWasteEmissions * 365;
 
-  // Totals
   const totalEmissions = transportEmissions + energyEmissions + foodEmissions + wasteEmissions;
-  const annualEstimate = parseFloat((totalEmissions / 1000).toFixed(2)); // in tons
+  const annualEstimate = parseFloat((totalEmissions / 1000).toFixed(2));
 
-  // Score (0-100)
-  // Average person in developed is 10-15 tons. Average global is 4.5. Let's make 4.5 tons the reference.
-  // Less than 2 tons is excellent.
-  const ecoScore = Math.max(1, Math.min(100, Math.round(100 - (annualEstimate * 5.5))));
+  const ecoScore = Math.max(1, Math.min(100, Math.round(100 - annualEstimate * 5.5)));
 
   let ecoLabel = '';
   let ecoColor = '';

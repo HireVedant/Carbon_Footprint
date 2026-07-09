@@ -3,8 +3,8 @@
 // Real-time Firestore aggregation for EcoTrack AI Community Dashboard.
 //
 // Architecture & Assumptions:
-//   - Reads from 3 aggregated collections (communityStats, communityLeaderboard,
-//     communityReports) so the Community page only does O(1) Firestore reads.
+//   - Reads communityStats and communityLeaderboard for the Community page.
+//   - communityReports remains a write-only historical aggregate for generated reports.
 //   - Writes to all 3 collections via Firestore runTransaction to avoid race conditions.
 //   - No raw 'calculations' data is ever exposed publicly (privacy first).
 //
@@ -25,7 +25,6 @@ import {
   doc,
   setDoc,
   getDoc,
-  deleteDoc,
   onSnapshot,
   query,
   orderBy,
@@ -38,14 +37,12 @@ import { db } from '../firebase/firebase';
 import type {
   CommunityStats,
   LeaderboardEntry,
-  RecentReport,
   EmissionBreakdown,
 } from '../types/community';
 
 // ── Collection / document paths ───────────────────────────────────────────────
 const COMMUNITY_STATS_DOC = doc(db, 'communityStats', 'global');
 const LEADERBOARD_COL = collection(db, 'communityLeaderboard');
-const REPORTS_COL = collection(db, 'communityReports');
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -128,31 +125,6 @@ export function subscribeToLeaderboard(
   });
 }
 
-/**
- * Subscribes to the most recent anonymized community reports.
- * Returns an unsubscribe function.
- */
-export function subscribeToRecentReports(
-  callback: (reports: RecentReport[]) => void,
-  limitCount: number = 10
-): () => void {
-  const q = query(REPORTS_COL, orderBy('createdAt', 'desc'), limit(limitCount));
-  return onSnapshot(q, (snap) => {
-    const reports: RecentReport[] = snap.docs.map((d, idx) => {
-      const data = d.data();
-      return {
-        id: d.id,
-        displayName: privacySafeName(data.displayName, idx),
-        ecoScore: data.ecoScore ?? 0,
-        annualEstimate: data.annualEstimate ?? 0,
-        ecoLabel: data.ecoLabel ?? '',
-        highestCategory: data.highestCategory ?? 'Transport',
-        createdAt: toDate(data.createdAt),
-      };
-    });
-    callback(reports);
-  });
-}
 
 // ── Aggregation Writers ───────────────────────────────────────────────────────
 

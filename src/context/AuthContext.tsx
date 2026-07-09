@@ -39,12 +39,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(currentUser);
 
       if (currentUser) {
-        // Fetch custom Firestore user profile document
         try {
           const profile = await getUserDocument(currentUser.uid);
-          setUserProfile(profile);
+          if (profile) {
+            setUserProfile(profile);
+          } else {
+            // Fallback when Firestore profile is missing — keeps header menu visible
+            setUserProfile({
+              uid: currentUser.uid,
+              name: currentUser.displayName || 'Eco User',
+              email: currentUser.email || '',
+              photo: currentUser.photoURL || '',
+              userType: 'Individual',
+              createdAt: null,
+            });
+          }
         } catch (error) {
-          // Fallback or ignore profile fetch errors quietly
+          setUserProfile({
+            uid: currentUser.uid,
+            name: currentUser.displayName || 'Eco User',
+            email: currentUser.email || '',
+            photo: currentUser.photoURL || '',
+            userType: 'Individual',
+            createdAt: null,
+          });
         }
       } else {
         setUserProfile(null);
@@ -81,12 +99,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     setLoading(true);
+    const uid = user?.uid;
     try {
       await authLogout();
       setUser(null);
       setUserProfile(null);
-      localStorage.clear();
-      sessionStorage.clear();
+      if (uid) {
+        localStorage.removeItem(`ecotrack_inputs_${uid}`);
+        localStorage.removeItem(`ecotrack_results_${uid}`);
+      }
     } finally {
       setLoading(false);
     }

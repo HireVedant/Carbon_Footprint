@@ -7,7 +7,7 @@ import { UserMenu } from '../auth/UserMenu';
 import Toast, { ToastProps } from '../ui/Toast';
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
@@ -105,10 +105,10 @@ export default function Navbar() {
 
           {/* Right Section: User Menu / Auth Buttons */}
           <div className="flex items-center gap-3 sm:gap-4">
-            {user ? (
-              <>
-                <UserMenu />
-              </>
+            {loading ? (
+              <div className="w-10 h-10 rounded-full border border-white/10 bg-white/5 animate-pulse" />
+            ) : user ? (
+              <UserMenu />
             ) : (
               <>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>

@@ -65,33 +65,36 @@ export const ChartCard: React.FC<ChartCardProps> = ({ type, title, subtitle, dat
         usePointStyle: true,
       },
     },
-    scales: {
-      x: type === 'doughnut' ? undefined : {
-        grid: {
-          color: 'rgba(255, 255, 255, 0.03)',
-        },
-        ticks: {
-          color: '#64748b',
-          font: {
-            family: 'Inter',
-            size: 10,
-          },
-        },
-      },
-      y: type === 'doughnut' ? undefined : {
-        grid: {
-          color: 'rgba(255, 255, 255, 0.03)',
-        },
-        ticks: {
-          color: '#64748b',
-          font: {
-            family: 'Inter',
-            size: 10,
-          },
-        },
-      },
-    },
   };
+
+  if (type !== 'doughnut') {
+    commonOptions.scales = {
+      x: {
+        grid: {
+          color: 'rgba(255, 255, 255, 0.03)',
+        },
+        ticks: {
+          color: '#64748b',
+          font: {
+            family: 'Inter',
+            size: 10,
+          },
+        },
+      },
+      y: {
+        grid: {
+          color: 'rgba(255, 255, 255, 0.03)',
+        },
+        ticks: {
+          color: '#64748b',
+          font: {
+            family: 'Inter',
+            size: 10,
+          },
+        },
+      },
+    };
+  }
 
   const renderChart = () => {
     switch (type) {

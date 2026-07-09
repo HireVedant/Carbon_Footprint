@@ -1,17 +1,31 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { LogOut, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Toast, { ToastProps } from '../ui/Toast';
+import type { UserProfile } from '../../firebase/firestore';
 
 export const UserMenu: React.FC = () => {
-  const { userProfile, logout } = useAuth();
+  const { user, userProfile, logout, loading } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [toast, setToast] = useState<ToastProps | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  const displayProfile = useMemo<UserProfile | null>(() => {
+    if (userProfile) return userProfile;
+    if (!user) return null;
+    return {
+      uid: user.uid,
+      name: user.displayName || 'Eco User',
+      email: user.email || '',
+      photo: user.photoURL || '',
+      userType: 'Individual',
+      createdAt: null,
+    };
+  }, [user, userProfile]);
 
   const handleLogout = async () => {
     try {
@@ -26,7 +40,6 @@ export const UserMenu: React.FC = () => {
     }
   };
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -37,7 +50,16 @@ export const UserMenu: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (!userProfile) return null;
+  if (loading) {
+    return (
+      <div
+        className="w-10 h-10 rounded-full border border-white/10 bg-white/5 animate-pulse"
+        aria-label="Loading profile"
+      />
+    );
+  }
+
+  if (!displayProfile) return null;
 
   return (
     <div className="relative z-50" ref={dropdownRef}>
@@ -52,17 +74,18 @@ export const UserMenu: React.FC = () => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center justify-center gap-2 focus:outline-none group p-1 rounded-full border border-white/5 bg-white/5 hover:border-white/10 transition-all duration-300 w-10 h-10"
+        aria-label="Open profile menu"
       >
-        {userProfile.photo ? (
+        {displayProfile.photo ? (
           <img
-            src={userProfile.photo}
-            alt={userProfile.name}
+            src={displayProfile.photo}
+            alt={displayProfile.name}
             className="w-full h-full rounded-full object-cover border border-white/10 group-hover:scale-105 transition-transform"
           />
         ) : (
           <div className="w-full h-full rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white font-bold text-sm border border-white/10 group-hover:scale-105 transition-transform">
-            {userProfile.name
-              ? userProfile.name
+            {displayProfile.name
+              ? displayProfile.name
                   .split(' ')
                   .map((n) => n[0])
                   .join('')
@@ -73,7 +96,6 @@ export const UserMenu: React.FC = () => {
         )}
       </button>
 
-      {/* Dropdown Menu */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -83,16 +105,14 @@ export const UserMenu: React.FC = () => {
             transition={{ duration: 0.2 }}
             className="absolute right-0 mt-2 w-56 rounded-2xl bg-dark-900 border border-white/10 p-2 shadow-2xl text-left backdrop-blur-xl"
           >
-            {/* Header info */}
             <div className="px-3 py-2 border-b border-white/5 mb-2">
-              <p className="text-xs font-semibold text-white truncate">{userProfile.name}</p>
-              <p className="text-[10px] text-dark-400 truncate">{userProfile.email}</p>
+              <p className="text-xs font-semibold text-white truncate">{displayProfile.name}</p>
+              <p className="text-[10px] text-dark-400 truncate">{displayProfile.email}</p>
               <span className="inline-block mt-1 text-[8px] font-extrabold uppercase bg-primary-500/10 text-primary-400 border border-primary-500/20 px-1.5 py-0.5 rounded">
-                {userProfile.userType}
+                {displayProfile.userType}
               </span>
             </div>
 
-            {/* Links list */}
             <div className="space-y-0.5">
               <Link
                 to="/dashboard"
@@ -104,7 +124,6 @@ export const UserMenu: React.FC = () => {
               </Link>
             </div>
 
-            {/* Logout section */}
             <div className="border-t border-white/5 mt-2 pt-1.5">
               <button
                 onClick={() => {

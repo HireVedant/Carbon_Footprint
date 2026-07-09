@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import {
@@ -30,6 +30,8 @@ import {
   BarChart3,
   BookOpen,
   Sparkles,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { useCommunityStats } from '../hooks/useCommunityStats';
 import {
@@ -152,11 +154,26 @@ function formatCO2(kg: number): string {
 // Community Page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function Community() {
-  const { stats, leaderboard, recentReports, insights, loading, error } = useCommunityStats();
+  const { stats, leaderboard, insights, loading, error } = useCommunityStats();
   const seiSurvey  = getSEISurveyStats();
   const seiMetrics = getSEIDerivedMetrics();
   const seiDoughnutData  = useMemo(() => getSEIEmissionChartData(), []);
   const seiBarData       = useMemo(() => getSEICaseStudyChartData(), []);
+
+  const leaderboardPageSize = 5;
+  const [leaderboardPage, setLeaderboardPage] = useState(0);
+  const totalLeaderboardPages = Math.max(1, Math.ceil(leaderboard.length / leaderboardPageSize));
+  const leaderboardPageStart = leaderboardPage * leaderboardPageSize;
+  const visibleLeaderboard = useMemo(
+    () => leaderboard.slice(leaderboardPageStart, leaderboardPageStart + leaderboardPageSize),
+    [leaderboard, leaderboardPageStart]
+  );
+
+  useEffect(() => {
+    if (leaderboardPage >= totalLeaderboardPages) {
+      setLeaderboardPage(totalLeaderboardPages - 1);
+    }
+  }, [leaderboardPage, totalLeaderboardPages]);
 
   // Live community emission breakdown chart (from aggregated stats)
   const liveBreakdownData = useMemo(() => {
@@ -448,120 +465,86 @@ export default function Community() {
           </div>
         </section>
 
-        {/* ═══ LEADERBOARD + RECENT REPORTS ════════════════════════════════════ */}
-        <section id="community-leaderboard-reports">
-          <div className="grid lg:grid-cols-2 gap-6">
-
-            {/* Leaderboard */}
-            <div className="glass p-5 sm:p-6 flex flex-col">
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-amber-400" />
-                  <h2 className="text-base font-display font-bold text-white">Leaderboard</h2>
-                </div>
-                <span className="text-xs text-dark-500">Top eco scores</span>
+        {/* ═══ USER LEADERBOARD ════════════════════════════════════════════════ */}
+        <section id="community-leaderboard">
+          <div className="glass p-5 sm:p-6 flex flex-col max-w-3xl mx-auto">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-amber-400" />
+                <h2 className="text-base font-display font-bold text-white">User Leaderboard</h2>
               </div>
-
-              {loading ? (
-                <div className="space-y-2">
-                  {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
-                </div>
-              ) : leaderboard.length === 0 ? (
-                <div className="flex flex-col items-center justify-center flex-1 py-10 gap-3">
-                  <Trophy className="w-10 h-10 text-dark-600" />
-                  <p className="text-sm text-dark-500 text-center">
-                    Be the first EcoTrack user to generate a report and claim the top spot!
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {leaderboard.map((entry, i) => (
-                    <motion.div
-                      key={`${entry.displayName}-${i}`}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors duration-200"
-                    >
-                      <RankBadge rank={i + 1} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-white truncate">{entry.displayName}</p>
-                        <div className="flex items-center gap-1 text-[10px] text-dark-500 mt-0.5">
-                          {categoryIcon(entry.highestCategory)}
-                          <span>{entry.highestCategory}</span>
-                        </div>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold text-white">{entry.annualEstimate} t</p>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ecoScoreColor(entry.ecoScore)}`}>
-                          {entry.ecoLabel}
-                        </span>
-                      </div>
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary-500/20 to-accent-500/10 flex-shrink-0">
-                        <span className="text-sm font-display font-bold gradient-text">{entry.ecoScore}</span>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
+              <span className="text-xs text-dark-500">Top eco scores</span>
             </div>
 
-            {/* Recent Reports */}
-            <div className="glass p-5 sm:p-6 flex flex-col">
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-primary-400" />
-                  <h2 className="text-base font-display font-bold text-white">Recent Reports</h2>
-                </div>
-                <span className="flex items-center gap-1.5 text-xs text-emerald-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Live
-                </span>
+            {loading ? (
+              <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
               </div>
-
-              {loading ? (
-                <div className="space-y-2">
-                  {Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)}
-                </div>
-              ) : recentReports.length === 0 ? (
-                <div className="flex flex-col items-center justify-center flex-1 py-10 gap-3">
-                  <FileText className="w-10 h-10 text-dark-600" />
-                  <p className="text-sm text-dark-500 text-center">
-                    No reports generated yet. Be the first!
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {recentReports.map((report, i) => (
-                    <motion.div
-                      key={report.id}
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors duration-200"
-                    >
-                      <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center flex-shrink-0">
-                        {categoryIcon(report.highestCategory)}
+            ) : leaderboard.length === 0 ? (
+              <div className="flex flex-col items-center justify-center flex-1 py-10 gap-3">
+                <Trophy className="w-10 h-10 text-dark-600" />
+                <p className="text-sm text-dark-500 text-center">
+                  Be the first EcoTrack user to generate a report and claim the top spot!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {visibleLeaderboard.map((entry, i) => (
+                  <motion.div
+                    key={`${entry.displayName}-${leaderboardPageStart + i}`}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors duration-200"
+                  >
+                    <RankBadge rank={leaderboardPageStart + i + 1} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{entry.displayName}</p>
+                      <div className="flex items-center gap-1 text-[10px] text-dark-500 mt-0.5">
+                        {categoryIcon(entry.highestCategory)}
+                        <span>{entry.highestCategory}</span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-white truncate">{report.displayName}</p>
-                        <p className="text-[10px] text-dark-500">
-                          {report.createdAt
-                            ? report.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                            : 'Recent'}
-                        </p>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold text-white">{report.annualEstimate} t</p>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ecoScoreColor(report.ecoScore)}`}>
-                          {report.ecoScore}/100
-                        </span>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-sm font-bold text-white">{entry.annualEstimate} t</p>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ecoScoreColor(entry.ecoScore)}`}>
+                        {entry.ecoLabel}
+                      </span>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary-500/20 to-accent-500/10 flex-shrink-0">
+                      <span className="text-sm font-display font-bold gradient-text">{entry.ecoScore}</span>
+                    </div>
+                  </motion.div>
+                ))}
+                {totalLeaderboardPages > 1 && (
+                  <div className="flex items-center justify-between border-t border-white/5 mt-3 pt-3">
+                    <span className="text-xs text-dark-500">
+                      Page {leaderboardPage + 1} of {totalLeaderboardPages}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setLeaderboardPage((page) => Math.max(0, page - 1))}
+                        disabled={leaderboardPage === 0}
+                        title="Previous leaderboard page"
+                        className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-white/10 text-dark-300 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none transition-all"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setLeaderboardPage((page) => Math.min(totalLeaderboardPages - 1, page + 1))}
+                        disabled={leaderboardPage >= totalLeaderboardPages - 1}
+                        title="Next leaderboard page"
+                        className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-white/10 text-dark-300 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none transition-all"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </section>
 

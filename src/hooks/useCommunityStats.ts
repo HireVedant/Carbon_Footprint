@@ -7,20 +7,17 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   subscribeToCommunityStats,
   subscribeToLeaderboard,
-  subscribeToRecentReports,
 } from '../services/communityAnalyticsService';
 import { getSEIInsights } from '../services/seiDatasetService';
 import type {
   CommunityStats,
   LeaderboardEntry,
-  RecentReport,
   CommunityInsight,
 } from '../types/community';
 
 interface UseCommunityStatsReturn {
   stats: CommunityStats | null;
   leaderboard: LeaderboardEntry[];
-  recentReports: RecentReport[];
   insights: CommunityInsight[];
   loading: boolean;
   error: string | null;
@@ -29,10 +26,8 @@ interface UseCommunityStatsReturn {
 export function useCommunityStats(): UseCommunityStatsReturn {
   const [stats, setStats] = useState<CommunityStats | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
-  const [recentReports, setRecentReports] = useState<RecentReport[]>([]);
   const [loadingStats, setLoadingStats] = useState(true);
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
-  const [loadingReports, setLoadingReports] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // ── Stable callbacks (memoized to avoid re-subscription on each render) ────
@@ -47,36 +42,26 @@ export function useCommunityStats(): UseCommunityStatsReturn {
     setLoadingLeaderboard(false);
   }, []);
 
-  const handleReports = useCallback((data: RecentReport[]) => {
-    setRecentReports(data);
-    setLoadingReports(false);
-  }, []);
-
-  // ── Subscribe to all 3 real-time listeners ───────────────────────────────
+  // ── Subscribe to community stats + user leaderboard (report feed removed from UI) ──
 
   useEffect(() => {
     let unsubStats: (() => void) | undefined;
     let unsubLeaderboard: (() => void) | undefined;
-    let unsubReports: (() => void) | undefined;
 
     try {
       unsubStats = subscribeToCommunityStats(handleStats);
       unsubLeaderboard = subscribeToLeaderboard(handleLeaderboard);
-      unsubReports = subscribeToRecentReports(handleReports, 10);
     } catch (err) {
       setError('Failed to connect to community data. Please try again later.');
       setLoadingStats(false);
       setLoadingLeaderboard(false);
-      setLoadingReports(false);
     }
 
-    // Cleanup: unsubscribe all listeners when component unmounts
     return () => {
       unsubStats?.();
       unsubLeaderboard?.();
-      unsubReports?.();
     };
-  }, [handleStats, handleLeaderboard, handleReports]);
+  }, [handleStats, handleLeaderboard]);
 
   // ── Derived insights (memoized — only recomputes when stats/leaderboard change) ──
 
@@ -129,7 +114,7 @@ export function useCommunityStats(): UseCommunityStatsReturn {
     return [...seiInsights, ...liveInsights];
   }, [stats, leaderboard]);
 
-  const loading = loadingStats || loadingLeaderboard || loadingReports;
+  const loading = loadingStats || loadingLeaderboard;
 
-  return { stats, leaderboard, recentReports, insights, loading, error };
+  return { stats, leaderboard, insights, loading, error };
 }

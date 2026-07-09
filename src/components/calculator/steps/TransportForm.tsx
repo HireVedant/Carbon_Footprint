@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useCalculator } from '../../../context/CalculatorContext';
-import { Car, Bike, Train, Bus, User, Navigation, Plane, Footprints } from 'lucide-react';
+import { transportRequiresFuel } from '../../../utils/carbonCalculator';
+import { Car, Bike, Train, Bus, User, Navigation, Footprints } from 'lucide-react';
 import Input from '../../ui/Input';
 
 interface TransportFormProps {
@@ -15,26 +16,33 @@ const transportOptions = [
   { value: 'bus', label: 'Bus', icon: Bus },
   { value: 'train', label: 'Train', icon: Train },
   { value: 'auto', label: 'Auto Rickshaw', icon: User },
-];
+] as const;
 
 const fuelTypes = [
   { value: 'petrol', label: 'Petrol' },
   { value: 'diesel', label: 'Diesel' },
   { value: 'cng', label: 'CNG' },
   { value: 'electric', label: 'Electric' },
-];
+] as const;
 
 export const TransportForm: React.FC<TransportFormProps> = ({ setIsValid }) => {
   const { inputs, updateInputs } = useCalculator();
   const [distanceError, setDistanceError] = useState('');
   const [flightsError, setFlightsError] = useState('');
 
-  const handleTransportSelect = (value: any) => {
-    updateInputs({ primaryTransport: value });
+  const handleTransportSelect = (value: (typeof transportOptions)[number]['value']) => {
+    const updates: Partial<import('../../../utils/carbonCalculator').CalculatorInputs> = {
+      primaryTransport: value,
+    };
+    if (!transportRequiresFuel(value)) {
+      // Fuel is ignored in calculations for non-fuel modes; reset to avoid stale UI state.
+      updates.fuelType = 'petrol';
+    }
+    updateInputs(updates);
     validate(inputs.distanceTravelled, inputs.flightsPerYear);
   };
 
-  const handleFuelSelect = (value: any) => {
+  const handleFuelSelect = (value: (typeof fuelTypes)[number]['value']) => {
     updateInputs({ fuelType: value });
   };
 
@@ -78,7 +86,7 @@ export const TransportForm: React.FC<TransportFormProps> = ({ setIsValid }) => {
     validate(inputs.distanceTravelled, updatedVal);
   };
 
-  const showFuelSelector = ['car', 'bike', 'auto'].includes(inputs.primaryTransport);
+  const showFuelSelector = transportRequiresFuel(inputs.primaryTransport);
 
   React.useEffect(() => {
     validate(inputs.distanceTravelled, inputs.flightsPerYear);
@@ -149,7 +157,7 @@ export const TransportForm: React.FC<TransportFormProps> = ({ setIsValid }) => {
           label="Average daily distance travelled (km)"
           type="number"
           placeholder="e.g. 15"
-          value={inputs.distanceTravelled || ''}
+          value={inputs.distanceTravelled}
           onChange={handleDistanceChange}
           error={distanceError}
           min="0"
@@ -161,7 +169,7 @@ export const TransportForm: React.FC<TransportFormProps> = ({ setIsValid }) => {
           label="Number of flights taken per year"
           type="number"
           placeholder="e.g. 2"
-          value={inputs.flightsPerYear || ''}
+          value={inputs.flightsPerYear}
           onChange={handleFlightsChange}
           error={flightsError}
           min="0"

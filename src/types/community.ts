@@ -48,19 +48,6 @@ export interface LeaderboardEntry {
   updatedAt: Date | null;
 }
 
-/**
- * Fully anonymized recent report entry.
- * Stored in communityReports/{calculationId}.
- */
-export interface RecentReport {
-  id: string;
-  displayName: string;
-  ecoScore: number;
-  annualEstimate: number;      // tons CO₂/year
-  ecoLabel: string;
-  highestCategory: string;
-  createdAt: Date | null;
-}
 
 /** A dynamic insight string with an optional source tag. */
 export interface CommunityInsight {
