@@ -3,6 +3,10 @@ An AI-powered Carbon Footprint Tracking and Sustainability Recommendation Platfo
 
 ---
 
+## Link 
+https://carbon-footprint-pccoe-sei.vercel.app/
+
+
 ## Project Overview
 
 EcoTrack AI is a comprehensive web application designed to help individuals and organizations understand, track, and reduce their environmental impact. As climate change continues to be a pressing global issue, understanding one's personal carbon footprint is the first crucial step toward sustainability.
@@ -72,7 +76,7 @@ Follow the instructions below to set up EcoTrack AI on your local machine.
 
 ### Method 1 — Clone Repository
 
-#### Windows
+#### Run these in terminal
 
 ```cmd
 git clone https://github.com/HireVedant/Carbon_Footprint
@@ -81,20 +85,3 @@ npm install
 npm run dev
 ```
 
-#### Linux
-
-```bash
-git clone https://github.com/HireVedant/Carbon_Footprint
-cd Carbon_Footprint
-npm install
-npm run dev
-```
-
-#### macOS
-
-```bash
-git clone https://github.com/HireVedant/Carbon_Footprint
-cd Carbon_Footprint
-npm install
-npm run dev
-```
