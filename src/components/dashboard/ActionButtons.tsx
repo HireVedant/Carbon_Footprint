@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { RefreshCw, Download, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useCalculator } from '../../context/CalculatorContext';
+import { useAssessment } from '../../context/AssessmentContext';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../ui/Button';
 import { generateCarbonReport } from '../../utils/reportGenerator';
 import Toast, { ToastProps } from '../ui/Toast';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 
-export const ActionButtons: React.FC = () => {
-  const navigate  = useNavigate();
-  const { results, isCalculated, resetCalculator } = useCalculator();
+export const ActionButtons: React.FC<{ historyDocs?: any[] }> = ({ historyDocs = [] }) => {
+  const navigate = useNavigate();
+  const { result: results, answers, isCalculated, resetAssessment } = useAssessment();
   const { user, userProfile } = useAuth();
 
   const [isGenerating, setIsGenerating] = useState(false);
@@ -22,8 +22,8 @@ export const ActionButtons: React.FC = () => {
   };
 
   const handleRecalculate = () => {
-    resetCalculator();
-    navigate('/calculator');
+    resetAssessment();
+    navigate('/assessment');
   };
 
   const handleDownloadReport = async () => {
@@ -42,7 +42,8 @@ export const ActionButtons: React.FC = () => {
       };
       // Simulate slight delay for async generation feel
       await new Promise(resolve => setTimeout(resolve, 800));
-      generateCarbonReport(results, reportUser);
+      
+      await generateCarbonReport(results, reportUser, { answers, historyDocs });
       showToast('success', 'Report downloaded successfully!');
     } catch (err) {
       showToast('error', 'Failed to generate report. Please try again.');
@@ -71,29 +72,31 @@ export const ActionButtons: React.FC = () => {
           Recalculate Footprint
         </Button>
 
-        <Button
-          variant={isCalculated ? 'primary' : 'secondary'}
-          onClick={handleDownloadReport}
-          disabled={!isCalculated || isGenerating}
-          className="w-full sm:w-auto"
-          id="action-download-report"
-        >
-          {isGenerating ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Generating…
-            </>
-          ) : (
-            <>
-              <Download className="w-4 h-4 mr-2" />
-              Download Report
-            </>
-          )}
-        </Button>
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full sm:w-auto">
+          <Button
+            variant={isCalculated ? 'primary' : 'secondary'}
+            onClick={handleDownloadReport}
+            disabled={!isCalculated || isGenerating}
+            className={`w-full sm:w-auto transition-all duration-300 ${isCalculated ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 border-0 shadow-lg shadow-emerald-500/20 text-white' : ''}`}
+            id="action-download-report"
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Generating Scientific Report…
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4 mr-2" />
+                Download Scientific Report
+              </>
+            )}
+          </Button>
+        </motion.div>
 
         <Button
           variant="secondary"
-          onClick={() => navigate('/calculator')}
+          onClick={() => navigate('/assessment')}
           className="w-full sm:w-auto"
           id="action-ai-advice"
         >

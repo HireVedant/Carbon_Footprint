@@ -65,8 +65,8 @@ export const EnergyForm: React.FC<EnergyFormProps> = ({ setIsValid }) => {
   };
 
   const handleElectricityValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    const updatedVal = isNaN(val) ? 0 : val;
+    const raw = e.target.value;
+    const updatedVal = raw === '' ? 0 : Number(raw);
     updateInputs({ electricityValue: updatedVal });
     validate(updatedVal, inputs.acUsage, inputs.acHours, inputs.heaterUsage, inputs.electronicDevices);
   };
@@ -82,22 +82,22 @@ export const EnergyForm: React.FC<EnergyFormProps> = ({ setIsValid }) => {
   };
 
   const handleAcHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    const updatedVal = isNaN(val) ? 0 : val;
+    const raw = e.target.value;
+    const updatedVal = raw === '' ? 0 : Number(raw);
     updateInputs({ acHours: updatedVal });
     validate(inputs.electricityValue, inputs.acUsage, updatedVal, inputs.heaterUsage, inputs.electronicDevices);
   };
 
   const handleHeaterHoursChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    const updatedVal = isNaN(val) ? 0 : val;
+    const raw = e.target.value;
+    const updatedVal = raw === '' ? 0 : Number(raw);
     updateInputs({ heaterUsage: updatedVal });
     validate(inputs.electricityValue, inputs.acUsage, inputs.acHours, updatedVal, inputs.electronicDevices);
   };
 
   const handleDevicesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
-    const updatedVal = isNaN(val) ? 0 : val;
+    const raw = e.target.value;
+    const updatedVal = raw === '' ? 0 : Math.floor(Number(raw));
     updateInputs({ electronicDevices: updatedVal });
     validate(inputs.electricityValue, inputs.acUsage, inputs.acHours, inputs.heaterUsage, updatedVal);
   };
@@ -147,7 +147,7 @@ export const EnergyForm: React.FC<EnergyFormProps> = ({ setIsValid }) => {
           id="electricityValue"
           type="number"
           placeholder={inputs.electricityType === 'units' ? 'e.g. 200' : 'e.g. 1500'}
-          value={inputs.electricityValue || ''}
+          value={inputs.electricityValue}
           onChange={handleElectricityValueChange}
           error={elecError}
           min="0"
@@ -215,7 +215,7 @@ export const EnergyForm: React.FC<EnergyFormProps> = ({ setIsValid }) => {
                 label="Average AC hours used per day"
                 type="number"
                 placeholder="e.g. 5"
-                value={inputs.acHours || ''}
+                value={inputs.acHours}
                 onChange={handleAcHoursChange}
                 error={acError}
                 min="0"
@@ -233,7 +233,7 @@ export const EnergyForm: React.FC<EnergyFormProps> = ({ setIsValid }) => {
             label="Average water heater/geyser usage (hours/day)"
             type="number"
             placeholder="e.g. 1"
-            value={inputs.heaterUsage || ''}
+            value={inputs.heaterUsage}
             onChange={handleHeaterHoursChange}
             error={heaterError}
             min="0"
@@ -250,7 +250,7 @@ export const EnergyForm: React.FC<EnergyFormProps> = ({ setIsValid }) => {
           label="Total active electronic devices (phone, laptop, TV, etc.) used daily"
           type="number"
           placeholder="e.g. 5"
-          value={inputs.electronicDevices || ''}
+          value={inputs.electronicDevices}
           onChange={handleDevicesChange}
           error={devicesError}
           min="0"

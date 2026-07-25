@@ -13,9 +13,15 @@ import {
   orderBy,
   serverTimestamp,
   limit,
+  Timestamp,
 } from 'firebase/firestore';
-import { CalculationResult } from '../utils/carbonCalculator';
+import { CalculationResult as LegacyCalculationResult } from '../utils/carbonCalculator';
+import { CalculationResult as V2CalculationResult } from '../utils/calculationEngine';
+import { AssessmentAnswers } from '../utils/calculationEngine';
 import { removeCommunityEntry } from '../services/communityAnalyticsService';
+import { normalizeAssessmentDocument, NormalizedAssessmentDocument } from '../utils/firestoreMigration';
+
+// ─── Legacy types (preserved for backward compatibility) ─────────────────────
 
 export interface UserProfile {
   uid: string;
@@ -42,68 +48,72 @@ export interface SavedCalculation {
   createdAt: any;
 }
 
-// ---------------- User Profiles Services ----------------
+// ─── User Profile Services ───────────────────────────────────────────────────
 
-/**
- * Creates or updates the user profile document in Firestore.
- */
+/** Creates or merges a user profile document (never overwrites existing data). */
 export async function createUserDocument(uid: string, profile: Partial<UserProfile>): Promise<void> {
   const userRef = doc(db, 'users', uid);
   const docSnap = await getDoc(userRef);
 
   if (!docSnap.exists()) {
-    // New user document
     await setDoc(userRef, {
       uid,
       name: profile.name || 'Eco User',
       email: profile.email || '',
       photo: profile.photo || '',
       userType: profile.userType || 'Individual',
+      role: 'user',
+      isTestAccount: false,
+      isSuspended: false,
+      isEmailVerified: false,
       createdAt: serverTimestamp(),
       lastLogin: serverTimestamp(),
     });
   } else {
-    // Existing user login timestamp update
-    await updateDoc(userRef, {
-      lastLogin: serverTimestamp(),
-    });
+    // Only update lastLogin — never overwrite role or other controlled fields
+    await updateDoc(userRef, { lastLogin: serverTimestamp() });
   }
 }
 
-/**
- * Gets a user profile document from Firestore.
- */
+/** Gets a user profile document. */
 export async function getUserDocument(uid: string): Promise<UserProfile | null> {
   const userRef = doc(db, 'users', uid);
   const docSnap = await getDoc(userRef);
-  if (docSnap.exists()) {
-    return docSnap.data() as UserProfile;
-  }
-  return null;
+  return docSnap.exists() ? (docSnap.data() as UserProfile) : null;
 }
 
-/**
- * Updates a user profile document in Firestore.
- */
+/** Updates a user profile document (partial update only). */
 export async function updateUserDocument(uid: string, updates: Partial<UserProfile>): Promise<void> {
   const userRef = doc(db, 'users', uid);
   await updateDoc(userRef, updates);
 }
 
-// ---------------- Calculations Services ----------------
+/** Secure owner bootstrap routine: promotes jeevansagale9@gmail.com to 'owner' if no owner exists yet. */
+export async function bootstrapOwnerAccount(currentUid: string, email: string): Promise<void> {
+  if (!email || email.toLowerCase() !== 'jeevansagale9@gmail.com') return;
 
-/**
- * Saves a new carbon footprint calculation to Firestore.
- */
-export async function saveCalculation(userId: string, results: CalculationResult): Promise<string> {
+  try {
+    const usersCol = collection(db, 'users');
+    const ownerQuery = query(usersCol, where('role', '==', 'owner'), limit(1));
+    const ownerSnap = await getDocs(ownerQuery);
+
+    if (ownerSnap.empty) {
+      const userRef = doc(db, 'users', currentUid);
+      await updateDoc(userRef, { role: 'owner', ownerBootstrappedAt: serverTimestamp() });
+    }
+  } catch (err) {
+    console.error('Owner bootstrap check failed:', err);
+  }
+}
+
+// ─── Legacy Calculation Services (v1 — preserved for existing data) ──────────
+
+/** Saves a legacy v1 carbon footprint calculation. */
+export async function saveCalculation(userId: string, results: LegacyCalculationResult): Promise<string> {
   const calculationsRef = collection(db, 'calculations');
   const docRef = await addDoc(calculationsRef, {
     userId,
-    date: new Date().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }),
+    date: new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
     transportEmission: results.transportEmissions,
     energyEmission: results.energyEmissions,
     foodEmission: results.foodEmissions,
@@ -112,14 +122,14 @@ export async function saveCalculation(userId: string, results: CalculationResult
     ecoScore: results.ecoScore,
     ecoLabel: results.ecoLabel,
     annualEstimate: results.annualEstimate,
+    calculatorVersion: '1.0.0',
+    datasetVersion: 'legacy-v1',
     createdAt: serverTimestamp(),
   });
   return docRef.id;
 }
 
-/**
- * Retrieves calculation history for a given user sorted by newest first.
- */
+/** Retrieves legacy calculation history sorted by newest first. */
 export async function getUserCalculations(userId: string): Promise<SavedCalculation[]> {
   try {
     const calculationsRef = collection(db, 'calculations');
@@ -128,46 +138,29 @@ export async function getUserCalculations(userId: string): Promise<SavedCalculat
       where('userId', '==', userId),
       orderBy('createdAt', 'desc')
     );
-    const querySnapshot = await getDocs(q);
-    const calculations: SavedCalculation[] = [];
-    querySnapshot.forEach((doc) => {
-      calculations.push({
-        calculationId: doc.id,
-        ...doc.data(),
-      } as SavedCalculation);
-    });
-    return calculations;
-  } catch (error) {
-    // Fallback if index is building or query fails (e.g. mock data or empty list)
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ calculationId: d.id, ...d.data() } as SavedCalculation));
+  } catch {
     return [];
   }
 }
 
-/**
- * Permanently deletes a calculation document from Firestore and updates community stats.
- */
+/** Soft-deletes a legacy calculation (removes from community stats but keeps audit trail if needed). */
 export async function deleteCalculation(calculationId: string, userId: string): Promise<void> {
   const calcRef = doc(db, 'calculations', calculationId);
   const snap = await getDoc(calcRef);
-  
   if (!snap.exists()) return;
-  
+
   const data = snap.data();
-  
-  // 1. Delete the user's calculation document
   await deleteDoc(calcRef);
 
-  // 2. Check if the user has any other calculations left
-  const userCalcsRef = collection(db, 'calculations');
-  const q = query(userCalcsRef, where('userId', '==', userId), limit(1));
+  const q = query(collection(db, 'calculations'), where('userId', '==', userId), limit(1));
   const remainingSnap = await getDocs(q);
-  const hasRemaining = !remainingSnap.empty;
 
-  // 3. Update community aggregates via transaction
   await removeCommunityEntry({
     calculationId,
     userId,
-    hasRemaining,
+    hasRemaining: !remainingSnap.empty,
     removedEmission: data.totalEmission ?? 0,
     removedScore: data.ecoScore ?? 0,
     removedBreakdown: {
@@ -175,6 +168,177 @@ export async function deleteCalculation(calculationId: string, userId: string): 
       energy: data.energyEmission ?? 0,
       food: data.foodEmission ?? 0,
       waste: data.wasteEmission ?? 0,
-    }
+    },
   });
 }
+
+// ─── V2 Assessment Services ──────────────────────────────────────────────────
+
+/**
+ * Saves a v2 scientific assessment to Firestore under users/{uid}/assessments/{id}.
+ * Never overwrites existing assessments — always creates new immutable records.
+ */
+export async function saveV2Assessment(
+  userId: string,
+  answers: AssessmentAnswers,
+  result: V2CalculationResult,
+  mode: 'quick' | 'detailed' = 'quick'
+): Promise<string> {
+  const assessmentsRef = collection(db, 'users', userId, 'assessments');
+  const docRef = await addDoc(assessmentsRef, {
+    userId,
+    mode,
+    location: {
+      country: 'India',
+      state: answers.state || 'Delhi',
+      district: answers.district || '',
+      city: answers.city || '',
+      dwelling: answers.dwelling || 'APARTMENT',
+      isUrban: answers.isUrban !== false,
+    },
+    emissions: {
+      totalKgCO2PerYear: result.totalKgCO2PerYear,
+      totalTonnesCO2PerYear: result.totalTonnesCO2PerYear,
+      breakdown: result.breakdown,
+      percentages: result.percentages,
+    },
+    subBreakdown: result.subBreakdown,
+    confidence: result.confidence,
+    answers: answers,
+    aiAdvice: [],
+    status: 'approved',
+    calculatorVersion: result.metadata.calculatorVersion,
+    datasetVersion: result.metadata.datasetVersion,
+    aiPromptVersion: '1.0',
+    aiModel: 'gemini-flash',
+    createdAt: serverTimestamp(),
+    timestamp: new Date().toISOString(),
+  });
+  return docRef.id;
+}
+
+/** Retrieves all v2 assessments for a user, normalized for backward compatibility. */
+export async function getUserAssessments(userId: string): Promise<NormalizedAssessmentDocument[]> {
+  try {
+    const assessmentsRef = collection(db, 'users', userId, 'assessments');
+    const q = query(assessmentsRef, orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => normalizeAssessmentDocument({ id: d.id, ...d.data() }, d.id));
+  } catch {
+    return [];
+  }
+}
+
+/** Caches AI advice onto an existing assessment document (never creates a new one). */
+export async function cacheAiAdvice(userId: string, assessmentId: string, aiAdvice: any[]): Promise<void> {
+  const assessmentRef = doc(db, 'users', userId, 'assessments', assessmentId);
+  await updateDoc(assessmentRef, { aiAdvice, aiAdviceCachedAt: serverTimestamp() });
+}
+
+/** Soft-deletes a v2 assessment (sets status to 'deleted' — never permanent delete). */
+export async function softDeleteAssessment(userId: string, assessmentId: string): Promise<void> {
+  const assessmentRef = doc(db, 'users', userId, 'assessments', assessmentId);
+  await updateDoc(assessmentRef, { status: 'deleted', deletedAt: serverTimestamp() });
+}
+
+export interface UnifiedHistoryItem {
+  id: string;
+  isV2: boolean;
+  date: string;
+  timestampMs: number;
+  totalKgCO2: number;
+  totalTonnesCO2: number;
+  breakdown: {
+    transport: number;
+    energy: number;
+    food: number;
+    waste: number;
+    shopping?: number;
+  };
+  ecoScore: number;
+  confidenceRating?: string;
+  confidenceScore?: number;
+  mode?: string;
+  rawDoc?: any;
+}
+
+/** Fetches both v1 calculations and v2 assessments, producing a unified chronological history. */
+export async function getUnifiedUserHistory(userId: string): Promise<UnifiedHistoryItem[]> {
+  try {
+    const [v1List, v2List] = await Promise.all([
+      getUserCalculations(userId),
+      getUserAssessments(userId)
+    ]);
+
+    const items: UnifiedHistoryItem[] = [];
+
+    // Process V2 assessments
+    for (const doc of v2List) {
+      if ((doc as any).status === 'deleted') continue;
+      const totalKg = doc.emissions?.totalKgCO2PerYear ?? 0;
+      const totalTonnes = doc.emissions?.totalTonnesCO2PerYear ?? Math.round((totalKg / 1000) * 100) / 100;
+      const createdTime = doc.timestamp ? new Date(doc.timestamp).getTime() : Date.now();
+      const dateStr = new Date(createdTime).toLocaleDateString('en-IN', {
+        year: 'numeric', month: 'short', day: 'numeric'
+      });
+
+      // Calculate EcoScore (100 = 0 kg, 0 = 10,000+ kg)
+      const ecoScore = Math.max(0, Math.min(100, Math.round(100 - (totalKg / 100))));
+
+      items.push({
+        id: doc.id,
+        isV2: true,
+        date: dateStr,
+        timestampMs: createdTime,
+        totalKgCO2: Math.round(totalKg),
+        totalTonnesCO2: totalTonnes,
+        breakdown: {
+          transport: Math.round(doc.emissions?.breakdown?.transport ?? 0),
+          energy: Math.round(doc.emissions?.breakdown?.energy ?? 0),
+          food: Math.round(doc.emissions?.breakdown?.food ?? 0),
+          waste: Math.round(doc.emissions?.breakdown?.waste ?? 0),
+          shopping: Math.round(doc.emissions?.breakdown?.shopping ?? 0),
+        },
+        ecoScore,
+        confidenceRating: doc.confidence?.overallRating || 'HIGH',
+        confidenceScore: doc.confidence?.overallScore || 85,
+        mode: doc.mode || 'quick',
+        rawDoc: doc,
+      });
+    }
+
+    // Process V1 calculations
+    for (const calc of v1List) {
+      const totalKg = (calc.annualEstimate ?? calc.totalEmission ?? 0) * 1000;
+      const totalTonnes = calc.annualEstimate ?? (calc.totalEmission ?? 0);
+      const createdTime = calc.createdAt?.toDate?.()?.getTime?.() || Date.now();
+
+      items.push({
+        id: calc.calculationId || `v1_${Math.random()}`,
+        isV2: false,
+        date: calc.date || new Date(createdTime).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' }),
+        timestampMs: createdTime,
+        totalKgCO2: Math.round(totalKg),
+        totalTonnesCO2: Math.round(totalTonnes * 100) / 100,
+        breakdown: {
+          transport: Math.round(calc.transportEmission || 0),
+          energy: Math.round(calc.energyEmission || 0),
+          food: Math.round(calc.foodEmission || 0),
+          waste: Math.round(calc.wasteEmission || 0),
+        },
+        ecoScore: calc.ecoScore || 50,
+        confidenceRating: 'ESTIMATE',
+        confidenceScore: 60,
+        mode: 'quick',
+        rawDoc: calc,
+      });
+    }
+
+    // Sort newest first
+    return items.sort((a, b) => b.timestampMs - a.timestampMs);
+  } catch (err) {
+    console.error('Error fetching unified user history:', err);
+    return [];
+  }
+}
+

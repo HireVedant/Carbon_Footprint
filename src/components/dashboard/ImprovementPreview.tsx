@@ -1,64 +1,185 @@
 import React from 'react';
-import { ArrowRight, Sparkles, Footprints, Flame, Plus } from 'lucide-react';
+import { Sparkles, Footprints, Flame, Plus, Plane, Recycle, Leaf, ShoppingBag, Droplets } from 'lucide-react';
 import { CalculationResult } from '../../utils/carbonCalculator';
-import { useState } from 'react';
-import Toast, { ToastProps } from '../ui/Toast';
-import { AnimatePresence } from 'framer-motion';
+import { AssessmentAnswers } from '../../utils/calculationEngine';
 
 interface ImprovementPreviewProps {
   results: CalculationResult;
+  /** Optional v2 assessment answers for answer-aware recommendations. Falls back to emission-based heuristics if absent. */
+  answers?: Partial<AssessmentAnswers>;
 }
 
-export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results }) => {
-  const { totalEmissions } = results;
-  const [toast, setToast] = useState<ToastProps | null>(null);
+interface Recommendation {
+  title: string;
+  description: string;
+  reduction: number;
+  icon: React.ElementType;
+  color: string;
+}
 
-  const showToast = (type: 'success' | 'error' | 'info', message: string) => {
-    setToast({ type, message });
-    setTimeout(() => setToast(null), 3000);
-  };
+export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results, answers }) => {
+  const { totalEmissions, transportEmissions, energyEmissions, foodEmissions, wasteEmissions } = results;
 
-  // Compute placeholder carbon savings relative to the actual emissions size
-  const transportSavings = Math.round(totalEmissions * 0.12); // e.g. 12% savings by swapping commutes
-  const dietSavings = Math.round(totalEmissions * 0.08); // e.g. 8% by diet modifications
-  const energySavings = Math.round(totalEmissions * 0.05); // e.g. 5% by vampire load savings
+  // Derive behavioral signals from v2 answers where available; fall back to emission-based signals
+  const dietType = answers?.dietType;
+  const isVegetarianOrVegan =
+    dietType === 'vegan' ||
+    dietType === 'lacto_vegetarian' ||
+    (answers as any)?.diet === 'vegetarian' ||
+    (answers as any)?.diet === 'vegan';
 
-  const improvements = [
-    {
+  // V2: no vehicle = public/walk/cycle; if ownsVehicle is explicitly false, treat as non-driver
+  const isNonDriver = answers?.ownsVehicle === false;
+  const hasFlights = (answers?.flightDetails?.length ?? 0) > 0;
+  const totalFlights = answers?.flightDetails?.reduce((sum, f) => sum + (f.tripsPerYear ?? 1), 0) ?? 0;
+  const hasHighFlights = totalFlights > 2;
+
+  // Emission-based thresholds (used when v2 answers are not available)
+  const hasHighEnergy = energyEmissions / totalEmissions > 0.3;
+  const hasHighWaste = wasteEmissions / totalEmissions > 0.2;
+  const isHighMeatConsumer =
+    !isVegetarianOrVegan && (
+      dietType === 'mixed_non_veg' ||
+      dietType === 'chicken_moderate' ||
+      // Legacy v1 compat
+      (answers as any)?.diet === 'non-vegetarian'
+    );
+
+  // Waste behavior signals from v2
+  const doesNotCompost = answers?.compostingOrganic === false;
+  const doesNotRecycle = answers?.recyclingDryWaste === false;
+  const hasHighApparelPurchases = (answers?.apparelItemsMonthly ?? 0) > 3;
+
+  // Build the recommendation pool dynamically based on answers and emissions
+  const pool: Recommendation[] = [];
+
+  // --- Transportation recommendations ---
+  if (!isNonDriver) {
+    pool.push({
       title: 'Active / Shared Commuting',
-      description: 'Switching to public transit or carpooling for 3 days/week.',
-      reduction: transportSavings,
-      action: 'Set commute goal',
+      description: 'Switching to public transit or carpooling for 3 days/week saves approximately 25% of your vehicle emissions.',
+      reduction: Math.round(transportEmissions * 0.25),
       icon: Footprints,
       color: 'text-blue-400 bg-blue-500/10',
-    },
-    {
-      title: 'Dietary Adjustments',
-      description: 'Opting for meatless meals twice weekly.',
-      reduction: dietSavings,
-      action: 'Adjust meal plan',
+    });
+  } else if (transportEmissions > 0) {
+    pool.push({
+      title: 'Walk or Cycle Short Trips',
+      description: 'Walking or cycling for trips under 3 km instead of transit reduces emissions further.',
+      reduction: Math.round(transportEmissions * 0.10),
+      icon: Footprints,
+      color: 'text-blue-400 bg-blue-500/10',
+    });
+  }
+
+  // --- Flight recommendations ---
+  if (hasFlights) {
+    pool.push({
+      title: 'Reduce Air Travel',
+      description: hasHighFlights
+        ? `You have ${totalFlights} annual flight segment(s). Use rail for shorter trips and offset remaining flights.`
+        : 'Consider replacing some air travel with rail or video conferencing for shorter routes.',
+      reduction: Math.round(transportEmissions * 0.35),
+      icon: Plane,
+      color: 'text-sky-400 bg-sky-500/10',
+    });
+  }
+
+  // --- Diet recommendations (NEVER for vegetarian/vegan) ---
+  if (!isVegetarianOrVegan && isHighMeatConsumer) {
+    pool.push({
+      title: 'Reduce High-Impact Meat Consumption',
+      description: 'Opting for meatless meals twice weekly significantly lowers food emissions. Some meat types carry a high carbon cost.',
+      reduction: Math.round(foodEmissions * 0.20),
       icon: Flame,
       color: 'text-emerald-400 bg-emerald-500/10',
-    },
-    {
+    });
+  }
+
+  // --- Food waste recommendations ---
+  const foodWasteLevel = answers?.foodWasteLevel;
+  if (foodWasteLevel === 'HIGH' || foodWasteLevel === 'MODERATE' || (!foodWasteLevel && foodEmissions / totalEmissions > 0.25)) {
+    pool.push({
+      title: 'Reduce Food Waste',
+      description: 'Planning meals and storing food properly can cut food waste by half, reducing both emissions and cost.',
+      reduction: Math.round(foodEmissions * 0.08),
+      icon: Leaf,
+      color: 'text-lime-400 bg-lime-500/10',
+    });
+  }
+
+  // --- Energy recommendations ---
+  if (hasHighEnergy) {
+    pool.push({
       title: 'Appliance Power Auditing',
-      description: 'Enabling smart plugs and upgrading to LED light fixtures.',
-      reduction: energySavings,
-      action: 'Check appliances',
+      description: 'Enabling smart plugs and upgrading to BEE 5-star rated appliances and LED lighting can cut energy emissions by ~12%.',
+      reduction: Math.round(energyEmissions * 0.12),
       icon: Plus,
       color: 'text-amber-400 bg-amber-500/10',
-    },
-  ];
+    });
+  }
+
+  // Solar offset recommendation if not already installed
+  if (!answers?.solarInstalledKw && energyEmissions > 500) {
+    pool.push({
+      title: 'Install Rooftop Solar',
+      description: 'A 3 kW rooftop solar system offsets ~360 kWh/month from the grid, significantly reducing energy emissions.',
+      reduction: Math.round(energyEmissions * 0.30),
+      icon: Droplets,
+      color: 'text-cyan-400 bg-cyan-500/10',
+    });
+  }
+
+  // --- Waste recommendations ---
+  if (doesNotCompost || (!answers && wasteEmissions > 0)) {
+    pool.push({
+      title: 'Start Composting',
+      description: 'Composting organic kitchen waste diverts methane-generating material from landfills.',
+      reduction: Math.round(wasteEmissions * 0.12),
+      icon: Recycle,
+      color: 'text-green-400 bg-green-500/10',
+    });
+  }
+
+  if (doesNotRecycle) {
+    pool.push({
+      title: 'Recycle Paper & Plastic',
+      description: 'Separating recyclables diverts waste from landfills and reduces manufacturing emissions.',
+      reduction: Math.round(wasteEmissions * 0.15),
+      icon: Recycle,
+      color: 'text-green-400 bg-green-500/10',
+    });
+  }
+
+  if (hasHighWaste && hasHighApparelPurchases) {
+    pool.push({
+      title: 'Reduce Fast Fashion',
+      description: 'Buying fewer clothes or choosing second-hand cuts manufacturing and textile emissions significantly.',
+      reduction: Math.round(wasteEmissions * 0.10),
+      icon: ShoppingBag,
+      color: 'text-pink-400 bg-pink-500/10',
+    });
+  }
+
+  // Sort by highest reduction potential and take top 3
+  const improvements = pool
+    .filter((r) => r.reduction > 0)
+    .sort((a, b) => b.reduction - a.reduction)
+    .slice(0, 3);
+
+  // Fallback if somehow nothing matched
+  if (improvements.length === 0) {
+    improvements.push({
+      title: 'Track & Set Carbon Goals',
+      description: 'Set a monthly carbon budget and track your progress with EcoTrack AI to build lasting habits.',
+      reduction: Math.round(totalEmissions * 0.05),
+      icon: Sparkles,
+      color: 'text-primary-400 bg-primary-500/10',
+    });
+  }
 
   return (
     <div className="glass p-6 hover:border-white/15 transition-all duration-300 h-full flex flex-col justify-between relative">
-      <AnimatePresence>
-        {toast && (
-          <div className="absolute top-4 left-4 right-4 z-50">
-            <Toast type={toast.type} message={toast.message} />
-          </div>
-        )}
-      </AnimatePresence>
       <div>
         <div className="flex items-center gap-2 mb-4">
           <Sparkles className="w-5 h-5 text-primary-400" />
@@ -85,7 +206,7 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results 
                 <span className="text-[10px] text-dark-500 font-semibold sm:hidden">Est. Saving</span>
                 <div>
                   <p className="text-xs font-bold text-emerald-400 leading-tight">
-                    -{item.reduction} <span className="text-[10px] font-normal">kg/yr</span>
+                    -{item.reduction.toLocaleString()} <span className="text-[10px] font-normal">kg/yr</span>
                   </p>
                   <span className="text-[9px] text-dark-500 block">CO₂ reduction</span>
                 </div>
@@ -93,16 +214,6 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results 
             </div>
           ))}
         </div>
-      </div>
-      
-      <div className="mt-6 flex justify-end">
-        <button
-          className="text-xs font-semibold text-primary-400 hover:text-white flex items-center gap-1.5 transition-colors group"
-          onClick={() => showToast('info', 'AI Coach module is being developed in Day 5.')}
-        >
-          Explore Detailed Recommendations
-          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-        </button>
       </div>
     </div>
   );

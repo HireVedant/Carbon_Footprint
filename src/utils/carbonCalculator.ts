@@ -30,7 +30,7 @@ export interface CalculatorInputs {
   // Step 3: Food
   diet: 'vegan' | 'vegetarian' | 'non-vegetarian';
   meatFrequency: 'daily' | 'weekly' | 'occasionally' | 'never';
-  beefMuttonFrequency: 'daily' | 'weekly' | 'occasionally' | 'never';
+  highImpactMeatFrequency: 'daily' | 'weekly' | 'occasionally' | 'never';
   foodWaste: 'low' | 'medium' | 'high';
   localFood: 'always' | 'mostly' | 'rarely' | 'never';
 
@@ -84,7 +84,7 @@ export const initialInputs: CalculatorInputs = {
 
   diet: 'vegetarian',
   meatFrequency: 'never',
-  beefMuttonFrequency: 'never',
+  highImpactMeatFrequency: 'never',
   foodWaste: 'medium',
   localFood: 'mostly',
 
@@ -96,8 +96,15 @@ export const initialInputs: CalculatorInputs = {
 };
 
 export function mergeCalculatorInputs(
-  storedInputs: Partial<CalculatorInputs> | null | undefined
+  storedInputs: any | null | undefined
 ): CalculatorInputs {
+  if (!storedInputs) return { ...initialInputs };
+
+  // Backwards compatibility for persistence schema
+  if ('beefMuttonFrequency' in storedInputs && !('highImpactMeatFrequency' in storedInputs)) {
+    storedInputs.highImpactMeatFrequency = storedInputs.beefMuttonFrequency;
+  }
+
   return { ...initialInputs, ...(storedInputs ?? {}) };
 }
 
@@ -171,12 +178,12 @@ export function calculateCarbonFootprint(inputs: CalculatorInputs): CalculationR
   // 3. Food - daily kg CO2 * 365
   const baseFoodEmissions = EMISSION_FACTORS.food.diet[inputs.diet] ?? EMISSION_FACTORS.food.diet.vegetarian;
   let meatMultiplier = 1.0;
-  let beefMultiplier = 1.0;
+  let highImpactMeatMultiplier = 1.0;
 
   if (inputs.diet === 'non-vegetarian') {
     meatMultiplier = EMISSION_FACTORS.food.meatFrequencyMultiplier[inputs.meatFrequency] ?? 1.0;
-    beefMultiplier =
-      EMISSION_FACTORS.food.beefMuttonFrequencyMultiplier[inputs.beefMuttonFrequency] ?? 1.0;
+    highImpactMeatMultiplier =
+      EMISSION_FACTORS.food.highImpactMeatFrequencyMultiplier[inputs.highImpactMeatFrequency] ?? 1.0;
   }
 
   const foodWasteEmissions = EMISSION_FACTORS.food.foodWaste[inputs.foodWaste] ?? 0.5;
@@ -184,7 +191,7 @@ export function calculateCarbonFootprint(inputs: CalculatorInputs): CalculationR
 
   const dailyFoodEmissions = Math.max(
     0.5,
-    baseFoodEmissions * meatMultiplier * beefMultiplier + foodWasteEmissions + localFoodBonus
+    baseFoodEmissions * meatMultiplier * highImpactMeatMultiplier + foodWasteEmissions + localFoodBonus
   );
   const foodEmissions = dailyFoodEmissions * 365;
   // 4. Waste - daily kg CO2 * 365

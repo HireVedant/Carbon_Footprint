@@ -1,18 +1,19 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Leaf, Github, Twitter, Linkedin, Mail, Heart, ArrowUpRight, Loader2 } from 'lucide-react';
-import { db } from '../../firebase/firebase';
-import { collection, addDoc, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
+import { Leaf, Github, Twitter, Linkedin, Mail, Heart, ArrowUpRight, Loader2, CheckCircle } from 'lucide-react';
+import { subscribeToNewsletter } from '../../services/newsletterService';
+import { useAuth } from '../../context/AuthContext';
 import Toast, { ToastProps } from '../ui/Toast';
 import { AnimatePresence } from 'framer-motion';
 
 const footerLinks = {
   Product: [
-    { name: 'Calculator', path: '/calculator' },
+    { name: 'Assessment', path: '/assessment' },
     { name: 'Dashboard', path: '/dashboard' },
   ],
   Company: [
     { name: 'About', path: '/about' },
+    { name: 'Community', path: '/community' },
   ],
   Legal: [
     { name: 'Privacy Policy', path: '#' },
@@ -27,70 +28,39 @@ const socialLinks = [
   { icon: Mail,     href: '#', label: 'Email' },
 ];
 
-// ── Newsletter helpers ────────────────────────────────────────────────────────
-
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-}
-
-async function subscribeToNewsletter(email: string): Promise<{ success: boolean; message: string }> {
-  const trimmed = email.trim().toLowerCase();
-
-  if (!trimmed) {
-    return { success: false, message: 'Please enter your email address.' };
-  }
-  if (!isValidEmail(trimmed)) {
-    return { success: false, message: 'Please enter a valid email address.' };
-  }
-
-  try {
-    // Check for duplicate
-    const newsletterRef = collection(db, 'newsletter');
-    const dupQuery = query(newsletterRef, where('email', '==', trimmed));
-    const dupSnap = await getDocs(dupQuery);
-
-    if (!dupSnap.empty) {
-      return { success: false, message: 'This email is already subscribed!' };
-    }
-
-    await addDoc(newsletterRef, {
-      email: trimmed,
-      timestamp: serverTimestamp(),
-    });
-
-    return { success: true, message: 'You\'re subscribed! Thank you for joining.' };
-  } catch (err: any) {
-    // Firestore unavailable — fall back to localStorage
-    const stored: string[] = JSON.parse(localStorage.getItem('newsletter_subscribers') || '[]');
-    if (stored.includes(trimmed)) {
-      return { success: false, message: 'This email is already subscribed!' };
-    }
-    stored.push(trimmed);
-    localStorage.setItem('newsletter_subscribers', JSON.stringify(stored));
-    return { success: true, message: 'You\'re subscribed! (Saved locally)' };
-  }
-}
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
 export default function Footer() {
-  const [emailInput, setEmailInput]   = useState('');
-  const [isLoading, setIsLoading]     = useState(false);
+  const { user } = useAuth();
+  const [emailInput, setEmailInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  useEffect(() => {
+    if (user?.email) {
+      setEmailInput(user.email);
+    }
+  }, [user]);
 
   const handleSubscribe = async () => {
     if (isLoading) return;
     setIsLoading(true);
     setFeedbackMsg(null);
 
-    const result = await subscribeToNewsletter(emailInput);
+    const emailToUse = user?.email || emailInput;
+    const result = await subscribeToNewsletter(
+      emailToUse,
+      user?.uid,
+      user?.displayName || 'User',
+      user?.emailVerified ?? true
+    );
+
     setFeedbackMsg({ type: result.success ? 'success' : 'error', text: result.message });
 
     if (result.success) {
-      setEmailInput('');
+      setIsSubscribed(true);
+      if (!user) setEmailInput('');
     }
-    setTimeout(() => setFeedbackMsg(null), 3000);
-
+    setTimeout(() => setFeedbackMsg(null), 4000);
     setIsLoading(false);
   };
 
@@ -100,7 +70,6 @@ export default function Footer() {
 
   return (
     <footer className="relative border-t border-white/5 bg-dark-950" id="footer">
-      {/* Gradient top border effect */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/50 to-transparent" />
 
       <div className="container-max mx-auto section-padding">
@@ -109,11 +78,11 @@ export default function Footer() {
           <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl" />
           <div className="relative flex flex-col lg:flex-row items-center justify-between gap-6">
             <div>
-              <h3 className="text-2xl sm:text-3xl font-display font-bold mb-2">
+              <h3 className="text-2xl sm:text-3xl font-display font-bold mb-2 text-white">
                 Stay updated on <span className="gradient-text">sustainability</span>
               </h3>
               <p className="text-dark-400 max-w-md">
-                Get weekly insights on reducing your carbon footprint with AI-powered tips.
+                Get weekly insights on reducing your carbon footprint with AI-powered tips tailored for India.
               </p>
             </div>
             <div className="w-full lg:w-auto">
@@ -122,21 +91,26 @@ export default function Footer() {
                   type="email"
                   placeholder="Enter your email"
                   id="footer-email-input"
-                  className="input-field flex-1 lg:w-72"
-                  value={emailInput}
+                  className="input-field flex-1 lg:w-72 disabled:opacity-70 disabled:cursor-not-allowed"
+                  value={user?.email || emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  disabled={isLoading}
+                  disabled={isLoading || !!user || isSubscribed}
+                  readOnly={!!user}
                   aria-label="Newsletter email"
                 />
                 <button
                   className="btn-primary whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
                   id="footer-subscribe-btn"
                   onClick={handleSubscribe}
-                  disabled={isLoading}
+                  disabled={isLoading || isSubscribed}
                 >
                   {isLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : isSubscribed ? (
+                    <span className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                      <CheckCircle className="w-4 h-4" /> Subscribed
+                    </span>
                   ) : (
                     <>
                       Subscribe

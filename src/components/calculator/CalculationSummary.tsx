@@ -65,7 +65,7 @@ export const CalculationSummary: React.FC = () => {
         ];
       case 'Food':
         return [
-          'Integrate more plant-based meals into your week. Replacing beef or mutton has the highest impact.',
+          'Consider incorporating more plant-based meals if appropriate for your diet.',
           'Plan meals in advance to reduce food waste. Compost whatever organic waste remains.',
           'Support local agriculture by purchasing locally grown, seasonal produce.',
         ];

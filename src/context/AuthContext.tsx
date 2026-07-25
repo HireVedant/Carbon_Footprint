@@ -5,6 +5,7 @@ import {
   UserProfile,
   getUserDocument,
   updateUserDocument as firestoreUpdateUser,
+  bootstrapOwnerAccount,
 } from '../firebase/firestore';
 import {
   signUpWithEmail as authSignUp,
@@ -39,6 +40,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setUser(currentUser);
 
       if (currentUser) {
+        if (currentUser.email) {
+          void bootstrapOwnerAccount(currentUser.uid, currentUser.email);
+        }
         try {
           const profile = await getUserDocument(currentUser.uid);
           if (profile) {
@@ -99,15 +103,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     setLoading(true);
-    const uid = user?.uid;
     try {
       await authLogout();
       setUser(null);
       setUserProfile(null);
-      if (uid) {
-        localStorage.removeItem(`ecotrack_inputs_${uid}`);
-        localStorage.removeItem(`ecotrack_results_${uid}`);
-      }
     } finally {
       setLoading(false);
     }

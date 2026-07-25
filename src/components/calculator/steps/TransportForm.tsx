@@ -73,15 +73,15 @@ export const TransportForm: React.FC<TransportFormProps> = ({ setIsValid }) => {
   };
 
   const handleDistanceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseFloat(e.target.value);
-    const updatedVal = isNaN(val) ? 0 : val;
+    const raw = e.target.value;
+    const updatedVal = raw === '' ? 0 : Number(raw);
     updateInputs({ distanceTravelled: updatedVal });
     validate(updatedVal, inputs.flightsPerYear);
   };
 
   const handleFlightsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = parseInt(e.target.value, 10);
-    const updatedVal = isNaN(val) ? 0 : val;
+    const raw = e.target.value;
+    const updatedVal = raw === '' ? 0 : Math.floor(Number(raw));
     updateInputs({ flightsPerYear: updatedVal });
     validate(inputs.distanceTravelled, updatedVal);
   };

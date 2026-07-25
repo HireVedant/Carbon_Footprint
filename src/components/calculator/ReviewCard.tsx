@@ -120,8 +120,8 @@ export const ReviewCard: React.FC<ReviewCardProps> = ({ onJumpToStep }) => {
                       <span className="text-white font-medium capitalize">{inputs.meatFrequency}</span>
                     </div>
                     <div>
-                      <span className="text-dark-400 block">Beef Frequency</span>
-                      <span className="text-white font-medium capitalize">{inputs.beefMuttonFrequency}</span>
+                      <span className="text-dark-400 block">High Impact Meat Frequency</span>
+                      <span className="text-white font-medium capitalize">{inputs.highImpactMeatFrequency}</span>
                     </div>
                   </>
                 )}

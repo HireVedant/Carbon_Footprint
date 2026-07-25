@@ -40,11 +40,13 @@ export interface CommunityStats {
  * Stored in communityLeaderboard/{userId}.
  */
 export interface LeaderboardEntry {
+  userId: string;
   displayName: string;
   ecoScore: number;
   annualEstimate: number;      // tons CO₂/year
   ecoLabel: string;
   highestCategory: string;     // "Transport" | "Energy" | "Food" | "Waste"
+  isAnonymous: boolean;
   updatedAt: Date | null;
 }
 

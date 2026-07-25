@@ -61,7 +61,7 @@ export const EMISSION_FACTORS = {
       occasionally: 1.0,
       never: 0.8,
     },
-    beefMuttonFrequencyMultiplier: {
+    highImpactMeatFrequencyMultiplier: {
       daily: 2.0,
       weekly: 1.5,
       occasionally: 1.1,

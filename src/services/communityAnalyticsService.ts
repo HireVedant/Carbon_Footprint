@@ -113,11 +113,13 @@ export function subscribeToLeaderboard(
     const entries: LeaderboardEntry[] = snap.docs.map((d) => {
       const data = d.data();
       return {
-        displayName: data.displayName ?? 'Anonymous User',
+        userId: d.id,
+        displayName: data.isAnonymous ? 'Anonymous User' : (data.displayName ?? 'Anonymous User'),
         ecoScore: data.ecoScore ?? 0,
         annualEstimate: data.annualEstimate ?? 0,
         ecoLabel: data.ecoLabel ?? '',
         highestCategory: data.highestCategory ?? 'Transport',
+        isAnonymous: !!data.isAnonymous,
         updatedAt: toDate(data.updatedAt),
       };
     });
@@ -209,6 +211,7 @@ export async function updateCommunityAggregates(payload: CalcPayload): Promise<v
           annualEstimate,
           ecoLabel,
           highestCategory: topCategory,
+          isAnonymous: existingLeader.exists() ? (existingLeader.data().isAnonymous ?? false) : false,
           updatedAt: serverTimestamp(),
         });
       }
@@ -313,5 +316,18 @@ export async function updateUserCount(totalUsers: number): Promise<void> {
     );
   } catch (err) {
     console.warn('[CommunityAnalytics] Failed to update user count:', err);
+  }
+}
+
+/**
+ * Toggles anonymous mode for a user's leaderboard entry.
+ */
+export async function toggleAnonymousRanking(userId: string, isAnonymous: boolean): Promise<void> {
+  try {
+    const leaderboardRef = doc(db, 'communityLeaderboard', userId);
+    await setDoc(leaderboardRef, { isAnonymous, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (err) {
+    console.error('[CommunityAnalytics] Failed to toggle anonymous ranking:', err);
+    throw err;
   }
 }

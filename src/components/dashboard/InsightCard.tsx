@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Sparkles, TrendingUp, HelpCircle, CheckCircle } from 'lucide-react';
 import { CalculationResult } from '../../utils/carbonCalculator';
+import { AssessmentAnswers } from '../../utils/calculationEngine';
+import { motion } from 'framer-motion';
 
 interface InsightCardProps {
   results: CalculationResult;
+  /** Optional v2 assessment answers for diet-aware insights. Falls back to emission-based heuristics if absent. */
+  answers?: Partial<AssessmentAnswers>;
 }
 
-export const InsightCard: React.FC<InsightCardProps> = ({ results }) => {
+export const InsightCard: React.FC<InsightCardProps> = ({ results, answers }) => {
   const {
     transportEmissions,
     energyEmissions,
@@ -33,33 +37,56 @@ export const InsightCard: React.FC<InsightCardProps> = ({ results }) => {
   const highest = sorted[0];
   const secondHighest = sorted[1];
 
-  // Food comparison: global daily food average footprint is ~1400 kg CO2/year
+  // Food comparison: ICAR Indian dietary average food footprint ~1,400 kg CO2/year
   const foodEmissionsTons = parseFloat((foodEmissions / 1000).toFixed(2));
   const isFoodBelowAverage = foodEmissions < 1400;
 
-  // Let's form the list of observations
+  // Diet-aware food observation — prefer v2 answers if available, else derive from food emission quantum
+  const dietType = answers?.dietType;
+  const isVegetarianOrVegan =
+    dietType === 'vegan' ||
+    dietType === 'lacto_vegetarian' ||
+    // Legacy v1 field compat (diet passed as part of a mapped v1 result object)
+    (answers as any)?.diet === 'vegetarian' ||
+    (answers as any)?.diet === 'vegan';
+
+  const dietLabel = dietType === 'vegan'
+    ? 'vegan'
+    : dietType === 'lacto_vegetarian'
+    ? 'vegetarian'
+    : isVegetarianOrVegan
+    ? 'plant-based'
+    : null;
+
+  let foodObservationText: string;
+  if (isVegetarianOrVegan && dietLabel) {
+    foodObservationText = isFoodBelowAverage
+      ? `Your ${dietLabel} diet keeps food emissions low at ${foodEmissionsTons} t/yr — well below reference averages. Excellent sustainable choice!`
+      : `Your food emissions contribute ${foodPct}% of your footprint. Consider reducing food waste and buying more local produce to lower this further.`;
+  } else {
+    foodObservationText = isFoodBelowAverage
+      ? `Your food footprint is below reference averages (${foodEmissionsTons} t/yr), demonstrating sustainable dietary choices.`
+      : `Your food emissions contribute ${foodPct}% of your footprint. Incorporating plant-based meals can help lower this.`;
+  }
+
+  // Build observations list
   const observations = [
     {
-      type: 'highest',
       text: `${highest.name} is your highest emissions contributor, accounting for ${highest.pct}% of your footprint. Focus mitigation efforts here first.`,
       icon: TrendingUp,
-      highlight: true,
     },
     {
-      type: 'second',
       text: `${secondHighest.name} is your second highest contributor, producing ${secondHighest.pct}% of total emissions.`,
       icon: HelpCircle,
-      highlight: false,
     },
     {
-      type: 'food',
-      text: isFoodBelowAverage
-        ? `Your food footprint is below reference averages (${foodEmissionsTons} tons/yr), demonstrating sustainable dietary choices.`
-        : `Your food emissions contribute ${foodPct}% of your footprint. Incorporating plant-based meals can help lower this.`,
+      text: foodObservationText,
       icon: CheckCircle,
-      highlight: false,
     },
   ];
+
+  // Active insight state — first card highlighted by default, click persists selection
+  const [activeInsight, setActiveInsight] = useState(0);
 
   return (
     <div className="glass p-6 hover:border-white/15 transition-all duration-300 h-full flex flex-col justify-between">
@@ -72,29 +99,34 @@ export const InsightCard: React.FC<InsightCardProps> = ({ results }) => {
         <div className="space-y-4">
           {observations.map((obs, idx) => {
             const Icon = obs.icon;
+            const isActive = activeInsight === idx;
             return (
-              <div
+              <motion.div
                 key={idx}
-                className={`p-4 rounded-2xl border text-xs leading-relaxed flex gap-3 transition-all ${
-                  obs.highlight
-                    ? 'bg-primary-500/5 border-primary-500/30 text-primary-300 shadow-[0_0_15px_rgba(16,185,129,0.05)]'
-                    : 'bg-white/[0.02] border-white/5 text-dark-300'
+                onMouseEnter={() => setActiveInsight(idx)}
+                onClick={() => setActiveInsight(idx)}
+                whileHover={{ scale: 1.02, y: -2 }}
+                transition={{ duration: 0.2 }}
+                className={`p-4 rounded-2xl border text-xs leading-relaxed flex gap-3 cursor-pointer transition-all duration-300 ${
+                  isActive
+                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 shadow-lg shadow-emerald-500/10'
+                    : 'border-slate-700/40 bg-slate-900/30 text-slate-300'
                 }`}
               >
-                <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                  obs.highlight ? 'bg-primary-500/10 text-primary-400' : 'bg-white/5 text-dark-400'
+                <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-300 ${
+                  isActive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-dark-400'
                 }`}>
                   <Icon className="w-3.5 h-3.5" />
                 </div>
                 <span>{obs.text}</span>
-              </div>
+              </motion.div>
             );
           })}
         </div>
       </div>
       
       <p className="text-[10px] text-dark-500 mt-4 text-center italic">
-        Observations are dynamically computed based on your current carbon survey answers.
+        Observations are dynamically computed from your assessment answers and emission breakdown.
       </p>
     </div>
   );

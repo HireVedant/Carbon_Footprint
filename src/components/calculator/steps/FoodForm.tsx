@@ -36,13 +36,13 @@ export const FoodForm: React.FC<FoodFormProps> = ({ setIsValid }) => {
 
   const handleDietSelect = (diet: any) => {
     if (diet !== 'non-vegetarian') {
-      updateInputs({ diet, meatFrequency: 'never', beefMuttonFrequency: 'never' });
+      updateInputs({ diet, meatFrequency: 'never', highImpactMeatFrequency: 'never' });
     } else {
-      updateInputs({ diet, meatFrequency: 'weekly', beefMuttonFrequency: 'occasionally' });
+      updateInputs({ diet, meatFrequency: 'weekly', highImpactMeatFrequency: 'occasionally' });
     }
   };
 
-  const handleFrequencySelect = (field: 'meatFrequency' | 'beefMuttonFrequency', value: any) => {
+  const handleFrequencySelect = (field: 'meatFrequency' | 'highImpactMeatFrequency', value: any) => {
     updateInputs({ [field]: value });
   };
 
@@ -118,19 +118,19 @@ export const FoodForm: React.FC<FoodFormProps> = ({ setIsValid }) => {
             </div>
           </div>
 
-          {/* Beef/Mutton Frequency */}
+          {/* High Impact Meat Frequency */}
           <div>
             <label className="block text-xs font-bold text-dark-400 uppercase tracking-wider mb-3">
-              Beef & Mutton consumption frequency
+              High impact meat consumption frequency
             </label>
             <div className="grid grid-cols-2 gap-2">
               {frequencies.map((freq) => {
-                const isSelected = inputs.beefMuttonFrequency === freq.value;
+                const isSelected = inputs.highImpactMeatFrequency === freq.value;
                 return (
                   <button
                     key={freq.value}
                     type="button"
-                    onClick={() => handleFrequencySelect('beefMuttonFrequency', freq.value)}
+                    onClick={() => handleFrequencySelect('highImpactMeatFrequency', freq.value)}
                     className={`py-2 px-3 rounded-lg border text-xs font-semibold transition-all duration-300 ${
                       isSelected
                         ? 'bg-primary-500/10 border-primary-500 text-primary-400'

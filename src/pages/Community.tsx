@@ -40,6 +40,8 @@ import {
   getSEISurveyStats,
   getSEIDerivedMetrics,
 } from '../services/seiDatasetService';
+import { useAuth } from '../context/AuthContext';
+import { toggleAnonymousRanking } from '../services/communityAnalyticsService';
 
 // ── Chart.js registration ─────────────────────────────────────────────────────
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
@@ -154,6 +156,7 @@ function formatCO2(kg: number): string {
 // Community Page
 // ─────────────────────────────────────────────────────────────────────────────
 export default function Community() {
+  const { user } = useAuth();
   const { stats, leaderboard, insights, loading, error } = useCommunityStats();
   const seiSurvey  = getSEISurveyStats();
   const seiMetrics = getSEIDerivedMetrics();
@@ -171,9 +174,21 @@ export default function Community() {
 
   useEffect(() => {
     if (leaderboardPage >= totalLeaderboardPages) {
-      setLeaderboardPage(totalLeaderboardPages - 1);
+      setLeaderboardPage(Math.max(0, totalLeaderboardPages - 1));
     }
   }, [leaderboardPage, totalLeaderboardPages]);
+
+  const userRankIndex = useMemo(() => leaderboard.findIndex(e => e.userId === user?.uid), [leaderboard, user?.uid]);
+  const userEntry = userRankIndex >= 0 ? leaderboard[userRankIndex] : null;
+
+  const handleToggleAnonymous = async (isAnonymous: boolean) => {
+    if (!user) return;
+    try {
+      await toggleAnonymousRanking(user.uid, isAnonymous);
+    } catch (err) {
+      console.error('Failed to toggle anonymity', err);
+    }
+  };
 
   // Live community emission breakdown chart (from aggregated stats)
   const liveBreakdownData = useMemo(() => {
@@ -489,13 +504,15 @@ export default function Community() {
               </div>
             ) : (
               <div className="space-y-2">
-                {visibleLeaderboard.map((entry, i) => (
+                {visibleLeaderboard.map((entry, i) => {
+                  const isCurrentUser = user && entry.userId === user.uid;
+                  return (
                   <motion.div
                     key={`${entry.displayName}-${leaderboardPageStart + i}`}
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05 }}
-                    className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-colors duration-200"
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors duration-200 ${isCurrentUser ? 'bg-primary-500/10 border border-primary-500/20' : 'hover:bg-white/5'}`}
                   >
                     <RankBadge rank={leaderboardPageStart + i + 1} />
                     <div className="flex-1 min-w-0">
@@ -515,7 +532,7 @@ export default function Community() {
                       <span className="text-sm font-display font-bold gradient-text">{entry.ecoScore}</span>
                     </div>
                   </motion.div>
-                ))}
+                )})}
                 {totalLeaderboardPages > 1 && (
                   <div className="flex items-center justify-between border-t border-white/5 mt-3 pt-3">
                     <span className="text-xs text-dark-500">
@@ -543,6 +560,48 @@ export default function Community() {
                     </div>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* My Contribution Card */}
+            {userEntry && (
+              <div className="mt-6 pt-6 border-t border-white/5">
+                <h3 className="text-sm font-semibold text-white mb-4">My Contribution</h3>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-primary-500/5 border border-primary-500/20">
+                  <RankBadge rank={userRankIndex + 1} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{userEntry.displayName}</p>
+                    <div className="flex items-center gap-1 text-[10px] text-dark-500 mt-0.5">
+                      {categoryIcon(userEntry.highestCategory)}
+                      <span>{userEntry.highestCategory}</span>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-bold text-white">{userEntry.annualEstimate} t</p>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ecoScoreColor(userEntry.ecoScore)}`}>
+                      {userEntry.ecoLabel}
+                    </span>
+                  </div>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary-500/20 to-accent-500/10 flex-shrink-0">
+                    <span className="text-sm font-display font-bold gradient-text">{userEntry.ecoScore}</span>
+                  </div>
+                </div>
+                
+                <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white/5 p-4 rounded-xl">
+                  <div>
+                    <h4 className="text-sm font-medium text-white">Anonymous Ranking</h4>
+                    <p className="text-xs text-dark-400 mt-0.5">Hide your display name from the public leaderboard</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer"
+                      checked={userEntry.isAnonymous}
+                      onChange={(e) => handleToggleAnonymous(e.target.checked)}
+                    />
+                    <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
+                  </label>
+                </div>
               </div>
             )}
           </div>
