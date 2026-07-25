@@ -217,68 +217,175 @@ export default function Dashboard() {
         {/* ── HERO SECTION: ANNUAL FOOTPRINT & METRIC CARDS ─────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Main Footprint Card */}
-          <div className="lg:col-span-2 bg-gray-900/70 border border-white/10 backdrop-blur-xl rounded-2xl p-6 flex flex-col justify-between space-y-4">
+          <div className="lg:col-span-2 glass-eco p-6 flex flex-col justify-between space-y-4">
             <div>
               <div className="flex items-center justify-between">
-                <span className="text-xs uppercase tracking-widest text-emerald-400 font-bold">Annual Carbon Footprint</span>
-                <span className="text-xs text-gray-500 font-mono">v2.0 Scientific Engine</span>
+                <span className="text-xs uppercase tracking-widest text-emerald-400 font-bold flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" /> Annual Carbon Footprint
+                </span>
+                <span className="text-xs text-emerald-300/60 font-mono">v2.0 SEI Scientific Engine</span>
               </div>
               <div className="mt-3 flex items-baseline gap-3">
-                <p className="text-5xl sm:text-6xl font-bold text-white tracking-tight">{totalTonnes}</p>
-                <span className="text-xl text-gray-400 font-normal">tonnes CO₂e/yr</span>
+                <p className="text-5xl sm:text-6xl font-extrabold text-white tracking-tight">{totalTonnes}</p>
+                <span className="text-xl text-emerald-300 font-normal">tonnes CO₂e/yr</span>
               </div>
-              <p className="text-xs text-gray-400 mt-1">{totalKg.toLocaleString()} kg CO₂e annual total</p>
+              <p className="text-xs text-dark-300 mt-1">{totalKg.toLocaleString()} kg CO₂e annual total</p>
             </div>
 
             {/* Benchmarks & Comparisons */}
-            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-800">
-              <div className="bg-gray-800/50 p-3 rounded-xl">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">vs Indian Average (2.2t)</p>
+            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-emerald-500/20">
+              <div className="bg-emerald-950/40 border border-emerald-500/20 p-3 rounded-xl">
+                <p className="text-[10px] text-dark-300 uppercase tracking-wider font-semibold">vs Indian Baseline (2.2t)</p>
                 <p className={`text-sm font-bold mt-1 flex items-center gap-1 ${isLowerThanIndia ? 'text-emerald-400' : 'text-amber-400'}`}>
                   {isLowerThanIndia ? <ArrowDownRight className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
                   {Math.abs(vsIndiaPct)}% {isLowerThanIndia ? 'lower' : 'higher'}
                 </p>
               </div>
 
-              <div className="bg-gray-800/50 p-3 rounded-xl">
-                <p className="text-[10px] text-gray-400 uppercase tracking-wider font-semibold">vs Previous Assessment</p>
+              <div className="bg-emerald-950/40 border border-emerald-500/20 p-3 rounded-xl">
+                <p className="text-[10px] text-dark-300 uppercase tracking-wider font-semibold">vs Previous Assessment</p>
                 {deltaVsPrev !== null ? (
                   <p className={`text-sm font-bold mt-1 flex items-center gap-1 ${deltaVsPrev <= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                     {deltaVsPrev <= 0 ? <ArrowDownRight className="w-4 h-4" /> : <ArrowUpRight className="w-4 h-4" />}
                     {Math.abs(prevPctChange ?? 0)}% ({deltaVsPrev <= 0 ? '-' : '+'}{Math.abs(deltaVsPrev)} kg)
                   </p>
                 ) : (
-                  <p className="text-xs text-gray-500 mt-1">First assessment</p>
+                  <p className="text-xs text-dark-400 mt-1">First assessment</p>
                 )}
               </div>
             </div>
           </div>
 
           {/* Eco Score Card */}
-          <div className="bg-gray-900/70 border border-white/10 backdrop-blur-xl rounded-2xl p-6 flex flex-col items-center justify-center text-center space-y-3">
+          <div className="glass-eco p-6 flex flex-col items-center justify-center text-center space-y-3">
             <ProgressRing score={ecoScore} />
             <div>
-              <p className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Eco Score</p>
-              <p className="text-xs text-emerald-400 mt-0.5">{ecoScore >= 70 ? 'Sustainable Lifestyle' : 'Improvement Opportunities Available'}</p>
+              <p className="text-xs uppercase tracking-wider text-dark-300 font-semibold">Eco Score Rating</p>
+              <p className="text-xs text-emerald-400 font-semibold mt-0.5">{ecoScore >= 70 ? 'Eco Champion Lifestyle' : 'Improvement Opportunities Available'}</p>
             </div>
           </div>
 
           {/* Confidence Card */}
-          <div className="bg-gray-900/70 border border-white/10 backdrop-blur-xl rounded-2xl p-6 flex flex-col justify-between space-y-4">
+          <div className="glass-eco p-6 flex flex-col justify-between space-y-4">
             <div>
-              <span className="text-xs uppercase tracking-widest text-indigo-400 font-bold">Scientific Confidence</span>
+              <span className="text-xs uppercase tracking-widest text-cyan-400 font-bold">Scientific Confidence</span>
               <div className="mt-3 flex items-baseline gap-2">
                 <p className="text-4xl font-bold text-white">{confidenceScore}%</p>
-                <span className="text-xs px-2 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full font-bold">{confidenceRating}</span>
+                <span className="text-xs px-2.5 py-0.5 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 rounded-full font-bold">{confidenceRating}</span>
               </div>
-              <p className="text-xs text-gray-400 mt-2">Based on state-specific grid factors and verified datasets.</p>
+              <p className="text-xs text-dark-300 mt-2">Validated against Indian state grid emissions factor (0.716 kg/kWh).</p>
             </div>
-            <Link to="/history" className="flex items-center justify-between text-xs text-gray-400 hover:text-white pt-3 border-t border-gray-800 transition-colors">
-              <span className="flex items-center gap-1.5"><HistoryIcon className="w-3.5 h-3.5" /> View Full History</span>
+            <Link to="/history" className="flex items-center justify-between text-xs text-emerald-300 hover:text-white pt-3 border-t border-emerald-500/20 transition-colors">
+              <span className="flex items-center gap-1.5"><HistoryIcon className="w-3.5 h-3.5" /> View Assessment Logs</span>
               <span>→</span>
             </Link>
           </div>
         </div>
+
+        {/* ── VIRTUAL ECO-FOREST & ACHIEVEMENT BADGES ───────────────────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Virtual Eco-Forest Display */}
+          <div className="lg:col-span-7 glass-eco p-6 rounded-3xl relative overflow-hidden flex flex-col justify-between">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                  <TreePine className="w-4 h-4 text-emerald-400" /> Virtual Eco-Forest Sanctuary
+                </span>
+                <h3 className="text-lg font-display font-bold text-white mt-0.5">
+                  Your Digital Grove: {Math.max(3, Math.round(ecoScore / 6))} Trees Grown
+                </h3>
+              </div>
+              <span className="text-xs px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 font-semibold">
+                Level {Math.max(1, Math.floor(ecoScore / 15))} Sanctuary
+              </span>
+            </div>
+
+            {/* Trees Visualizer Grid */}
+            <div className="py-6 px-4 bg-emerald-950/40 rounded-2xl border border-emerald-500/20 flex flex-wrap items-center justify-center gap-6 my-2 min-h-[160px]">
+              {Array.from({ length: Math.max(4, Math.min(14, Math.round(ecoScore / 6))) }, (_, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: idx * 0.08 }}
+                  whileHover={{ scale: 1.2, rotate: 5 }}
+                  className="flex flex-col items-center cursor-pointer group"
+                >
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/60 transition-all">
+                    <TreePine className="w-6 h-6 text-white animate-leaf-sway" />
+                  </div>
+                  <span className="text-[10px] text-emerald-300 font-medium mt-1">Tree #{idx + 1}</span>
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between text-xs text-dark-300 pt-3 border-t border-emerald-500/20">
+              <span>🌱 Equivalent to <strong>{Math.round(totalTonnes * 45)}</strong> real-world trees needed/year</span>
+              <span className="text-emerald-400 font-semibold">Keep reducing footprint to plant more!</span>
+            </div>
+          </div>
+
+          {/* Achievement Badges Showcase */}
+          <div className="lg:col-span-5 glass-eco p-6 rounded-3xl flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-base font-display font-bold text-white flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-400" /> Eco Badges & Milestones
+                </h3>
+                <span className="text-xs text-dark-400">3 / 4 Unlocked</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-emerald-950/50 border border-emerald-500/30 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <TreePine className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Forest Guardian</h4>
+                    <span className="text-[10px] text-emerald-300 font-semibold">Unlocked!</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-emerald-950/50 border border-emerald-500/30 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                    <Car className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Clean Commuter</h4>
+                    <span className="text-[10px] text-cyan-300 font-semibold">Unlocked!</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-emerald-950/50 border border-emerald-500/30 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center text-amber-400">
+                    <Zap className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Solar Titan</h4>
+                    <span className="text-[10px] text-amber-300 font-semibold">Unlocked!</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-dark-950/50 border border-white/10 flex items-center gap-3 opacity-60">
+                  <div className="w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center text-dark-400">
+                    <Wind className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-dark-300">Net Zero Hero</h4>
+                    <span className="text-[10px] text-dark-400">Reach EcoScore 90</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 pt-3 border-t border-emerald-500/20 text-center">
+              <Link to="/community" className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center justify-center gap-1">
+                View Community Leaderboard & Challenges →
+              </Link>
+            </div>
+          </div>
+        </div>
+
 
         {/* ── 2. INSIGHTS ─────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Leaf, ChevronRight, LogOut } from 'lucide-react';
+import { Menu, X, Leaf, LogOut, Sparkles, Calculator } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UserMenu } from '../auth/UserMenu';
 import Toast, { ToastProps } from '../ui/Toast';
@@ -19,9 +19,9 @@ export default function Navbar() {
   const navLinks = user
     ? [
         { name: 'Home', path: '/' },
-        { name: 'Community', path: '/community' },
         { name: 'Assessment', path: '/assessment' },
         { name: 'Dashboard', path: '/dashboard' },
+        { name: 'Community', path: '/community' },
         { name: 'History', path: '/history' },
         { name: 'About', path: '/about' },
       ]
@@ -58,8 +58,10 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`sticky top-0 z-40 transition-all duration-300 ${
-        scrolled ? 'bg-dark-950/80 backdrop-blur-lg border-b border-white/5' : 'bg-transparent'
+      className={`sticky top-0 z-50 transition-all duration-300 ${
+        scrolled
+          ? 'bg-dark-950/85 backdrop-blur-xl border-b border-emerald-500/20 shadow-lg shadow-emerald-950/50'
+          : 'bg-dark-950/40 backdrop-blur-md border-b border-white/5'
       }`}
     >
       <AnimatePresence>
@@ -72,30 +74,34 @@ export default function Navbar() {
       <div className="container-max mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
+          <Link to="/" className="flex items-center gap-3 group">
             <motion.div
-              className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-lg shadow-primary-500/30 group-hover:shadow-primary-500/50 transition-shadow duration-300"
-              whileHover={{ scale: 1.05 }}
+              className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/30 group-hover:shadow-emerald-500/60 group-hover:scale-105 transition-all duration-300"
+              whileHover={{ rotate: 12 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Leaf className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              <Leaf className="w-5 h-5 sm:w-6 sm:h-6 text-white animate-leaf-sway" />
             </motion.div>
-            <span className="text-lg sm:text-xl font-display font-bold hidden sm:inline">
-              Eco<span className="gradient-text">Track</span>
-              <span className="text-dark-400 font-light ml-1">AI</span>
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xl sm:text-2xl font-display font-extrabold tracking-tight">
+                Eco<span className="gradient-text">Track</span>
+              </span>
+              <span className="text-[10px] text-emerald-400 font-medium tracking-wider uppercase flex items-center gap-1 -mt-1">
+                <Sparkles className="w-2.5 h-2.5" /> Sustainable AI
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden md:flex items-center gap-1.5 bg-emerald-950/30 p-1.5 rounded-full border border-emerald-500/15">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.path}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                className={`relative px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
                   isActive(link.path)
-                    ? 'bg-primary-500/20 text-primary-400'
-                    : 'text-dark-300 hover:text-primary-400 hover:bg-white/5'
+                    ? 'text-white bg-gradient-to-r from-emerald-600 to-teal-600 shadow-md shadow-emerald-500/25'
+                    : 'text-dark-300 hover:text-emerald-300 hover:bg-white/5'
                 }`}
               >
                 {link.name}
@@ -105,8 +111,17 @@ export default function Navbar() {
 
           {/* Right Section: User Menu / Auth Buttons */}
           <div className="flex items-center gap-3 sm:gap-4">
+            {!user && (
+              <Link
+                to="/assessment"
+                className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/20 transition-all duration-300"
+              >
+                <Calculator className="w-3.5 h-3.5" /> Quick Calc
+              </Link>
+            )}
+
             {loading ? (
-              <div className="w-10 h-10 rounded-full border border-white/10 bg-white/5 animate-pulse" />
+              <div className="w-10 h-10 rounded-full border border-emerald-500/20 bg-emerald-950/40 animate-pulse" />
             ) : user ? (
               <UserMenu />
             ) : (
@@ -114,7 +129,7 @@ export default function Navbar() {
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Link
                     to="/login"
-                    className="hidden sm:inline-flex px-4 py-2 text-sm font-medium text-primary-400 hover:text-primary-300 transition-colors duration-300"
+                    className="hidden sm:inline-flex px-4 py-2 text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors duration-300"
                   >
                     Sign In
                   </Link>
@@ -122,9 +137,9 @@ export default function Navbar() {
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Link
                     to="/register"
-                    className="hidden sm:inline-flex px-4 py-2 rounded-lg bg-gradient-to-r from-primary-500 to-accent-500 text-white text-sm font-medium hover:shadow-lg hover:shadow-primary-500/30 transition-all duration-300"
+                    className="btn-primary py-2 px-5 text-sm"
                   >
-                    Sign Up
+                    Get Started
                   </Link>
                 </motion.div>
               </>
@@ -133,7 +148,7 @@ export default function Navbar() {
             {/* Mobile Menu Toggle */}
             <motion.button
               onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-white/5 transition-colors duration-300"
+              className="md:hidden p-2 rounded-xl bg-emerald-950/40 border border-emerald-500/20 text-emerald-300 hover:bg-emerald-900/50 transition-colors duration-300"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               aria-label="Toggle menu"
@@ -151,17 +166,17 @@ export default function Navbar() {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="md:hidden border-t border-white/5 bg-white/5"
+              className="md:hidden border-t border-emerald-500/20 bg-dark-950/95 backdrop-blur-2xl rounded-b-2xl"
             >
-              <div className="px-4 py-4 space-y-3">
+              <div className="px-4 py-4 space-y-2">
                 {navLinks.map((link) => (
                   <Link
                     key={link.name}
                     to={link.path}
-                    className={`block px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                    className={`block px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
                       isActive(link.path)
-                        ? 'bg-primary-500/20 text-primary-400'
-                        : 'text-dark-300 hover:text-primary-400 hover:bg-white/5'
+                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md'
+                        : 'text-dark-300 hover:text-emerald-300 hover:bg-emerald-900/20'
                     }`}
                   >
                     {link.name}
@@ -170,29 +185,29 @@ export default function Navbar() {
 
                 {!user && (
                   <>
-                    <div className="h-px bg-white/10 my-2" />
+                    <div className="h-px bg-emerald-500/20 my-3" />
                     <Link
                       to="/login"
-                      className="block px-4 py-2 rounded-lg text-sm font-medium text-primary-400 hover:bg-white/5 transition-colors duration-300"
+                      className="block px-4 py-2.5 rounded-xl text-sm font-medium text-emerald-300 hover:bg-emerald-900/20 transition-colors duration-300"
                     >
                       Sign In
                     </Link>
                     <Link
                       to="/register"
-                      className="block px-4 py-2 rounded-lg bg-gradient-to-r from-primary-500 to-accent-500 text-white text-sm font-medium text-center hover:shadow-lg hover:shadow-primary-500/30 transition-all duration-300"
+                      className="block text-center btn-primary py-2.5 text-sm"
                     >
-                      Sign Up
+                      Get Started Free
                     </Link>
                   </>
                 )}
 
                 {user && (
                   <>
-                    <div className="h-px bg-white/10 my-2" />
+                    <div className="h-px bg-emerald-500/20 my-3" />
                     <motion.button
                       onClick={handleMobileLogout}
                       disabled={isLoggingOut}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors duration-300 text-sm font-medium disabled:opacity-50"
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-red-400 bg-red-950/20 hover:bg-red-950/40 border border-red-500/20 transition-colors duration-300 text-sm font-medium disabled:opacity-50"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -208,4 +223,4 @@ export default function Navbar() {
       </div>
     </nav>
   );
-}
+}

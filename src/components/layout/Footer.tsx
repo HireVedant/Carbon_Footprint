@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Leaf, Github, Twitter, Linkedin, Mail, Heart, ArrowUpRight, Loader2, CheckCircle } from 'lucide-react';
+import { Leaf, Github, Twitter, Linkedin, Mail, Heart, ArrowUpRight, Loader2, CheckCircle, ShieldCheck, Sparkles } from 'lucide-react';
 import { subscribeToNewsletter } from '../../services/newsletterService';
 import { useAuth } from '../../context/AuthContext';
 import Toast, { ToastProps } from '../ui/Toast';
@@ -69,20 +69,23 @@ export default function Footer() {
   };
 
   return (
-    <footer className="relative border-t border-white/5 bg-dark-950" id="footer">
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary-500/50 to-transparent" />
+    <footer className="relative border-t border-emerald-500/20 bg-dark-950" id="footer">
+      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
 
       <div className="container-max mx-auto section-padding">
         {/* Newsletter CTA */}
-        <div className="glass p-8 sm:p-10 mb-16 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-3xl" />
-          <div className="relative flex flex-col lg:flex-row items-center justify-between gap-6">
+        <div className="glass-eco p-8 sm:p-10 mb-16 relative overflow-hidden rounded-3xl border border-emerald-500/30">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
             <div>
-              <h3 className="text-2xl sm:text-3xl font-display font-bold mb-2 text-white">
+              <span className="text-xs uppercase tracking-wider text-emerald-400 font-bold flex items-center gap-1 mb-2">
+                <Sparkles className="w-3.5 h-3.5" /> Eco Awareness Digest
+              </span>
+              <h3 className="text-2xl sm:text-3xl font-display font-extrabold mb-2 text-white">
                 Stay updated on <span className="gradient-text">sustainability</span>
               </h3>
-              <p className="text-dark-400 max-w-md">
-                Get weekly insights on reducing your carbon footprint with AI-powered tips tailored for India.
+              <p className="text-dark-300 max-w-md text-sm">
+                Receive weekly actionable AI insights on cutting your carbon footprint and living eco-consciously.
               </p>
             </div>
             <div className="w-full lg:w-auto">
@@ -133,18 +136,33 @@ export default function Footer() {
         </div>
 
         {/* Links Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-8 lg:gap-12 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12 mb-16">
+          <div className="col-span-2 sm:col-span-1">
+            <Link to="/" className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center">
+                <Leaf className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-display font-extrabold text-white">EcoTrack</span>
+            </Link>
+            <p className="text-xs text-dark-400 leading-relaxed mb-4">
+              Empowering individuals & organizations to measure, track, and offset carbon emissions using AI precision.
+            </p>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] text-emerald-300 font-semibold">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> 100% Carbon Neutral Site
+            </div>
+          </div>
+
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
+              <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4">
                 {category}
               </h4>
-              <ul className="space-y-3">
+              <ul className="space-y-2.5">
                 {links.map((link) => (
                   <li key={link.name}>
                     <Link
                       to={link.path}
-                      className="text-sm text-dark-400 hover:text-primary-400 transition-colors duration-300 flex items-center gap-1 group"
+                      className="text-xs text-dark-300 hover:text-emerald-400 transition-colors duration-300 flex items-center gap-1 group"
                     >
                       {link.name}
                       <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
@@ -157,14 +175,11 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="pt-8 border-t border-emerald-500/10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
-              <Leaf className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-sm text-dark-400">
-              © {new Date().getFullYear()} EcoTrack AI — Software Engineering Mini Project 2026. Built with{' '}
-              <Heart className="w-3 h-3 inline text-red-400" /> for the planet.
+            <span className="text-xs text-dark-400">
+              © {new Date().getFullYear()} EcoTrack AI. Dedicated to sustainable development and global climate action. Built with{' '}
+              <Heart className="w-3.5 h-3.5 inline text-emerald-400" /> for the planet.
             </span>
           </div>
 
@@ -175,7 +190,7 @@ export default function Footer() {
                 href={social.href}
                 aria-label={social.label}
                 id={`footer-social-${social.label.toLowerCase()}`}
-                className="w-9 h-9 rounded-lg bg-white/5 flex items-center justify-center text-dark-400 hover:text-primary-400 hover:bg-white/10 transition-all duration-300"
+                className="w-9 h-9 rounded-xl bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-center text-dark-300 hover:text-emerald-300 hover:bg-emerald-900/40 transition-all duration-300"
               >
                 <social.icon className="w-4 h-4" />
               </a>

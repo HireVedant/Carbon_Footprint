@@ -272,16 +272,15 @@ export default function Community() {
           transition={{ duration: 0.6 }}
           className="text-center max-w-3xl mx-auto pt-4"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 mb-5">
-            <Globe2 className="w-4 h-4 text-primary-400" />
-            <span className="text-sm font-medium text-primary-300">Community Analytics</span>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 mb-5 shadow-eco-glow">
+            <Globe2 className="w-4 h-4 text-emerald-400" />
+            <span className="text-sm font-semibold text-emerald-300">Global Community Analytics Hub</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold leading-tight mb-4">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-extrabold leading-tight mb-4">
             Our Collective <span className="gradient-text">Carbon Impact</span>
           </h1>
-          <p className="text-dark-400 text-base sm:text-lg leading-relaxed">
-            Real-time community analytics powered by live Firestore data and validated by our
-            SEI survey of 50+ participants. Updated instantly as new reports come in.
+          <p className="text-dark-300 text-base sm:text-lg leading-relaxed">
+            Real-time community metrics powered by live assessments and validated by our SEI survey dataset. See how individual choices compound into global climate change action.
           </p>
         </motion.div>
 

@@ -145,27 +145,26 @@ export default function Assessment() {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-16 relative flex flex-col">
-      {/* Background */}
-      <div className="absolute inset-0 mesh-bg" />
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary-500/5 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-accent-500/5 rounded-full blur-[100px] pointer-events-none" />
+    <div className="min-h-screen pt-20 pb-16 relative flex flex-col justify-center">
+      <div className="absolute inset-0 mesh-bg opacity-70" />
+      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-teal-500/10 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="container-max mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
         {/* Calculation In Progress */}
         {calculating && (
           <div className="max-w-md mx-auto text-center py-20 space-y-6">
             <div className="relative inline-flex items-center justify-center">
-              <div className="w-16 h-16 rounded-full border-4 border-primary-500/20 border-t-primary-500 animate-spin" />
-              <Leaf className="w-6 h-6 text-primary-400 absolute animate-pulse" />
+              <div className="w-20 h-20 rounded-full border-4 border-emerald-500/20 border-t-emerald-400 animate-spin shadow-eco-glow" />
+              <Leaf className="w-8 h-8 text-emerald-300 absolute animate-pulse" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-xl font-display font-bold text-white flex items-center justify-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary-400 animate-pulse" />
-                Processing Assessment...
+              <h3 className="text-2xl font-display font-bold text-white flex items-center justify-center gap-2">
+                <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
+                Calculating Your Footprint...
               </h3>
-              <p className="text-sm text-dark-400">
-                Scientific Calculation Engine v2.0 is processing your answers against CEA, ARAI, and ICAO datasets.
+              <p className="text-sm text-dark-300">
+                AI Scientific Calculation Engine v2.0 is processing your answers against verified CEA, ARAI, and SEI datasets.
               </p>
             </div>
           </div>
@@ -181,15 +180,15 @@ export default function Assessment() {
             <SectionHeading
               badge="Assessment Complete"
               title="Your Carbon"
-              highlight="Footprint"
-              description="Scientific assessment powered by CEA, ARAI, and ICAO datasets."
+              highlight="Impact Report"
+              description="Scientific assessment powered by CEA, ARAI, and ICAO emissions datasets."
             />
 
             {/* Total Emission Card */}
-            <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-8 rounded-2xl shadow-xl text-center space-y-4">
-              <p className="text-xs uppercase tracking-widest text-gray-500 font-semibold">Annual Carbon Footprint</p>
-              <p className="text-6xl font-bold text-white">{result.totalTonnesCO2PerYear} <span className="text-2xl text-gray-400 font-normal">tonnes CO₂e/year</span></p>
-              <p className="text-sm text-gray-400">{result.totalKgCO2PerYear.toLocaleString()} kg CO₂e · Grid Factor: {result.metadata.gridFactorUsed} kg CO₂/kWh ({result.metadata.state})</p>
+            <div className="glass-eco p-8 rounded-3xl text-center space-y-4 shadow-eco-glow-lg border border-emerald-500/30">
+              <p className="text-xs uppercase tracking-widest text-emerald-400 font-bold">Annual Carbon Footprint</p>
+              <p className="text-6xl font-extrabold text-white tracking-tight">{result.totalTonnesCO2PerYear} <span className="text-2xl text-emerald-300 font-normal">tonnes CO₂e/year</span></p>
+              <p className="text-sm text-dark-300">{result.totalKgCO2PerYear.toLocaleString()} kg CO₂e · Grid Factor: {result.metadata.gridFactorUsed} kg CO₂/kWh ({result.metadata.state})</p>
             </div>
 
             {/* Category Breakdown */}
