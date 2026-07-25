@@ -65,50 +65,66 @@ export default function Assessment() {
   const { userProfile } = useAuth();
 
   const handleCalculate = async () => {
-    setCalculating(true);
-    const computedResult = runCalculation();
-    if (user) {
-      try {
-        const docId = await saveV2Assessment(user.uid, answers, computedResult, mode);
-        setAssessmentId(docId);
-        
-        // Update community aggregates if not a test account
-        if (!userProfile?.isTestAccount) {
-          // Dynamic import to avoid circular dependencies and code bloat if unused
-          const { updateCommunityAggregates } = await import('../services/communityAnalyticsService');
-          const { collection, getCountFromServer } = await import('firebase/firestore');
-          const { db } = await import('../firebase/firebase');
-          
-          let totalUsers = 1;
-          try {
-            const usersCol = collection(db, 'users');
-            const countSnap = await getCountFromServer(usersCol);
-            totalUsers = countSnap.data().count;
-          } catch {
-            // fallback
-          }
+  setCalculating(true);
 
-          await updateCommunityAggregates({
-            userId: user.uid,
-            calculationId: docId,
-            displayName: user.displayName || userProfile?.name || 'Eco User',
-            transportEmission: computedResult.breakdown.transport || 0,
-            energyEmission: computedResult.breakdown.energy || 0,
-            foodEmission: computedResult.breakdown.food || 0,
-            wasteEmission: computedResult.breakdown.waste || 0,
-            totalEmission: computedResult.totalKgCO2PerYear,
-            ecoScore: Math.max(0, Math.min(100, Math.round(100 - (computedResult.totalKgCO2PerYear / 100)))),
-            ecoLabel: 'Calculated', // Fallback, could be based on score
-            annualEstimate: computedResult.totalTonnesCO2PerYear,
-            totalUsers,
-          });
-        }
-      } catch (err) {
-        console.error('Failed to auto-save assessment:', err);
+  const computedResult = runCalculation();
+
+  if (user) {
+    try {
+      const docId = await saveV2Assessment(
+        user.uid,
+        answers,
+        computedResult,
+        mode
+      );
+
+      setAssessmentId(docId);
+
+      const { updateCommunityAggregates } = await import(
+        '../services/communityAnalyticsService'
+      );
+      const { collection, getCountFromServer } = await import(
+        'firebase/firestore'
+      );
+      const { db } = await import('../firebase/firebase');
+
+      let totalUsers = 1;
+
+      try {
+        const usersCol = collection(db, 'users');
+        const countSnap = await getCountFromServer(usersCol);
+        totalUsers = countSnap.data().count;
+      } catch {
+        // Non-fatal fallback
       }
+
+      await updateCommunityAggregates({
+        userId: user.uid,
+        calculationId: docId,
+        displayName: user.displayName || userProfile?.name || 'Eco User',
+        transportEmission: computedResult.breakdown.transport || 0,
+        energyEmission: computedResult.breakdown.energy || 0,
+        foodEmission: computedResult.breakdown.food || 0,
+        wasteEmission: computedResult.breakdown.waste || 0,
+        totalEmission: computedResult.totalKgCO2PerYear,
+        ecoScore: Math.max(
+          0,
+          Math.min(
+            100,
+            Math.round(100 - computedResult.totalKgCO2PerYear / 100)
+          )
+        ),
+        ecoLabel: 'Calculated',
+        annualEstimate: computedResult.totalTonnesCO2PerYear,
+        totalUsers,
+      });
+    } catch (err) {
+      console.error('Failed to auto-save assessment:', err);
     }
-    setCalculating(false);
-  };
+  }
+
+  setCalculating(false);
+};
 
   // Skip steps in quick mode (waste & shopping are auto-estimated)
   const visibleSteps = mode === 'quick'
