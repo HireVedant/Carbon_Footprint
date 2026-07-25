@@ -8,7 +8,7 @@ The platform combines a data-driven carbon calculation engine with an intuitive 
 
 ## Live Demo
 
-<https://carbon-footprint-pccoe.vercel.app/>
+<https://eco-track-platform.vercel.app/>
 
 ---
 
