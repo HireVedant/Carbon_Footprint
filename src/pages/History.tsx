@@ -84,67 +84,11 @@ export default function History() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {history.map((item) => (
-              <div key={item.id} className="glass p-6 rounded-2xl flex flex-col group hover:border-primary-500/30 transition-all space-y-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-dark-300">
-                    <Calendar className="w-4 h-4 text-primary-400" />
-                    {item.date}
-                    {item.isV2 && (
-                      <span className="text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full">v2.0</span>
-                    )}
-                  </div>
-                  <span className={`text-xs px-2 py-1 rounded-full border ${
-                    item.ecoScore >= 85 ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' :
-                    item.ecoScore >= 70 ? 'text-green-400 border-green-500/30 bg-green-500/10' :
-                    item.ecoScore >= 50 ? 'text-amber-400 border-amber-500/30 bg-amber-500/10' :
-                    item.ecoScore >= 30 ? 'text-orange-400 border-orange-500/30 bg-orange-500/10' :
-                    'text-red-400 border-red-500/30 bg-red-500/10'
-                  }`}>
-                    Score: {item.ecoScore}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-3xl font-display font-bold text-white">
-                      {item.totalTonnesCO2} <span className="text-lg text-dark-400 font-normal">tonnes CO₂e</span>
-                    </h3>
-                    <p className="text-xs text-dark-400 mt-0.5">{item.totalKgCO2.toLocaleString()} kg CO₂e/year</p>
-                  </div>
-                  <button
-                    onClick={() => handleDelete(item)}
-                    className="p-2 text-dark-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                    title="Delete Report"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-
-                <div className="mt-auto pt-4 border-t border-white/10 space-y-2 text-sm text-dark-300">
-                  <div className="flex justify-between">
-                    <span>Transport</span>
-                    <span className="text-white font-medium">{item.breakdown.transport.toLocaleString()} kg</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Energy</span>
-                    <span className="text-white font-medium">{item.breakdown.energy.toLocaleString()} kg</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Food</span>
-                    <span className="text-white font-medium">{item.breakdown.food.toLocaleString()} kg</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Waste</span>
-                    <span className="text-white font-medium">{item.breakdown.waste.toLocaleString()} kg</span>
-                  </div>
-                  {item.breakdown.shopping !== undefined && (
-                    <div className="flex justify-between">
-                      <span>Shopping</span>
-                      <span className="text-white font-medium">{item.breakdown.shopping.toLocaleString()} kg</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <MemoizedHistoryItem 
+                key={item.id} 
+                item={item} 
+                onDelete={handleDelete} 
+              />
             ))}
           </div>
         )}
@@ -152,3 +96,69 @@ export default function History() {
     </div>
   );
 }
+
+const MemoizedHistoryItem = React.memo(({ item, onDelete }: { item: UnifiedHistoryItem, onDelete: (item: UnifiedHistoryItem) => void }) => {
+  return (
+    <div className="glass p-6 rounded-2xl flex flex-col group hover:border-primary-500/30 transition-all space-y-4">
+      <div className="flex justify-between items-start">
+        <div className="flex items-center gap-2 text-xs font-semibold text-dark-300">
+          <Calendar className="w-4 h-4 text-primary-400" />
+          {item.date}
+          {item.isV2 && (
+            <span className="text-[10px] px-2 py-0.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full">v2.0</span>
+          )}
+        </div>
+        <span className={`text-xs px-2 py-1 rounded-full border ${
+          item.ecoScore >= 85 ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' :
+          item.ecoScore >= 70 ? 'text-green-400 border-green-500/30 bg-green-500/10' :
+          item.ecoScore >= 50 ? 'text-amber-400 border-amber-500/30 bg-amber-500/10' :
+          item.ecoScore >= 30 ? 'text-orange-400 border-orange-500/30 bg-orange-500/10' :
+          'text-red-400 border-red-500/30 bg-red-500/10'
+        }`}>
+          Score: {item.ecoScore}
+        </span>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-3xl font-display font-bold text-white">
+            {item.totalTonnesCO2} <span className="text-lg text-dark-400 font-normal">tonnes CO₂e</span>
+          </h3>
+          <p className="text-xs text-dark-400 mt-0.5">{item.totalKgCO2.toLocaleString()} kg CO₂e/year</p>
+        </div>
+        <button
+          onClick={() => onDelete(item)}
+          className="p-2 text-dark-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+          title="Delete Report"
+        >
+          <Trash2 className="w-5 h-5" />
+        </button>
+      </div>
+
+      <div className="mt-auto pt-4 border-t border-white/10 space-y-2 text-sm text-dark-300">
+        <div className="flex justify-between">
+          <span>Transport</span>
+          <span className="text-white font-medium">{item.breakdown.transport.toLocaleString()} kg</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Energy</span>
+          <span className="text-white font-medium">{item.breakdown.energy.toLocaleString()} kg</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Food</span>
+          <span className="text-white font-medium">{item.breakdown.food.toLocaleString()} kg</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Waste</span>
+          <span className="text-white font-medium">{item.breakdown.waste.toLocaleString()} kg</span>
+        </div>
+        {item.breakdown.shopping !== undefined && (
+          <div className="flex justify-between">
+            <span>Shopping</span>
+            <span className="text-white font-medium">{item.breakdown.shopping.toLocaleString()} kg</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+});

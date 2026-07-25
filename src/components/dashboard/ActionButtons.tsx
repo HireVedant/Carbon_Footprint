@@ -7,6 +7,7 @@ import Button from '../ui/Button';
 import { generateCarbonReport } from '../../utils/reportGenerator';
 import Toast, { ToastProps } from '../ui/Toast';
 import { AnimatePresence, motion } from 'framer-motion';
+import { logAuditAction } from '../../services/auditService';
 
 export const ActionButtons: React.FC<{ historyDocs?: any[] }> = ({ historyDocs = [] }) => {
   const navigate = useNavigate();
@@ -27,8 +28,21 @@ export const ActionButtons: React.FC<{ historyDocs?: any[] }> = ({ historyDocs =
   };
 
   const handleDownloadReport = async () => {
+    if (!user) {
+      showToast('error', 'You must be logged in to download a report.');
+      return;
+    }
+
     if (!isCalculated || !results) {
       showToast('error', 'No report available. Please complete the carbon calculator first.');
+      return;
+    }
+
+    // Security Check: Ensure all history docs belong to the current user
+    const hasForeignData = historyDocs.some(doc => doc.userId !== user.uid && doc.userId !== undefined);
+    if (hasForeignData) {
+      void logAuditAction(user.uid, user.email || '', 'REPORT_GENERATION_FAILURE', 'historyDocs', { reason: 'Data boundary violation attempt' });
+      showToast('error', 'Security error: Unauthorized data access prevented.');
       return;
     }
 
@@ -40,12 +54,15 @@ export const ActionButtons: React.FC<{ historyDocs?: any[] }> = ({ historyDocs =
         name:  userProfile?.name || user?.displayName || 'Eco User',
         email: userProfile?.email || user?.email || '',
       };
+      
       // Simulate slight delay for async generation feel
       await new Promise(resolve => setTimeout(resolve, 800));
       
       await generateCarbonReport(results, reportUser, { answers, historyDocs });
+      
       showToast('success', 'Report downloaded successfully!');
-    } catch (err) {
+    } catch (err: any) {
+      void logAuditAction(user.uid, user.email || '', 'REPORT_GENERATION_FAILURE', 'generateCarbonReport', { error: err.message || 'Unknown error' });
       showToast('error', 'Failed to generate report. Please try again.');
     } finally {
       setIsGenerating(false);
@@ -115,3 +132,4 @@ export const ActionButtons: React.FC<{ historyDocs?: any[] }> = ({ historyDocs =
     </div>
   );
 };
+

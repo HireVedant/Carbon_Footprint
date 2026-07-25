@@ -152,6 +152,36 @@ function formatCO2(kg: number): string {
   return `${Math.round(kg)} kg`;
 }
 
+// ── Memoized Leaderboard Entry ────────────────────────────────────────────────
+const MemoizedLeaderboardEntry = React.memo(({ entry, index, isCurrentUser, isContributionCard = false }: { entry: any, index: number, isCurrentUser: boolean, isContributionCard?: boolean }) => {
+  return (
+    <motion.div
+      initial={!isContributionCard ? { opacity: 0, x: -10 } : undefined}
+      animate={!isContributionCard ? { opacity: 1, x: 0 } : undefined}
+      transition={!isContributionCard ? { delay: (index % 5) * 0.05 } : undefined}
+      className={`flex items-center gap-3 p-3 rounded-xl transition-colors duration-200 ${isCurrentUser ? 'bg-primary-500/10 border border-primary-500/20' : 'hover:bg-white/5'}`}
+    >
+      <RankBadge rank={index + 1} />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-white truncate">{entry.displayName}</p>
+        <div className="flex items-center gap-1 text-[10px] text-dark-500 mt-0.5">
+          {categoryIcon(entry.highestCategory)}
+          <span>{entry.highestCategory}</span>
+        </div>
+      </div>
+      <div className="text-right flex-shrink-0">
+        <p className="text-sm font-bold text-white">{entry.annualEstimate} t</p>
+        <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ecoScoreColor(entry.ecoScore)}`}>
+          {entry.ecoLabel}
+        </span>
+      </div>
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary-500/20 to-accent-500/10 flex-shrink-0">
+        <span className="text-sm font-display font-bold gradient-text">{entry.ecoScore}</span>
+      </div>
+    </motion.div>
+  );
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Community Page
 // ─────────────────────────────────────────────────────────────────────────────
@@ -507,32 +537,14 @@ export default function Community() {
                 {visibleLeaderboard.map((entry, i) => {
                   const isCurrentUser = user && entry.userId === user.uid;
                   return (
-                  <motion.div
-                    key={`${entry.displayName}-${leaderboardPageStart + i}`}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className={`flex items-center gap-3 p-3 rounded-xl transition-colors duration-200 ${isCurrentUser ? 'bg-primary-500/10 border border-primary-500/20' : 'hover:bg-white/5'}`}
-                  >
-                    <RankBadge rank={leaderboardPageStart + i + 1} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{entry.displayName}</p>
-                      <div className="flex items-center gap-1 text-[10px] text-dark-500 mt-0.5">
-                        {categoryIcon(entry.highestCategory)}
-                        <span>{entry.highestCategory}</span>
-                      </div>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-bold text-white">{entry.annualEstimate} t</p>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ecoScoreColor(entry.ecoScore)}`}>
-                        {entry.ecoLabel}
-                      </span>
-                    </div>
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary-500/20 to-accent-500/10 flex-shrink-0">
-                      <span className="text-sm font-display font-bold gradient-text">{entry.ecoScore}</span>
-                    </div>
-                  </motion.div>
-                )})}
+                    <MemoizedLeaderboardEntry 
+                      key={`${entry.displayName}-${leaderboardPageStart + i}`}
+                      entry={entry}
+                      index={leaderboardPageStart + i}
+                      isCurrentUser={!!isCurrentUser}
+                    />
+                  );
+                })}
                 {totalLeaderboardPages > 1 && (
                   <div className="flex items-center justify-between border-t border-white/5 mt-3 pt-3">
                     <span className="text-xs text-dark-500">
@@ -567,25 +579,12 @@ export default function Community() {
             {userEntry && (
               <div className="mt-6 pt-6 border-t border-white/5">
                 <h3 className="text-sm font-semibold text-white mb-4">My Contribution</h3>
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-primary-500/5 border border-primary-500/20">
-                  <RankBadge rank={userRankIndex + 1} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{userEntry.displayName}</p>
-                    <div className="flex items-center gap-1 text-[10px] text-dark-500 mt-0.5">
-                      {categoryIcon(userEntry.highestCategory)}
-                      <span>{userEntry.highestCategory}</span>
-                    </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-bold text-white">{userEntry.annualEstimate} t</p>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ecoScoreColor(userEntry.ecoScore)}`}>
-                      {userEntry.ecoLabel}
-                    </span>
-                  </div>
-                  <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary-500/20 to-accent-500/10 flex-shrink-0">
-                    <span className="text-sm font-display font-bold gradient-text">{userEntry.ecoScore}</span>
-                  </div>
-                </div>
+                <MemoizedLeaderboardEntry 
+                  entry={userEntry}
+                  index={userRankIndex}
+                  isCurrentUser={true}
+                  isContributionCard={true}
+                />
                 
                 <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white/5 p-4 rounded-xl">
                   <div>

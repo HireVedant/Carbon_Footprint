@@ -24,7 +24,7 @@ interface CalculatorContextType {
 const CalculatorContext = createContext<CalculatorContextType | undefined>(undefined);
 
 export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [inputs, setInputs] = useState<CalculatorInputs>(initialInputs);
   const [results, setResults] = useState<CalculationResult | null>(null);
   const [hydratedUserId, setHydratedUserId] = useState<string | null>(null);
@@ -147,6 +147,7 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
       saveCalculation(user.uid, computedResults)
         .then(async (calculationId) => {
           // Fetch current total user count for the community stats doc
+          if (userProfile?.isTestAccount) return;
           let totalUsers = 1;
           try {
             const usersCol = collection(db, 'users');

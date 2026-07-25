@@ -66,112 +66,16 @@ export const FlightPlanner: React.FC<FlightPlannerProps> = ({ flights, onChange 
         )}
       </div>
 
-      {flights.map((flight, index) => {
-        const result = calculateFlightEmission(flight.depIata, flight.arrIata, flight.cabinClass, flight.isRoundTrip, flight.tripsPerYear);
-        const depAirport = airports.find(a => a.iata === flight.depIata);
-        const arrAirport = airports.find(a => a.iata === flight.arrIata);
-
-        return (
-          <div key={flight.id} className="relative bg-gray-800/60 border border-gray-700/50 rounded-xl p-5 space-y-4 group">
-            {/* Route header */}
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Route {index + 1}</span>
-              <button
-                type="button"
-                onClick={() => removeFlight(flight.id)}
-                className="opacity-0 group-hover:opacity-100 p-1.5 text-red-400/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                aria-label="Remove flight"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Airport selectors */}
-            <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
-              <div>
-                <label className="block text-[11px] font-medium text-gray-400 mb-1">Departure</label>
-                <select
-                  value={flight.depIata}
-                  onChange={(e) => updateFlight(flight.id, { depIata: e.target.value })}
-                  className="w-full bg-gray-900/80 border border-gray-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 rounded-lg px-3 py-2.5 text-white text-sm outline-none transition-all"
-                >
-                  {airports.map(a => (
-                    <option key={a.iata} value={a.iata}>{a.iata} — {a.city}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="flex items-center justify-center pb-1">
-                <ArrowRight className="w-4 h-4 text-gray-600" />
-              </div>
-              <div>
-                <label className="block text-[11px] font-medium text-gray-400 mb-1">Arrival</label>
-                <select
-                  value={flight.arrIata}
-                  onChange={(e) => updateFlight(flight.id, { arrIata: e.target.value })}
-                  className="w-full bg-gray-900/80 border border-gray-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 rounded-lg px-3 py-2.5 text-white text-sm outline-none transition-all"
-                >
-                  {airports.map(a => (
-                    <option key={a.iata} value={a.iata}>{a.iata} — {a.city}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Options row */}
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="block text-[11px] font-medium text-gray-400 mb-1">Cabin Class</label>
-                <select
-                  value={flight.cabinClass}
-                  onChange={(e) => updateFlight(flight.id, { cabinClass: e.target.value as any })}
-                  className="w-full bg-gray-900/80 border border-gray-600 focus:border-cyan-500 rounded-lg px-3 py-2.5 text-white text-xs outline-none transition-all"
-                >
-                  <option value="ECONOMY">Economy</option>
-                  <option value="PREMIUM_ECONOMY">Premium Economy</option>
-                  <option value="BUSINESS">Business</option>
-                  <option value="FIRST">First Class</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[11px] font-medium text-gray-400 mb-1">Trip Type</label>
-                <div className="grid grid-cols-2 gap-1 bg-gray-900/80 border border-gray-600 rounded-lg p-0.5">
-                  <button
-                    type="button"
-                    onClick={() => updateFlight(flight.id, { isRoundTrip: false })}
-                    className={`py-2 text-[11px] font-medium rounded-md transition-all ${!flight.isRoundTrip ? 'bg-cyan-500 text-white' : 'text-gray-400 hover:text-white'}`}
-                  >One-way</button>
-                  <button
-                    type="button"
-                    onClick={() => updateFlight(flight.id, { isRoundTrip: true })}
-                    className={`py-2 text-[11px] font-medium rounded-md transition-all ${flight.isRoundTrip ? 'bg-cyan-500 text-white' : 'text-gray-400 hover:text-white'}`}
-                  >Round Trip</button>
-                </div>
-              </div>
-              <div>
-                <label className="block text-[11px] font-medium text-gray-400 mb-1">Trips / Year</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={52}
-                  value={flight.tripsPerYear}
-                  onChange={(e) => updateFlight(flight.id, { tripsPerYear: Math.max(1, parseInt(e.target.value) || 1) })}
-                  className="w-full bg-gray-900/80 border border-gray-600 focus:border-cyan-500 rounded-lg px-3 py-2.5 text-white text-sm outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Route summary pill */}
-            <div className="flex items-center justify-between bg-gray-900/50 rounded-lg px-3 py-2 mt-1">
-              <span className="text-xs text-gray-400">
-                {depAirport?.city || flight.depIata} → {arrAirport?.city || flight.arrIata} · {result.distanceKm.toLocaleString()} km
-              </span>
-              <span className="text-sm font-semibold text-cyan-400">
-                {Math.round(result.totalEmissionKgCO2).toLocaleString()} kg CO₂/yr
-              </span>
-            </div>
-          </div>
-        );
-      })}
+      {flights.map((flight, index) => (
+        <MemoizedFlightRoute
+          key={flight.id}
+          flight={flight}
+          index={index}
+          airports={airports}
+          updateFlight={updateFlight}
+          removeFlight={removeFlight}
+        />
+      ))}
 
       <button
         type="button"
@@ -184,3 +88,118 @@ export const FlightPlanner: React.FC<FlightPlannerProps> = ({ flights, onChange 
     </div>
   );
 };
+
+const MemoizedFlightRoute = React.memo(({ 
+  flight, index, airports, updateFlight, removeFlight 
+}: { 
+  flight: FlightTripEntry, 
+  index: number, 
+  airports: any[], 
+  updateFlight: (id: string, updates: Partial<FlightTripEntry>) => void,
+  removeFlight: (id: string) => void
+}) => {
+  const result = calculateFlightEmission(flight.depIata, flight.arrIata, flight.cabinClass, flight.isRoundTrip, flight.tripsPerYear);
+  const depAirport = airports.find(a => a.iata === flight.depIata);
+  const arrAirport = airports.find(a => a.iata === flight.arrIata);
+
+  return (
+    <div className="relative bg-gray-800/60 border border-gray-700/50 rounded-xl p-5 space-y-4 group">
+      {/* Route header */}
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Route {index + 1}</span>
+        <button
+          type="button"
+          onClick={() => removeFlight(flight.id)}
+          className="opacity-0 group-hover:opacity-100 p-1.5 text-red-400/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+          aria-label="Remove flight"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Airport selectors */}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3">
+        <div>
+          <label className="block text-[11px] font-medium text-gray-400 mb-1">Departure</label>
+          <select
+            value={flight.depIata}
+            onChange={(e) => updateFlight(flight.id, { depIata: e.target.value })}
+            className="w-full bg-gray-900/80 border border-gray-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 rounded-lg px-3 py-2.5 text-white text-sm outline-none transition-all"
+          >
+            {airports.map(a => (
+              <option key={a.iata} value={a.iata}>{a.iata} — {a.city}</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center justify-center pb-1">
+          <ArrowRight className="w-4 h-4 text-gray-600" />
+        </div>
+        <div>
+          <label className="block text-[11px] font-medium text-gray-400 mb-1">Arrival</label>
+          <select
+            value={flight.arrIata}
+            onChange={(e) => updateFlight(flight.id, { arrIata: e.target.value })}
+            className="w-full bg-gray-900/80 border border-gray-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/30 rounded-lg px-3 py-2.5 text-white text-sm outline-none transition-all"
+          >
+            {airports.map(a => (
+              <option key={a.iata} value={a.iata}>{a.iata} — {a.city}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* Options row */}
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <label className="block text-[11px] font-medium text-gray-400 mb-1">Cabin Class</label>
+          <select
+            value={flight.cabinClass}
+            onChange={(e) => updateFlight(flight.id, { cabinClass: e.target.value as any })}
+            className="w-full bg-gray-900/80 border border-gray-600 focus:border-cyan-500 rounded-lg px-3 py-2.5 text-white text-xs outline-none transition-all"
+          >
+            <option value="ECONOMY">Economy</option>
+            <option value="PREMIUM_ECONOMY">Premium Economy</option>
+            <option value="BUSINESS">Business</option>
+            <option value="FIRST">First Class</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-[11px] font-medium text-gray-400 mb-1">Trip Type</label>
+          <div className="grid grid-cols-2 gap-1 bg-gray-900/80 border border-gray-600 rounded-lg p-0.5">
+            <button
+              type="button"
+              onClick={() => updateFlight(flight.id, { isRoundTrip: false })}
+              className={`py-2 text-[11px] font-medium rounded-md transition-all ${!flight.isRoundTrip ? 'bg-cyan-500 text-white' : 'text-gray-400 hover:text-white'}`}
+            >One-way</button>
+            <button
+              type="button"
+              onClick={() => updateFlight(flight.id, { isRoundTrip: true })}
+              className={`py-2 text-[11px] font-medium rounded-md transition-all ${flight.isRoundTrip ? 'bg-cyan-500 text-white' : 'text-gray-400 hover:text-white'}`}
+            >Round Trip</button>
+          </div>
+        </div>
+        <div>
+          <label className="block text-[11px] font-medium text-gray-400 mb-1">Trips / Year</label>
+          <input
+            type="number"
+            min={1}
+            max={52}
+            value={flight.tripsPerYear}
+            onChange={(e) => updateFlight(flight.id, { tripsPerYear: Math.max(1, parseInt(e.target.value) || 1) })}
+            className="w-full bg-gray-900/80 border border-gray-600 focus:border-cyan-500 rounded-lg px-3 py-2.5 text-white text-sm outline-none transition-all"
+          />
+        </div>
+      </div>
+
+      {/* Route summary pill */}
+      <div className="flex items-center justify-between bg-gray-900/50 rounded-lg px-3 py-2 mt-1">
+        <span className="text-xs text-gray-400">
+          {depAirport?.city || flight.depIata} → {arrAirport?.city || flight.arrIata} · {result.distanceKm.toLocaleString()} km
+        </span>
+        <span className="text-sm font-semibold text-cyan-400">
+          {Math.round(result.totalEmissionKgCO2).toLocaleString()} kg CO₂/yr
+        </span>
+      </div>
+    </div>
+  );
+});

@@ -109,7 +109,12 @@ export type AuditAction =
   | 'ASSESSMENT_RESTORE'
   | 'NEWSLETTER_SEND'
   | 'NEWSLETTER_CANCEL'
-  | 'TEST_ACCOUNT_CREATE';
+  | 'TEST_ACCOUNT_CREATE'
+  | 'OWNER_CHANGE'
+  | 'PROMPT_INJECTION_DETECTED'
+  | 'AI_FAILURE'
+  | 'RATE_LIMIT_EXCEEDED'
+  | 'REPORT_GENERATION_FAILURE';
 
 /** Checks if a role has admin-level access */
 export function hasAdminAccess(role?: UserRole): boolean {

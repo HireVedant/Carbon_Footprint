@@ -55,77 +55,15 @@ export const ApplianceSelector: React.FC<ApplianceSelectorProps> = ({ appliances
       </div>
 
       {/* Added appliances */}
-      {appliances.map((app) => {
-        const cat = categories[app.applianceId];
-        if (!cat) return null;
-        const rating = cat.starRatings[app.stars];
-
-        return (
-          <div key={app.id} className="bg-gray-800/60 border border-gray-700/50 rounded-xl p-4 space-y-3 group">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-white">{cat.name}</span>
-              <button
-                type="button"
-                onClick={() => removeAppliance(app.id)}
-                className="opacity-0 group-hover:opacity-100 p-1.5 text-red-400/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
-                aria-label="Remove appliance"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {/* Star Rating */}
-              <div>
-                <label className="block text-[11px] font-medium text-gray-400 mb-1">BEE Star Rating</label>
-                <div className="flex gap-1">
-                  {([1, 2, 3, 4, 5] as const).map(s => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => updateAppliance(app.id, { stars: s })}
-                      className={`p-1.5 rounded-lg transition-all ${
-                        s <= app.stars
-                          ? 'text-amber-400 bg-amber-500/10'
-                          : 'text-gray-600 hover:text-gray-400'
-                      }`}
-                      aria-label={`${s} star${s > 1 ? 's' : ''}`}
-                    >
-                      <Star className="w-4 h-4" fill={s <= app.stars ? 'currentColor' : 'none'} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Daily Hours */}
-              <div>
-                <label className="block text-[11px] font-medium text-gray-400 mb-1">Daily Usage (hours)</label>
-                <input
-                  type="number"
-                  min={0.5}
-                  max={24}
-                  step={0.5}
-                  value={app.dailyHours}
-                  onChange={(e) => updateAppliance(app.id, { dailyHours: Math.max(0.5, parseFloat(e.target.value) || cat.defaultDailyHours) })}
-                  className="w-full bg-gray-900/80 border border-gray-600 focus:border-amber-500 rounded-lg px-3 py-2 text-white text-sm outline-none transition-all"
-                />
-              </div>
-            </div>
-
-            {/* Info pill */}
-            {rating && (
-              <div className="flex items-center justify-between bg-gray-900/50 rounded-lg px-3 py-2 text-xs">
-                <span className="text-gray-400">
-                  {rating.powerDrawWatts}W · {rating.isInverter ? 'Inverter' : 'Non-Inverter'} · {app.stars}★
-                </span>
-                <span className="text-amber-400 font-medium">
-                  ~{Math.round((rating.powerDrawWatts * app.dailyHours / 1000) * 365 * 0.716)} kg CO₂/yr
-                </span>
-              </div>
-            )}
-          </div>
-        );
-      })}
+      {appliances.map((app) => (
+        <MemoizedApplianceRow
+          key={app.id}
+          app={app}
+          categories={categories}
+          updateAppliance={updateAppliance}
+          removeAppliance={removeAppliance}
+        />
+      ))}
 
       {/* Add appliance buttons */}
       {availableToAdd.length > 0 && (
@@ -149,3 +87,82 @@ export const ApplianceSelector: React.FC<ApplianceSelectorProps> = ({ appliances
     </div>
   );
 };
+
+const MemoizedApplianceRow = React.memo(({
+  app, categories, updateAppliance, removeAppliance
+}: {
+  app: ApplianceUsage,
+  categories: any,
+  updateAppliance: (id: string, updates: Partial<ApplianceUsage>) => void,
+  removeAppliance: (id: string) => void
+}) => {
+  const cat = categories[app.applianceId];
+  if (!cat) return null;
+  const rating = cat.starRatings[app.stars];
+
+  return (
+    <div className="bg-gray-800/60 border border-gray-700/50 rounded-xl p-4 space-y-3 group">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-white">{cat.name}</span>
+        <button
+          type="button"
+          onClick={() => removeAppliance(app.id)}
+          className="opacity-0 group-hover:opacity-100 p-1.5 text-red-400/60 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+          aria-label="Remove appliance"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {/* Star Rating */}
+        <div>
+          <label className="block text-[11px] font-medium text-gray-400 mb-1">BEE Star Rating</label>
+          <div className="flex gap-1">
+            {([1, 2, 3, 4, 5] as const).map(s => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => updateAppliance(app.id, { stars: s })}
+                className={`p-1.5 rounded-lg transition-all ${
+                  s <= app.stars
+                    ? 'text-amber-400 bg-amber-500/10'
+                    : 'text-gray-600 hover:text-gray-400'
+                }`}
+                aria-label={`${s} star${s > 1 ? 's' : ''}`}
+              >
+                <Star className="w-4 h-4" fill={s <= app.stars ? 'currentColor' : 'none'} />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Daily Hours */}
+        <div>
+          <label className="block text-[11px] font-medium text-gray-400 mb-1">Daily Usage (hours)</label>
+          <input
+            type="number"
+            min={0.5}
+            max={24}
+            step={0.5}
+            value={app.dailyHours}
+            onChange={(e) => updateAppliance(app.id, { dailyHours: Math.max(0.5, parseFloat(e.target.value) || cat.defaultDailyHours) })}
+            className="w-full bg-gray-900/80 border border-gray-600 focus:border-amber-500 rounded-lg px-3 py-2 text-white text-sm outline-none transition-all"
+          />
+        </div>
+      </div>
+
+      {/* Info pill */}
+      {rating && (
+        <div className="flex items-center justify-between bg-gray-900/50 rounded-lg px-3 py-2 text-xs">
+          <span className="text-gray-400">
+            {rating.powerDrawWatts}W · {rating.isInverter ? 'Inverter' : 'Non-Inverter'} · {app.stars}★
+          </span>
+          <span className="text-amber-400 font-medium">
+            ~{Math.round((rating.powerDrawWatts * app.dailyHours / 1000) * 365 * 0.716)} kg CO₂/yr
+          </span>
+        </div>
+      )}
+    </div>
+  );
+});
