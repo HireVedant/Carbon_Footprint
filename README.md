@@ -1,53 +1,189 @@
 # EcoTrack AI
-An AI-powered Carbon Footprint Tracking and Sustainability Recommendation Platform.
+
+EcoTrack AI is a modern carbon footprint assessment platform that enables individuals to measure, understand, and reduce their environmental impact through scientifically derived emission calculations, adaptive assessments, historical analytics, and personalized sustainability recommendations.
+
+The platform combines a data-driven carbon calculation engine with an intuitive user experience to transform complex environmental data into practical actions for everyday users.
 
 ---
 
-## Link 
-https://carbon-footprint-pccoe.vercel.app/
+## Live Demo
+
+<https://carbon-footprint-pccoe.vercel.app/>
 
 ---
 
-## Project Overview
+## Overview
 
-EcoTrack AI is a comprehensive web application designed to help individuals and organizations understand, track, and reduce their environmental impact. As climate change continues to be a pressing global issue, understanding one's personal carbon footprint is the first crucial step toward sustainability.
+Climate change mitigation begins with understanding personal emissions. EcoTrack AI provides an accessible way for users to estimate their annual carbon footprint across major lifestyle categories while maintaining transparency in the underlying calculations.
 
-This project solves the problem of environmental awareness by providing users with an intuitive, data-driven platform to calculate their greenhouse gas emissions across various lifestyle factors such as transportation, energy usage, and diet. Beyond simple calculation, EcoTrack AI leverages intelligent algorithms to offer personalized sustainability recommendations, empowering users to make actionable, eco-friendly lifestyle changes.
+Unlike simple calculators that provide only a single emissions number, EcoTrack AI offers:
 
-Intended for environmentally conscious individuals and developed within an academic context as a Software Engineering Mini Project, EcoTrack AI serves as both a practical tool for carbon management and a demonstration of modern, full-stack web development practices.
+- Category-wise emission analysis
+- Scientific confidence estimation
+- Historical assessment tracking
+- AI-generated sustainability recommendations
+- Interactive "What-If" simulations
+- Downloadable assessment reports
+
+The project was developed as a Software Engineering Mini Project and demonstrates the application of modern frontend engineering, cloud services, data visualization, and sustainable computing concepts.
 
 ---
 
-## Features
+## Core Features
 
-- **Email & Password Authentication**: Secure user registration and login functionality.
-- **User Registration**: Create personal accounts to track data over time.
-- **Secure Login**: Protected routes ensuring privacy of user data.
-- **Carbon Footprint Calculator**: Detailed assessment of emissions from daily activities.
-- **AI Sustainability Recommendations**: Personalized suggestions to reduce environmental impact based on user data.
-- **Dashboard**: A centralized hub for tracking progress and reviewing metrics.
-- **User Profile**: Management of personal settings and historical data.
-- **Carbon Emission Breakdown**: Visual categorization of emissions using interactive charts.
-- **Download PDF Report**: Generate and download comprehensive sustainability reports.
-- **Newsletter Subscription**: Keep users informed on the latest sustainability tips and platform updates.
-- **Firebase Authentication**: Robust and secure user identity management.
-- **Firestore Database**: Real-time cloud database for storing user profiles and calculation history.
-- **Responsive Design**: Flawless user experience across desktop, tablet, and mobile devices.
+### Carbon Footprint Assessment
+
+A guided adaptive questionnaire collects lifestyle information and estimates annual greenhouse gas emissions across multiple categories including:
+
+- Transportation
+- Household Energy
+- Food & Diet
+- Waste Management
+- Consumer Shopping
+
+The questionnaire dynamically adapts based on previous responses, reducing unnecessary inputs and improving user experience.
+
+---
+
+### Scientific Calculation Engine
+
+EcoTrack AI implements a modular calculation engine that combines multiple emission factors and scientific datasets to estimate annual CO₂ equivalent emissions.
+
+Features include:
+
+- Category-based emission modelling
+- Regional electricity emission factors
+- Transportation-specific calculations
+- Household energy estimation
+- Food impact modelling
+- Confidence scoring
+- Versioned calculation engine
+
+---
+
+### Personalized Dashboard
+
+Every completed assessment generates a comprehensive dashboard containing:
+
+- Annual Carbon Footprint
+- Eco Score
+- Scientific Confidence Score
+- Indian Average Comparison
+- Category Breakdown
+- Historical Trend Analysis
+- AI Sustainability Insights
+- What-If Simulator
+- Action Recommendations
+
+---
+
+### AI Sustainability Coach
+
+EcoTrack AI provides contextual sustainability recommendations generated from assessment results.
+
+Recommendations focus on:
+
+- Transportation improvements
+- Energy optimization
+- Household efficiency
+- Sustainable food choices
+- Waste reduction
+
+The AI system operates only on assessment data and never requires unnecessary personal information.
+
+---
+
+### Historical Tracking
+
+Authenticated users can maintain a complete history of previous assessments.
+
+Features include:
+
+- Chronological assessment history
+- Previous assessment comparison
+- Historical trend visualization
+- Emission progression tracking
+
+---
+
+### Interactive Visualizations
+
+Assessment data is presented using multiple visualization techniques including:
+
+- Bar Charts
+- Doughnut Charts
+- Line Charts
+- Confidence Distribution
+- Category Comparisons
+
+These visualizations provide intuitive insight into the user's largest emission sources.
+
+---
+
+### Scientific PDF Reports
+
+Users can export assessment results as professionally formatted PDF reports containing:
+
+- Executive Summary
+- Emission Breakdown
+- Category Analysis
+- AI Recommendations
+- Scientific Metadata
+- Confidence Information
+
+---
+
+### Community Features
+
+EcoTrack AI also includes community-focused functionality including:
+
+- Community Statistics
+- Leaderboards
+- Sustainability Participation Metrics
 
 ---
 
 ## Technology Stack
 
-| Category | Technology |
-| :--- | :--- |
-| **Frontend** | React 19, TypeScript, React Router DOM |
-| **Backend & Database** | Firebase (Firestore) |
-| **Authentication** | Firebase Authentication |
-| **Data Visualization** | Chart.js, react-chartjs-2 |
-| **Document Generation** | jsPDF, jsPDF AutoTable |
-| **Styling & Animation** | Tailwind CSS, Framer Motion, Lucide React |
-| **Build Tool** | Vite |
-| **Programming Language** | TypeScript, JavaScript, HTML, CSS |
+| Category | Technologies |
+|-----------|--------------|
+| Frontend | React 19, TypeScript |
+| Routing | React Router |
+| Styling | Tailwind CSS |
+| Animations | Framer Motion |
+| Charts | Chart.js, react-chartjs-2 |
+| Authentication | Firebase Authentication |
+| Database | Cloud Firestore |
+| PDF Generation | jsPDF, jsPDF-AutoTable |
+| Build Tool | Vite |
+| Language | TypeScript |
+
+---
+
+## Architecture
+
+```
+User
+   │
+   ▼
+Adaptive Assessment
+   │
+   ▼
+Scientific Calculation Engine
+   │
+   ├────────► Confidence Engine
+   │
+   ├────────► Dataset Registry
+   │
+   ▼
+Assessment Result
+   │
+   ├────────► Dashboard
+   ├────────► AI Coach
+   ├────────► What-If Simulator
+   ├────────► History
+   └────────► PDF Report
+```
 
 ---
 
@@ -55,34 +191,137 @@ Intended for environmentally conscious individuals and developed within an acade
 
 ```text
 src/
-├── components/      # Reusable UI components organized by feature (auth, calculator, dashboard, layout, ui)
-├── constants/       # Application-wide constants, configuration values, and fixed data
-├── context/         # React Context providers for global state management (AuthContext, CalculatorContext)
-├── firebase/        # Firebase initialization, configuration, and service modules (auth, firestore)
-├── pages/           # Top-level route components representing full pages (Home, Dashboard, Calculator, etc.)
-└── utils/           # Helper functions and core business logic (carbon calculator math, PDF report generator)
+├── components/
+│   ├── assessment/
+│   ├── dashboard/
+│   ├── charts/
+│   ├── layout/
+│   └── ui/
+│
+├── context/
+│   ├── AuthContext
+│   └── AssessmentContext
+│
+├── data/
+│   └── datasets/
+│
+├── firebase/
+│
+├── hooks/
+│
+├── pages/
+│
+├── services/
+│
+├── types/
+│
+└── utils/
 ```
 
-- **`components/`**: Modular, reusable pieces of the UI (e.g., buttons, form fields, layout wrappers) to maintain DRY principles.
-- **`context/`**: Manages global application state, ensuring user authentication and calculator data are accessible throughout the app without prop drilling.
-- **`firebase/`**: Contains the setup and wrapper functions for interacting with Firebase Authentication and Firestore Database.
-- **`pages/`**: The main views of the application, assembled from various components and mapped to specific routes.
-- **`utils/`**: Pure functions handling complex calculations (like carbon emission math) and external integrations (like PDF generation).
+The project follows a modular architecture that separates user interface components, business logic, scientific calculations, Firebase services, datasets, and application state management.
 
 ---
 
-## Installation Guide
+## Installation
 
-Follow the instructions below to set up EcoTrack AI on your local machine.
+Clone the repository
 
-### Method 1 — Clone Repository
+```bash
+git clone https://github.com/HireVedant/Carbon_Footprint.git
+```
 
-#### Run these in terminal
+Navigate into the project
 
-```cmd
-git clone https://github.com/HireVedant/Carbon_Footprint
+```bash
 cd Carbon_Footprint
+```
+
+Install dependencies
+
+```bash
 npm install
+```
+
+Create a `.env` file
+
+```env
+VITE_FIREBASE_API_KEY=...
+VITE_FIREBASE_AUTH_DOMAIN=...
+VITE_FIREBASE_PROJECT_ID=...
+...
+```
+
+Start the development server
+
+```bash
 npm run dev
 ```
 
+---
+
+## Available Scripts
+
+```bash
+npm run dev        # Development server
+npm run build      # Production build
+npm run preview    # Preview production build
+npm run test       # Execute test suite
+```
+
+---
+
+## Key Capabilities
+
+- Adaptive assessment workflow
+- Scientific emission calculations
+- Versioned calculation engine
+- Dataset-driven architecture
+- Historical assessment management
+- Interactive analytics
+- AI-powered sustainability guidance
+- PDF report generation
+- Community engagement features
+- Responsive interface
+
+---
+
+## Project Status
+
+Current Version
+
+```
+Architecture            2.0.0
+Calculation Engine      2.0.0
+Dataset Registry        1.0.0
+```
+
+Implemented Components
+
+- Adaptive Assessment
+- Scientific Calculation Engine
+- Dataset Registry
+- Dashboard
+- Historical Tracking
+- AI Coach
+- Community Features
+- PDF Report Generation
+- Newsletter System
+- Administrative Dashboard
+
+---
+
+## Contributors
+
+Developed as part of the Software Engineering Mini Project.
+
+Primary Contributors
+
+- Jeevan Sagale
+- Tanay Daware
+- Vedant Hire
+
+---
+
+## License
+
+This project is intended for educational and research purposes.
