@@ -1,0 +1,133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // --- Helper Functions ---
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isOwner() {
+      return isAuthenticated() && (request.auth.token.email == 'jeevansagale9@gmail.com' || (getUserData() != null && getUserData().role == 'owner'));
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && (isOwner() || (getUserData() != null && getUserData().role == 'admin'));
+    }
+    
+    function isModerator() {
+      return isAuthenticated() && (isAdmin() || (getUserData() != null && getUserData().role == 'moderator'));
+    }
+    
+    function isSelf(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isUnmodified(key) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([key]);
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // --- Users Collection ---
+    match /users/{userId} {
+      // Users can read their own profile, moderators can read all
+      allow read: if isSelf(userId) || isModerator();
+      
+      // Initial creation
+      allow create: if isSelf(userId) && (!request.resource.data.keys().hasAny(['role']) || request.resource.data.role == 'user');
+      
+      // Update logic:
+      allow update: if (isSelf(userId) && (
+        isUnmodified('role') || 
+        (request.resource.data.role == 'owner' && request.auth.token.email.lower() == 'jeevansagale9@gmail.com')
+      )) || isAdmin();
+      
+      allow delete: if isAdmin();
+      
+      // --- V2 Assessments ---
+      match /assessments/{assessmentId} {
+        allow read: if isSelf(userId) || isModerator();
+        // Validation: Ensure calculations meet basic schema
+        allow create: if isSelf(userId) 
+          && request.resource.data.keys().hasAll(['userId', 'timestamp', 'emissions'])
+          && request.resource.data.userId == userId;
+          
+        // Assessments are immutable except for soft delete or caching AI advice
+        allow update: if (isSelf(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'deletedAt', 'aiAdvice', 'aiAdviceCachedAt'])) || isAdmin();
+        
+        allow delete: if false; // Only soft delete allowed
+      }
+    }
+    
+    // --- V1 Legacy Calculations ---
+    match /calculations/{calculationId} {
+      allow read: if isSelf(resource.data.userId) || isModerator();
+      allow create: if isSelf(request.resource.data.userId);
+      allow update, delete: if isSelf(resource.data.userId) || isAdmin();
+    }
+    
+    // --- Rate Limits ---
+    match /rate_limits/{docId} {
+      allow read: if isSelf(docId.replace('ai_', ''));
+      allow write: if false; // Server-only via functions
+    }
+    
+    // --- Audit Logs ---
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin(); // Admin actions trigger audit logs client side
+      allow update, delete: if false; // Immutable
+    }
+    
+    // --- AI Logs ---
+    match /ai_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+    
+    // --- Newsletters ---
+    match /newsletters/{email} {
+      allow read: if isAdmin();
+      allow create: if true; // Anyone can subscribe
+      allow update, delete: if isAdmin();
+    }
+    
+    // --- Dataset Registry ---
+    match /dataset_registry/{datasetId} {
+      allow read: if true; // Needed for client side calcs
+      allow write: if isAdmin();
+    }
+    
+    // --- Moderation ---
+    match /moderation/{modId} {
+      allow read, write: if isModerator();
+    }
+    
+    // --- Community Collections ---
+    match /communityStats/{docId} {
+      allow read: if true;
+      // Note: In production, stats updates should ideally be in Cloud Functions.
+      // Allowing authenticated users here for backward compatibility with client transactions.
+      allow write: if isAuthenticated();
+    }
+    
+    match /communityLeaderboard/{docId} {
+      allow read: if true;
+      allow write: if isSelf(docId) || isModerator();
+    }
+
+    match /communityReports/{docId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+  }
+}
