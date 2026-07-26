@@ -17,7 +17,7 @@ import { WhatIfSimulator } from '../components/dashboard/WhatIfSimulator';
 import {
   Wind, Zap, Calendar, ShieldCheck, TrendingDown,
   Car, Utensils, Trash2, ArrowUpRight, ArrowDownRight,
-  Sparkles, CheckCircle2, History as HistoryIcon, Loader2
+  Sparkles, CheckCircle2, History as HistoryIcon, Loader2, TreePine
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
@@ -149,12 +149,12 @@ export default function Dashboard() {
     ],
   };
 
-  const trendLabels = historyDocs.length > 0 
-    ? historyDocs.map((doc, i) => new Date(doc.createdAt?.toDate?.() || new Date()).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })).reverse() 
+  const trendLabels = historyDocs.length > 0
+    ? historyDocs.map((doc, i) => new Date(doc.createdAt?.toDate?.() || new Date()).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })).reverse()
     : ['Current'];
-    
-  const trendData = historyDocs.length > 0 
-    ? historyDocs.map(doc => Math.round(doc.emissions?.totalKgCO2PerYear ?? 0)).reverse() 
+
+  const trendData = historyDocs.length > 0
+    ? historyDocs.map(doc => Math.round(doc.emissions?.totalKgCO2PerYear ?? 0)).reverse()
     : [Math.round(totalKg)];
 
   const trendChartData = {
