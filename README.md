@@ -1,4 +1,4 @@
-# EcoTrack AI    
+# EcoTrack AI      
 
 EcoTrack AI is a modern carbon footprint assessment platform that enables individuals to measure, understand, and reduce their environmental impact through scientifically derived emission calculations, adaptive assessments, historical analytics, and personalized sustainability recommendations.
 
