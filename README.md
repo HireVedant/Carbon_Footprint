@@ -4,13 +4,13 @@ EcoTrack AI is a modern carbon footprint assessment platform that enables indivi
 
 The platform combines a data-driven carbon calculation engine with an intuitive user experience to transform complex environmental data into practical actions for everyday users.
 
----
+----
 
 ## Live Demo
 
 <https://eco-track-platform.vercel.app/>
 
----
+----
 
 ## Overview
 
@@ -27,7 +27,7 @@ Unlike simple calculators that provide only a single emissions number, EcoTrack 
 
 The project was developed as a Software Engineering Mini Project and demonstrates the application of modern frontend engineering, cloud services, data visualization, and sustainable computing concepts.
 
----
+----
 
 ## Core Features
 
@@ -43,7 +43,7 @@ A guided adaptive questionnaire collects lifestyle information and estimates ann
 
 The questionnaire dynamically adapts based on previous responses, reducing unnecessary inputs and improving user experience.
 
----
+----
 
 ### Scientific Calculation Engine
 
@@ -59,7 +59,7 @@ Features include:
 - Confidence scoring
 - Versioned calculation engine
 
----
+----
 
 ### Data Provider Layer
 
@@ -76,7 +76,7 @@ The application implements a **Data Provider Layer** (`src/data/providers/`) tha
 
 Switching data sources (mock → government API → Firestore → CSV → JSON) requires **ZERO component modifications**.
 
----
+----
 
 ### Personalized Dashboard
 
@@ -92,7 +92,7 @@ Every completed assessment generates a comprehensive dashboard containing:
 - What-If Simulator
 - Action Recommendations
 
----
+----
 
 ### AI Sustainability Coach
 
@@ -108,7 +108,7 @@ Recommendations focus on:
 
 The AI system operates only on assessment data and never requires unnecessary personal information.
 
----
+----
 
 ### Historical Tracking
 
@@ -121,7 +121,7 @@ Features include:
 - Historical trend visualization
 - Emission progression tracking
 
----
+----
 
 ### Visualization Architecture
 
@@ -140,7 +140,7 @@ The platform includes a comprehensive visualization system (`src/visualization/`
 
 All visualizations consume typed data from `VisualizationDataProvider` and follow the editorial dark-theme design system.
 
----
+----
 
 ### Scientific PDF Reports
 
@@ -153,7 +153,7 @@ Users can export assessment results as professionally formatted PDF reports cont
 - Scientific Metadata
 - Confidence Information
 
----
+----
 
 ### Community Features
 
@@ -163,7 +163,7 @@ EcoTrack AI also includes community-focused functionality including:
 - Leaderboards
 - Sustainability Participation Metrics
 
----
+----
 
 ## Technology Stack
 
@@ -181,7 +181,7 @@ EcoTrack AI also includes community-focused functionality including:
 | Build Tool | Vite 6.4 |
 | Language | TypeScript 5.8 |
 
----
+----
 
 ## Architecture
 
@@ -208,7 +208,7 @@ Assessment Result
    └────────► PDF Report
 ```
 
----
+----
 
 ## Project Structure
 
@@ -252,7 +252,7 @@ src/
 
 The project follows a modular architecture that separates user interface components, business logic, scientific calculations, Firebase services, datasets, visualization, and application state management.
 
----
+----
 
 ## Installation
 
@@ -315,7 +315,7 @@ npm run test       # Execute test suite
 - Community engagement features
 - Responsive interface
 
----
+----
 
 ## Project Status
 
@@ -340,7 +340,7 @@ Implemented Components
 - Newsletter System
 - Administrative Dashboard
 
----
+----
 
 ## Contributors
 
@@ -352,7 +352,7 @@ Primary Contributors
 - Tanay Daware
 - Vedant Hire
 
----
+----
 
 ## License
 
