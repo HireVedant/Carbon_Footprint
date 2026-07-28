@@ -1,18 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Leaf,
-  ArrowRight,
-} from 'lucide-react';
-
+import { Mail, Lock, Eye, EyeOff, Leaf, ArrowRight } from 'lucide-react';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
+import Toast, { ToastProps } from '../components/ui/Toast';
 
 function getLoginErrorMessage(code: string): string {
   switch (code) {
@@ -34,8 +27,6 @@ function getLoginErrorMessage(code: string): string {
   }
 }
 
-import Toast, { ToastProps } from '../components/ui/Toast';
-
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -55,15 +46,12 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!email.trim() || !password.trim()) {
       showToast('error', 'Please fill in all fields.');
       return;
     }
-
     setIsLoading(true);
     setToast(null);
-
     try {
       await login(email, password);
       showToast('success', 'Signed in successfully! Redirecting…');
@@ -77,36 +65,36 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-20 relative">
+    <div className="min-h-screen flex items-center justify-center px-4 py-20 relative" style={{ background: 'var(--bg-primary)' }}>
       {/* Background */}
-      <div className="absolute inset-0 mesh-bg" />
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent-500/5 rounded-full blur-3xl" />
+      <div className="absolute inset-0 mesh-bg" aria-hidden="true" />
+      <div className="absolute inset-0 grid-bg opacity-20" aria-hidden="true" />
+      <div className="absolute top-1/3 left-1/3 w-[500px] h-[500px] rounded-full opacity-20 blur-[120px] pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(52,211,153,0.08), transparent)' }} aria-hidden="true" />
 
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="relative w-full max-w-md"
       >
-        <div className="glass-strong p-8 sm:p-10">
+        <div className="p-8 sm:p-10" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-2xl)' }}>
           {/* Logo */}
           <div className="flex items-center justify-center gap-2.5 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
-              <Leaf className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #34d399, #2dd4bf)', boxShadow: '0 2px 12px rgba(52,211,153,0.25)' }}>
+              <Leaf className="w-4.5 h-4.5" style={{ color: 'var(--bg-primary)' }} />
             </div>
-            <span className="text-xl font-display font-bold">
+            <span className="text-lg font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
               Eco<span className="gradient-text">Track</span>
-              <span className="text-dark-400 font-light ml-1">AI</span>
+              <span className="font-light ml-1" style={{ color: 'var(--text-tertiary)' }}>AI</span>
             </span>
           </div>
 
           {/* Heading */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-display font-bold text-white mb-2">
-              Welcome Back
+            <h1 className="text-xl font-bold mb-2" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
+              Welcome back
             </h1>
-            <p className="text-sm text-dark-400">
+            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
               Sign in to continue tracking your carbon footprint.
             </p>
           </div>
@@ -116,7 +104,7 @@ export default function Login() {
             {toast && <Toast type={toast.type} message={toast.message} />}
           </AnimatePresence>
 
-          {/* Login Form */}
+          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4" id="login-form">
             <Input
               id="login-email"
@@ -140,31 +128,25 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-3 top-[38px] text-dark-400 hover:text-white"
+                className="absolute right-3 top-[38px] transition-colors duration-200"
+                style={{ color: 'var(--text-tertiary)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-tertiary)')}
                 aria-label="Toggle password visibility"
               >
-                {showPassword ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
 
             <div className="flex items-center justify-between">
               <label className="flex items-center gap-2">
-                <input type="checkbox" className="w-4 h-4" />
-                <span className="text-xs text-dark-400">Remember me</span>
+                <input type="checkbox" className="w-4 h-4 rounded" style={{ accentColor: 'var(--color-primary)' }} />
+                <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>Remember me</span>
               </label>
-
-              <span
-                className="text-xs text-dark-500 cursor-default"
-                title="Password reset is available via Firebase console"
-              >
+              <span className="text-xs cursor-default" style={{ color: 'var(--text-muted)' }} title="Password reset is available via Firebase console">
                 Forgot password?
               </span>
             </div>
@@ -187,19 +169,16 @@ export default function Login() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-dark-400">
+          <p className="mt-6 text-center text-sm" style={{ color: 'var(--text-tertiary)' }}>
             Don't have an account?{' '}
-            <Link
-              to="/register"
-              className="text-primary-400 hover:text-primary-300 font-medium"
-              id="login-register-link"
-            >
+            <Link to="/register" className="font-medium" style={{ color: 'var(--color-primary)' }} id="login-register-link">
               Create one free
             </Link>
           </p>
         </div>
 
-        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-20 bg-primary-500/10 blur-3xl rounded-full" />
+        {/* Subtle bottom glow */}
+        <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-3/4 h-16 rounded-full blur-2xl opacity-20" style={{ background: 'linear-gradient(90deg, transparent, rgba(52,211,153,0.15), transparent)' }} aria-hidden="true" />
       </motion.div>
     </div>
   );

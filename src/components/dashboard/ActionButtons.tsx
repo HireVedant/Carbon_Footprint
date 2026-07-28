@@ -89,27 +89,25 @@ export const ActionButtons: React.FC<{ historyDocs?: any[] }> = ({ historyDocs =
           Recalculate Footprint
         </Button>
 
-        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="w-full sm:w-auto">
-          <Button
-            variant={isCalculated ? 'primary' : 'secondary'}
-            onClick={handleDownloadReport}
-            disabled={!isCalculated || isGenerating}
-            className={`w-full sm:w-auto transition-all duration-300 ${isCalculated ? 'bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 border-0 shadow-lg shadow-emerald-500/20 text-white' : ''}`}
-            id="action-download-report"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Generating Scientific Report…
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4 mr-2" />
-                Download Scientific Report
-              </>
-            )}
-          </Button>
-        </motion.div>
+        <Button
+          variant={isCalculated ? 'primary' : 'secondary'}
+          onClick={handleDownloadReport}
+          disabled={!isCalculated || isGenerating}
+          className="w-full sm:w-auto"
+          id="action-download-report"
+        >
+          {isGenerating ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Generating Scientific Report…
+            </>
+          ) : (
+            <>
+              <Download className="w-4 h-4 mr-2" />
+              Download Scientific Report
+            </>
+          )}
+        </Button>
 
         <Button
           variant="secondary"
@@ -124,7 +122,7 @@ export const ActionButtons: React.FC<{ historyDocs?: any[] }> = ({ historyDocs =
 
       {/* "No report" message */}
       {!isCalculated && (
-        <p className="text-xs text-dark-500 flex items-center gap-1.5">
+        <p className="text-xs flex items-center gap-1.5" style={{ color: 'var(--text-tertiary)' }}>
           <AlertCircle className="w-3.5 h-3.5" />
           No report available. Complete the carbon calculator to generate a report.
         </p>

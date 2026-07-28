@@ -10,6 +10,7 @@ import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 // Lazy load pages for performance
 const Home = React.lazy(() => import('./pages/Home'));
+const Landing = React.lazy(() => import('./pages/Landing'));
 const Login = React.lazy(() => import('./pages/Login'));
 const Register = React.lazy(() => import('./pages/Register'));
 const Assessment = React.lazy(() => import('./pages/Assessment'));
@@ -33,13 +34,21 @@ function App() {
         <AssessmentProvider>
           <Router>
             <div className="flex flex-col min-h-screen">
+              {/* Skip to main content — accessibility */}
+              <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm focus:font-semibold"
+                style={{ background: 'var(--color-primary)', color: '#000' }}
+              >
+                Skip to content
+              </a>
               <Navbar />
-              <main className="flex-1">
+              <main id="main-content" className="flex-1" tabIndex={-1}>
                 <ErrorBoundary>
                   <Suspense fallback={<PageLoader />}>
                     <Routes>
                       {/* Public Routes */}
-                      <Route path="/" element={<Home />} />
+<Route path="/" element={<Landing />} />
                       <Route path="/login" element={<Login />} />
                       <Route path="/register" element={<Register />} />
                       <Route path="/about" element={<About />} />

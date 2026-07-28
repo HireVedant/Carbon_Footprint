@@ -1,643 +1,498 @@
-import React, { useState } from 'react';
+/**
+ * EcoTrack AI — Home Page
+ *
+ * Product showcase. Convinces users in under 30 seconds.
+ * Flow: Hero → Interactive Simulator → Equivalents → National Stats → Methodology → CTA
+ */
+
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, useInView, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import {
-  ArrowRight,
-  Leaf,
-  Brain,
-  BarChart3,
-  Globe2,
-  Zap,
-  Shield,
-  Users,
-  TrendingDown,
-  Sparkles,
-  ChevronRight,
-  CheckCircle2,
-  TreePine,
-  Wind,
-  Car,
-  Utensils,
-  Plane,
-  Home as HomeIcon,
-  HelpCircle,
-  RotateCw,
-  Award,
-  Smartphone,
-  Gauge
+  ArrowRight, TreePine, Zap, Car, Plane, Leaf,
+  BarChart3, Shield, CheckCircle2, ChevronDown,
+  Minus, Plus,
 } from 'lucide-react';
-import SectionHeading from '../components/ui/SectionHeading';
-import Card from '../components/ui/Card';
-import StatCard from '../components/ui/StatCard';
-import { getSEIHomeStats, getSEIHeroStats } from '../services/seiDatasetService';
+import { NationalDataProvider } from '../data/providers/NationalDataProvider';
+import { Doughnut, Radar } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale, LinearScale, BarElement, ArcElement,
+  RadialLinearScale, PointElement, LineElement, Filler,
+  Tooltip, Legend,
+} from 'chart.js';
 
-const fadeUp = {
-  initial: { opacity: 0, y: 30 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6, ease: 'easeOut' },
-};
+ChartJS.register(
+  CategoryScale, LinearScale, BarElement, ArcElement,
+  RadialLinearScale, PointElement, LineElement, Filler,
+  Tooltip, Legend,
+);
 
-const stagger = {
-  animate: { transition: { staggerChildren: 0.1 } },
-};
+/* ── Animated Counter ── */
+function Counter({ target, suffix = '', prefix = '', decimals = 0 }: {
+  target: number; suffix?: string; prefix?: string; decimals?: number;
+}) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true });
+  useEffect(() => {
+    if (!isInView) return;
+    const duration = 1800;
+    const start = Date.now();
+    const step = () => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(eased * target);
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }, [isInView, target]);
+  return (
+    <span ref={ref} className="tabular-nums" style={{ fontFamily: 'var(--font-mono)' }}>
+      {prefix}{decimals > 0 ? count.toFixed(decimals) : Math.round(count).toLocaleString()}{suffix}
+    </span>
+  );
+}
 
-const features = [
-  {
-    icon: Brain,
-    title: 'AI-Powered Precision',
-    description: 'Machine learning models process your commute, energy, and diet to calculate accurate CO2e emissions.',
-    color: 'from-emerald-500 to-teal-400',
-  },
-  {
-    icon: BarChart3,
-    title: 'Real-Time Dashboard',
-    description: 'Interactive charts track monthly trends, category breakdowns, and personalized reduction targets.',
-    color: 'from-teal-400 to-cyan-500',
-  },
-  {
-    icon: TreePine,
-    title: 'Virtual Eco-Forest',
-    description: 'Watch your digital forest thrive as you log eco-actions and lower your carbon footprint.',
-    color: 'from-emerald-400 to-green-500',
-  },
-  {
-    icon: Zap,
-    title: 'Smart AI Recommendations',
-    description: 'Get tailored high-impact recommendations to cut your footprint by up to 40% with minimal effort.',
-    color: 'from-amber-400 to-yellow-500',
-  },
-  {
-    icon: Shield,
-    title: 'Privacy & Security First',
-    description: 'Your personal data and assessment logs are encrypted and never shared with advertisers.',
-    color: 'from-cyan-400 to-blue-500',
-  },
-  {
-    icon: Users,
-    title: 'Gamified Eco Challenges',
-    description: 'Join community challenges, plant real & virtual trees, and climb the sustainability leaderboard.',
-    color: 'from-emerald-500 to-emerald-300',
-  },
-];
+/* ── Slider Component ── */
+function SimulatorSlider({ label, value, onChange, min, max, step = 1, unit, icon: Icon, color }: {
+  label: string; value: number; onChange: (v: number) => void;
+  min: number; max: number; step?: number; unit: string;
+  icon: React.ElementType; color: string;
+}) {
+  const pct = ((value - min) / (max - min)) * 100;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${color}15`, border: `1px solid ${color}25` }}>
+            <Icon className="w-4 h-4" style={{ color }} />
+          </div>
+          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>{label}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onChange(Math.max(min, value - step))}
+            className="w-7 h-7 rounded-md flex items-center justify-center transition-colors"
+            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-tertiary)' }}
+            aria-label={`Decrease ${label}`}
+          >
+            <Minus className="w-3 h-3" />
+          </button>
+          <span className="text-sm font-bold w-16 text-right tabular-nums" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+            {value}{unit}
+          </span>
+          <button
+            onClick={() => onChange(Math.min(max, value + step))}
+            className="w-7 h-7 rounded-md flex items-center justify-center transition-colors"
+            style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)', color: 'var(--text-tertiary)' }}
+            aria-label={`Increase ${label}`}
+          >
+            <Plus className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+      <div className="relative h-2 rounded-full" style={{ background: 'var(--bg-elevated)' }}>
+        <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-150" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color}60, ${color})` }} />
+        <input
+          type="range" min={min} max={max} step={step} value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          aria-label={label}
+          style={{ margin: 0 }}
+        />
+        <div className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 transition-all duration-150 pointer-events-none"
+          style={{ left: `calc(${pct}% - 8px)`, background: 'var(--bg-card)', borderColor: color, boxShadow: `0 0 8px ${color}40` }} />
+      </div>
+    </div>
+  );
+}
 
-const steps = [
-  {
-    step: '01',
-    title: 'Calculate',
-    description: 'Answer simple lifestyle questions or drag our interactive sliders to measure your CO2 footprint.',
-  },
-  {
-    step: '02',
-    title: 'Analyze',
-    description: 'Explore visual breakdowns of housing, transport, diet, and consumption with climate metrics.',
-  },
-  {
-    step: '03',
-    title: 'Reduce',
-    description: 'Follow AI suggestions, participate in challenges, and track your tree planting offsets.',
-  },
-];
+/* ── National Data ── */
+const nationalStats = NationalDataProvider.getNationalStatistics();
+const indiaAvg = NationalDataProvider.getIndiaAverageFootprintKg();
 
-// Eco Equivalents Data
-const ecoEquivalents = [
-  {
-    icon: Car,
-    title: '4,000 Kilometers Driven',
-    desc: 'Equal to driving a gasoline car from NYC to Los Angeles.',
-    color: 'text-amber-400',
-    stat: '4,000 km',
-  },
-  {
-    icon: TreePine,
-    title: '45 Trees Planted for 1 Year',
-    desc: 'The number of mature trees required to absorb 1 tonne of CO2 in a year.',
-    color: 'text-emerald-400',
-    stat: '45 Trees',
-  },
-  {
-    icon: Smartphone,
-    title: '120,000 Smartphone Charges',
-    desc: 'Enough power to charge a smartphone every day for over 320 years.',
-    color: 'text-cyan-400',
-    stat: '120k Charges',
-  },
-  {
-    icon: Utensils,
-    title: '220 Beef Hamburgers',
-    desc: 'Emissions produced from the lifecycle of standard beef meal production.',
-    color: 'text-rose-400',
-    stat: '220 Meals',
-  },
-];
-
-// Flashcards for Eco IQ
-const climateQuizData = [
-  {
-    id: 1,
-    question: 'Myth or Fact: Turning off standby electronics saves significant carbon emissions?',
-    answer: 'FACT! Standby power ("vampire energy") accounts for up to 10% of residential electricity consumption globally.',
-    badge: 'Energy Savings',
-  },
-  {
-    id: 2,
-    question: 'Myth or Fact: Electric vehicles produce zero lifecycle carbon emissions?',
-    answer: 'MYTH! EVs produce 50-70% less lifecycle emissions than gas cars, but manufacturing & battery charging still produce CO2.',
-    badge: 'Transport',
-  },
-  {
-    id: 3,
-    question: 'Myth or Fact: Eating 1 plant-based meal a day cuts more carbon than driving 10 km less?',
-    answer: 'FACT! Plant-based meals save ~2.5 kg CO2e per meal, equivalent to driving over 12 km in a gas car.',
-    badge: 'Dietary Impact',
-  },
-];
+/* ── Fade-up animation ── */
+const fadeUp = { initial: { opacity: 0, y: 30 }, animate: { opacity: 1, y: 0 } };
 
 export default function Home() {
   const { user, loading } = useAuth();
-  const stats = getSEIHomeStats();
-  const heroStats = getSEIHeroStats();
 
-  // Quick Footprint Simulator State
+  /* ── Simulator State ── */
   const [commuteKm, setCommuteKm] = useState(25);
   const [meatDays, setMeatDays] = useState(4);
-  const [elecBill, setElecBill] = useState(80);
-  const [flights, setFlights] = useState(1);
+  const [elecBill, setElecBill] = useState(2000);
+  const [flights, setFlights] = useState(2);
 
-  // Live Carbon Calculation Logic
-  const transportCO2 = (commuteKm * 365 * 0.17) / 1000; // Tons
-  const dietCO2 = ((meatDays * 0.45 + (7 - meatDays) * 0.15) * 52) / 100; // Tons
-  const energyCO2 = (elecBill * 12 * 0.0035); // Tons
-  const flightCO2 = flights * 0.85; // Tons
-  const totalCO2 = Number((transportCO2 + dietCO2 + energyCO2 + flightCO2).toFixed(1));
+  /* ── Computed Emissions ── */
+  const simulatorData = useMemo(() => {
+    const transportCO2 = (commuteKm * 365 * 0.17) / 1000;
+    const dietCO2 = ((meatDays * 0.45 + (7 - meatDays) * 0.15) * 52) / 100;
+    const energyCO2 = elecBill * 12 * 0.0035;
+    const flightCO2 = flights * 0.85;
+    const totalCO2 = Number((transportCO2 + dietCO2 + energyCO2 + flightCO2).toFixed(1));
+    const totalKg = totalCO2 * 1000;
+    const ecoScore = Math.max(10, Math.min(100, Math.round(100 - (totalCO2 / 6) * 80)));
+    const diffFromIndia = totalKg - indiaAvg.data;
+    const diffPct = Math.round((diffFromIndia / indiaAvg.data) * 100);
+    const treesNeeded = Math.round(totalCO2 * 45);
+    const carsEquivalent = (totalCO2 / 4.6).toFixed(1);
+    const flightsEquivalent = Math.round(totalCO2 / 0.255);
 
-  const treesNeeded = Math.round(totalCO2 * 45);
+    return {
+      transportCO2, dietCO2, energyCO2, flightCO2,
+      totalCO2, totalKg, ecoScore, diffFromIndia, diffPct,
+      treesNeeded, carsEquivalent, flightsEquivalent,
+    };
+  }, [commuteKm, meatDays, elecBill, flights]);
 
-  const getCO2Status = (tons: number) => {
-    if (tons < 3.5) return { label: 'Low Impact (Eco Champion)', color: 'text-emerald-400', bg: 'bg-emerald-500/20 border-emerald-500/30' };
-    if (tons <= 6.0) return { label: 'Moderate Impact', color: 'text-amber-400', bg: 'bg-amber-500/20 border-amber-500/30' };
-    return { label: 'High Impact (Action Needed)', color: 'text-rose-400', bg: 'bg-rose-500/20 border-rose-500/30' };
-  };
+  /* ── Chart Data ── */
+  const doughnutData = useMemo(() => ({
+    labels: ['Transport', 'Energy', 'Food', 'Flights'],
+    datasets: [{
+      data: [
+        Math.round(simulatorData.transportCO2 * 1000),
+        Math.round(simulatorData.energyCO2 * 1000),
+        Math.round(simulatorData.dietCO2 * 1000),
+        Math.round(simulatorData.flightCO2 * 1000),
+      ],
+      backgroundColor: [
+        'rgba(6, 182, 212, 0.75)',
+        'rgba(245, 158, 11, 0.75)',
+        'rgba(244, 63, 94, 0.75)',
+        'rgba(139, 92, 246, 0.75)',
+      ],
+      borderColor: ['rgba(6,182,212,1)', 'rgba(245,158,11,1)', 'rgba(244,63,94,1)', 'rgba(139,92,246,1)'],
+      borderWidth: 2, hoverOffset: 8,
+    }],
+  }), [simulatorData]);
 
-  const status = getCO2Status(totalCO2);
+  const radarData = useMemo(() => ({
+    labels: ['Transport', 'Energy', 'Food', 'Flights'],
+    datasets: [
+      {
+        label: 'You',
+        data: [
+          Math.round((simulatorData.transportCO2 / simulatorData.totalCO2) * 100) || 0,
+          Math.round((simulatorData.energyCO2 / simulatorData.totalCO2) * 100) || 0,
+          Math.round((simulatorData.dietCO2 / simulatorData.totalCO2) * 100) || 0,
+          Math.round((simulatorData.flightCO2 / simulatorData.totalCO2) * 100) || 0,
+        ],
+        borderColor: '#34d399',
+        backgroundColor: 'rgba(52,211,153,0.12)',
+        borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#34d399',
+      },
+      {
+        label: 'India Average',
+        data: [28, 35, 25, 12],
+        borderColor: 'rgba(245,158,11,0.6)',
+        backgroundColor: 'rgba(245,158,11,0.05)',
+        borderWidth: 1.5, borderDash: [4, 4], pointRadius: 2, pointBackgroundColor: '#f59e0b',
+      },
+    ],
+  }), [simulatorData]);
 
-  // Active Equivalent Tab State
-  const [activeEquiv, setActiveEquiv] = useState(0);
+  const chartOptions = useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#111C19', titleColor: '#E8F0EC', bodyColor: '#8A9C94', borderColor: 'rgba(255,255,255,0.07)', borderWidth: 1, padding: 10, cornerRadius: 8 } },
+  }), []);
 
-  // Quiz Card Flip States
-  const [flippedCards, setFlippedCards] = useState<{ [key: number]: boolean }>({});
+  const radarOptions = useMemo(() => ({
+    responsive: true, maintainAspectRatio: false,
+    scales: {
+      r: { beginAtZero: true, max: 60, grid: { color: 'rgba(255,255,255,0.04)' }, angleLines: { color: 'rgba(255,255,255,0.04)' }, pointLabels: { color: '#8A9C94', font: { size: 11 } }, ticks: { display: false } },
+    },
+    plugins: { legend: { display: true, position: 'bottom' as const, labels: { color: '#8A9C94', font: { size: 10 }, padding: 12, usePointStyle: true } }, tooltip: { backgroundColor: '#111C19', titleColor: '#E8F0EC', bodyColor: '#8A9C94', borderColor: 'rgba(255,255,255,0.07)', borderWidth: 1, padding: 10, cornerRadius: 8 } },
+  }), []);
 
-  const toggleCard = (id: number) => {
-    setFlippedCards((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  /* ── Hero parallax ── */
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
+  const heroY = useTransform(scrollYProgress, [0, 0.6], [0, 60]);
+
+  /* ── Eco score color ── */
+  const scoreColor = simulatorData.ecoScore >= 70 ? '#34d399' : simulatorData.ecoScore >= 50 ? '#f59e0b' : '#ef4444';
 
   return (
-    <div className="overflow-hidden bg-dark-950 text-white">
-      {/* ========== HERO SECTION ========== */}
-      <section className="relative min-h-screen flex items-center pt-16 pb-20 overflow-hidden" id="hero-section">
-        {/* Background Effects */}
-        <div className="absolute inset-0 mesh-bg opacity-70" />
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[850px] h-[850px] hero-glow opacity-60 blur-3xl pointer-events-none" />
+    <div style={{ background: 'var(--bg-void)', color: 'var(--text-primary)', minHeight: '100vh' }}>
 
-        {/* Animated Particles & Glow Orbs */}
-        <div className="absolute top-20 left-10 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl animate-float pointer-events-none" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-float pointer-events-none" style={{ animationDelay: '3s' }} />
+      {/* ═══ HERO ═══════════════════════════════════════════════════════ */}
+      <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden" aria-label="Hero">
+        <div className="absolute inset-0 mesh-bg" aria-hidden="true" />
+        <div className="absolute inset-0 grid-bg opacity-30" aria-hidden="true" />
+        <div className="absolute inset-0 noise-overlay" aria-hidden="true" />
+        <div className="absolute top-0 right-0 w-[700px] h-[700px] rounded-full opacity-20 blur-[200px] pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse, rgba(52,211,153,0.08), transparent)' }} aria-hidden="true" />
 
-        <div className="container-max mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid lg:grid-cols-12 gap-12 items-center">
-            
-            {/* Left Hero Content */}
-            <div className="lg:col-span-6 text-center lg:text-left pt-6">
-              {/* Badge */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 mb-6 shadow-eco-glow"
-              >
-                <Sparkles className="w-4 h-4 text-emerald-400" />
-                <span className="text-sm font-semibold text-emerald-300">Next-Gen AI Carbon Awareness Platform</span>
-              </motion.div>
+        <motion.div className="layout-editorial relative z-10 w-full py-24" style={{ opacity: heroOpacity, y: heroY }}>
+          <div className="max-w-3xl">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }} className="mb-6">
+              <span className="t-label-lg inline-flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--color-primary)' }} />
+                Environmental Intelligence Platform
+              </span>
+            </motion.div>
 
-              {/* Title */}
-              <motion.h1
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7, delay: 0.1 }}
-                className="text-4xl sm:text-5xl md:text-6xl font-display font-extrabold leading-[1.1] mb-6 tracking-tight"
-              >
-                Track & Reduce Your <br className="hidden sm:inline" />
-                <span className="gradient-text">Carbon Footprint</span> <br className="hidden sm:inline" />
-                With AI Precision
-              </motion.h1>
+            <motion.h1 initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.1 }}
+              className="mb-8" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2.5rem, 6vw, 5rem)', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.03em', color: 'var(--text-primary)' }}>
+              What if you could<br />
+              <span className="gradient-text">see your carbon impact</span><br />
+              in real time?
+            </motion.h1>
 
-              {/* Subtitle */}
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="text-base sm:text-lg text-dark-300 max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed"
-              >
-                Discover your personal eco-impact in minutes. Harness AI recommendations, plant virtual trees, and join a global movement for a zero-carbon future.
-              </motion.p>
+            <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
+              className="t-body-lg max-w-xl mb-10">
+              Drag four sliders. See your footprint instantly. No forms. No signup. Just real-time scientific calculations powered by government-verified datasets.
+            </motion.p>
 
-              {/* CTAs */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 mb-10"
-              >
-                <Link
-                  to={loading ? '#' : (user ? '/assessment' : '/register')}
-                  className={`btn-primary text-base w-full sm:w-auto ${loading ? 'opacity-70 pointer-events-none' : ''}`}
-                >
-                  {user ? 'Start Full Assessment' : 'Calculate Your Footprint Free'}
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
-                <a href="#simulator-section" className="btn-secondary text-base w-full sm:w-auto">
-                  <Gauge className="w-5 h-5 text-emerald-400" />
-                  Try Quick Simulator
-                </a>
-              </motion.div>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}
+              className="flex flex-wrap gap-3 mb-12">
+              <a href="#simulator" className="btn-primary text-sm px-8 py-3.5">
+                Try the Simulator <ArrowRight className="w-4 h-4" />
+              </a>
+              <Link to={loading ? '#' : (user ? '/assessment' : '/register')}
+                className={`btn-ghost text-sm px-8 py-3.5 ${loading ? 'opacity-50 pointer-events-none' : ''}`}>
+                {user ? 'Full Assessment' : 'Get Started Free'}
+              </Link>
+            </motion.div>
 
-              {/* Trust badges */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="flex items-center justify-center lg:justify-start gap-6 text-xs sm:text-sm text-dark-400"
-              >
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Free forever
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Verified SEI dataset
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Instant AI report
-                </span>
-              </motion.div>
-            </div>
-
-            {/* Right Hero Visual / Quick Interactive Simulator Widget */}
-            <div className="lg:col-span-6" id="simulator-section">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                className="glass-eco p-6 sm:p-8 rounded-3xl relative overflow-hidden"
-              >
-                {/* Glow border background */}
-                <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none" />
-
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-emerald-500/20">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                      <Gauge className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="font-display font-bold text-lg text-white">Live Footprint Simulator</h3>
-                      <p className="text-xs text-dark-300">Drag sliders to test your annual emissions</p>
-                    </div>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5, delay: 0.6 }}
+              className="flex items-center gap-8">
+              {[
+                { n: nationalStats.data.totalAnnualEmissionGtCO2, s: ' Gt', l: 'India Annual CO₂' },
+                { n: nationalStats.data.renewableSharePercent, s: '%', l: 'Renewable Energy' },
+                { n: 2070, s: '', l: 'Net Zero Target' },
+              ].map((item) => (
+                <div key={item.l}>
+                  <div className="t-stat-md" style={{ color: 'var(--color-primary)', fontFamily: 'var(--font-mono)' }}>
+                    {Number.isInteger(item.n) ? <Counter target={item.n} suffix={item.s} /> : <Counter target={item.n} suffix={item.s} decimals={1} />}
                   </div>
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30 animate-pulse">
-                    Interactive
+                  <span className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{item.l}</span>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Scroll indicator */}
+        <motion.div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+          animate={{ y: [0, 8, 0] }} transition={{ repeat: Infinity, duration: 2 }}>
+          <span className="text-[9px] uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>Scroll to explore</span>
+          <ChevronDown className="w-4 h-4" style={{ color: 'var(--text-muted)' }} />
+        </motion.div>
+      </section>
+
+      {/* ═══ INTERACTIVE SIMULATOR ═══════════════════════════════════════ */}
+      <section id="simulator" className="section-editorial relative" aria-label="Quick Carbon Simulator">
+        <div className="layout-editorial">
+          <motion.div {...fadeUp} viewport={{ once: true }} transition={{ duration: 0.6 }} className="mb-12">
+            <span className="t-label-lg block mb-3" style={{ color: 'var(--color-primary)' }}>Quick Simulator</span>
+            <h2 className="t-display-lg mb-4">Drag. See. <span className="gradient-text">Understand.</span></h2>
+            <p className="t-body max-w-2xl">Four sliders. Instant results. No page reload. This is what understanding your carbon footprint should feel like.</p>
+          </motion.div>
+
+          <div className="grid lg:grid-cols-5 gap-8 items-start">
+            {/* Sliders — Left 3 cols */}
+            <motion.div {...fadeUp} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.1 }} className="lg:col-span-3 glass-eco rounded-3xl p-6 sm:p-8 space-y-6">
+              <SimulatorSlider label="Daily Commute" value={commuteKm} onChange={setCommuteKm} min={0} max={100} unit=" km" icon={Car} color="#06b6d4" />
+              <SimulatorSlider label="Meat Meals / Week" value={meatDays} onChange={setMeatDays} min={0} max={7} unit=" days" icon={Leaf} color="#10b981" />
+              <SimulatorSlider label="Monthly Electricity Bill" value={elecBill} onChange={setElecBill} min={0} max={10000} step={100} unit=" ₹" icon={Zap} color="#f59e0b" />
+              <SimulatorSlider label="Flights / Year" value={flights} onChange={setFlights} min={0} max={20} unit=" /yr" icon={Plane} color="#8b5cf6" />
+            </motion.div>
+
+            {/* Results — Right 2 cols */}
+            <motion.div {...fadeUp} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.2 }} className="lg:col-span-2 space-y-5">
+              {/* Eco Score Ring */}
+              <div className="glass-eco rounded-3xl p-6 text-center">
+                <p className="text-[10px] uppercase tracking-wider mb-3" style={{ color: 'var(--text-muted)' }}>Your Estimated Eco Score</p>
+                <div className="relative w-32 h-32 mx-auto mb-4">
+                  <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="6" />
+                    <circle cx="50" cy="50" r="42" fill="none" stroke={scoreColor} strokeWidth="6"
+                      strokeDasharray={`${simulatorData.ecoScore * 2.64} 264`}
+                      strokeLinecap="round" className="transition-all duration-500" />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-3xl font-bold tabular-nums" style={{ fontFamily: 'var(--font-mono)', color: scoreColor }}>{simulatorData.ecoScore}</span>
+                    <span className="text-[9px]" style={{ color: 'var(--text-muted)' }}>/100</span>
+                  </div>
+                </div>
+                <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  {simulatorData.ecoScore >= 70 ? 'Good footprint!' : simulatorData.ecoScore >= 50 ? 'Room to improve' : 'High impact lifestyle'}
+                </p>
+              </div>
+
+              {/* CO₂ Total */}
+              <div className="glass-eco rounded-3xl p-6">
+                <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>Estimated Annual CO₂</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold tabular-nums" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{simulatorData.totalCO2}</span>
+                  <span className="text-sm" style={{ color: 'var(--text-muted)' }}>tonnes / year</span>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${
+                    simulatorData.diffFromIndia > 0
+                      ? 'text-red-400 bg-red-500/10 border-red-500/20'
+                      : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                  }`}>
+                    {simulatorData.diffFromIndia > 0 ? '+' : ''}{simulatorData.diffPct}% vs India avg
+                  </div>
+                </div>
+                <p className="text-[10px] mt-2" style={{ color: 'var(--text-muted)' }}>
+                  India average: {(indiaAvg.data / 1000).toFixed(1)}t CO₂e/year
+                </p>
+              </div>
+
+              {/* Charts Row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="glass-eco rounded-2xl p-4">
+                  <div className="h-[140px]">
+                    <Doughnut data={doughnutData} options={chartOptions} />
+                  </div>
+                </div>
+                <div className="glass-eco rounded-2xl p-4">
+                  <div className="h-[140px]">
+                    <Radar data={radarData} options={radarOptions} />
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA */}
+              <Link to={loading ? '#' : (user ? '/assessment' : '/register')}
+                className={`block text-center btn-primary text-sm py-3 ${loading ? 'opacity-50 pointer-events-none' : ''}`}>
+                {user ? 'Get Accurate Results' : 'Start Free Assessment'} <ArrowRight className="w-4 h-4 inline ml-1" />
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ ENVIRONMENTAL EQUIVALENTS ═════════════════════════════════ */}
+      <section className="section-compact relative" style={{ background: 'var(--bg-primary)', borderTop: '1px solid var(--border-subtle)', borderBottom: '1px solid var(--border-subtle)' }}>
+        <div className="layout-editorial">
+          <motion.div {...fadeUp} viewport={{ once: true }} className="mb-8">
+            <span className="t-label-lg block mb-3" style={{ color: 'var(--color-primary)' }}>In Perspective</span>
+            <h2 className="t-display-md">That's equivalent to</h2>
+          </motion.div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { value: simulatorData.treesNeeded, label: 'Trees needed\nto absorb yearly', icon: TreePine, color: '#10b981' },
+              { value: simulatorData.carsEquivalent, label: 'Cars off the\nroad for a year', icon: Car, color: '#06b6d4' },
+              { value: simulatorData.flightsEquivalent, label: 'Flights from Delhi\nto Mumbai', icon: Plane, color: '#8b5cf6' },
+              { value: Math.round(simulatorData.totalCO2 * 2.3), label: 'Smartphones\ncharged', icon: Zap, color: '#f59e0b' },
+            ].map((eq, i) => (
+              <motion.div key={eq.label} {...fadeUp} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
+                className="glass-eco rounded-2xl p-5 text-center group hover:border-white/15 transition-all duration-300">
+                <div className="w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center" style={{ background: `${eq.color}12`, border: `1px solid ${eq.color}20` }}>
+                  <eq.icon className="w-5 h-5" style={{ color: eq.color }} />
+                </div>
+                <p className="text-2xl font-bold tabular-nums mb-1" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>
+                  {typeof eq.value === 'number' ? eq.value.toLocaleString() : eq.value}
+                </p>
+                <p className="text-[10px] leading-tight whitespace-pre-line" style={{ color: 'var(--text-muted)' }}>{eq.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ NATIONAL STATISTICS ════════════════════════════════════════ */}
+      <section className="section-editorial relative" aria-label="India National Statistics">
+        <div className="layout-editorial">
+          <motion.div {...fadeUp} viewport={{ once: true }} className="mb-12">
+            <span className="t-label-lg block mb-3" style={{ color: 'var(--color-primary)' }}>National Intelligence</span>
+            <h2 className="t-display-lg mb-4">India's Carbon <span className="gradient-text">Profile</span></h2>
+            <p className="t-body max-w-2xl">
+              Sourced from Global Carbon Project, IEA India, CEA, and NITI Aayog. These are verified national-level statistics.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[
+              { label: 'Per Capita Emissions', value: (nationalStats.data.perCapitaKgCO2PerYear / 1000).toFixed(2), unit: 't CO₂e/yr', note: 'Global avg: 4.7t', confidence: 'Government Data', color: '#06b6d4' },
+              { label: 'Total Annual Emissions', value: nationalStats.data.totalAnnualEmissionGtCO2.toFixed(2), unit: 'Gt CO₂', note: '3rd largest globally', confidence: 'Government Data', color: '#f59e0b' },
+              { label: 'Renewable Share', value: `${nationalStats.data.renewableSharePercent}`, unit: '%', note: 'Target: 50% by 2030', confidence: 'CEA / MNRE', color: '#10b981' },
+              { label: 'Grid Carbon Intensity', value: nationalStats.data.gridAverageFactorKgCO2PerKWh.toFixed(3), unit: 'kg/kWh', note: 'National average', confidence: 'CEA Report', color: '#8b5cf6' },
+            ].map((stat, i) => (
+              <motion.div key={stat.label} {...fadeUp} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
+                className="glass-eco rounded-2xl p-6 group hover:border-white/15 transition-all duration-300">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{stat.label}</span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ background: `${stat.color}12`, color: stat.color, border: `1px solid ${stat.color}20` }}>
+                    {stat.confidence}
                   </span>
                 </div>
-
-                {/* Sliders Container */}
-                <div className="space-y-5">
-                  {/* Commute Slider */}
-                  <div>
-                    <div className="flex justify-between text-xs font-medium mb-1.5">
-                      <span className="flex items-center gap-1.5 text-emerald-200">
-                        <Car className="w-3.5 h-3.5 text-emerald-400" /> Daily Commute
-                      </span>
-                      <span className="text-emerald-400 font-bold">{commuteKm} km / day</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={commuteKm}
-                      onChange={(e) => setCommuteKm(Number(e.target.value))}
-                      className="eco-range-slider"
-                    />
-                  </div>
-
-                  {/* Diet Slider */}
-                  <div>
-                    <div className="flex justify-between text-xs font-medium mb-1.5">
-                      <span className="flex items-center gap-1.5 text-emerald-200">
-                        <Utensils className="w-3.5 h-3.5 text-amber-400" /> Meat Meals
-                      </span>
-                      <span className="text-amber-400 font-bold">{meatDays} days / week</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="7"
-                      value={meatDays}
-                      onChange={(e) => setMeatDays(Number(e.target.value))}
-                      className="eco-range-slider"
-                    />
-                  </div>
-
-                  {/* Energy Slider */}
-                  <div>
-                    <div className="flex justify-between text-xs font-medium mb-1.5">
-                      <span className="flex items-center gap-1.5 text-emerald-200">
-                        <HomeIcon className="w-3.5 h-3.5 text-cyan-400" /> Elec. Bill
-                      </span>
-                      <span className="text-cyan-400 font-bold">${elecBill} / month</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="20"
-                      max="300"
-                      step="10"
-                      value={elecBill}
-                      onChange={(e) => setElecBill(Number(e.target.value))}
-                      className="eco-range-slider"
-                    />
-                  </div>
-
-                  {/* Flights Slider */}
-                  <div>
-                    <div className="flex justify-between text-xs font-medium mb-1.5">
-                      <span className="flex items-center gap-1.5 text-emerald-200">
-                        <Plane className="w-3.5 h-3.5 text-purple-400" /> Flights / Year
-                      </span>
-                      <span className="text-purple-400 font-bold">{flights} round-trip</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="8"
-                      value={flights}
-                      onChange={(e) => setFlights(Number(e.target.value))}
-                      className="eco-range-slider"
-                    />
-                  </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-bold tabular-nums" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{stat.value}</span>
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{stat.unit}</span>
                 </div>
-
-                {/* Calculation Output Box */}
-                <div className="mt-6 p-4 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs text-dark-300 block mb-0.5">Est. Annual Carbon Output</span>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-display font-extrabold text-white tracking-tight">
-                        {totalCO2} <span className="text-sm font-normal text-emerald-400">Tons CO2e</span>
-                      </span>
-                    </div>
-                    <span className={`inline-block mt-1 text-[11px] px-2 py-0.5 rounded-full border font-semibold ${status.bg} ${status.color}`}>
-                      {status.label}
-                    </span>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="w-12 h-12 mx-auto rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 mb-1">
-                      <TreePine className="w-6 h-6 animate-pulse" />
-                    </div>
-                    <span className="text-xs text-emerald-300 font-semibold block">Requires ~{treesNeeded} Trees</span>
-                    <span className="text-[10px] text-dark-400">to offset annually</span>
-                  </div>
-                </div>
-
-                {/* Direct action CTA */}
-                <div className="mt-5 text-center">
-                  <Link
-                    to="/assessment"
-                    className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-400 text-dark-950 font-bold flex items-center justify-center gap-2 hover:brightness-110 shadow-lg shadow-emerald-500/25 transition-all duration-300"
-                  >
-                    Lock In Full AI Assessment <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              </motion.div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* ========== ECO EQUIVALENTS INTERACTIVE HUB ========== */}
-      <section className="section-padding relative bg-dark-900/40 border-y border-emerald-500/10">
-        <div className="container-max mx-auto">
-          <SectionHeading
-            badge="Climate Awareness"
-            title="Understanding Your Impact:"
-            highlight="What Does 1 Tonne CO2 Mean?"
-            description="Carbon emissions can feel abstract. Here is what just 1 Tonne of CO2e translates to in everyday life."
-          />
-
-          <div className="grid md:grid-cols-4 gap-4 mt-8">
-            {ecoEquivalents.map((item, idx) => {
-              const Icon = item.icon;
-              const isSelected = activeEquiv === idx;
-              return (
-                <motion.div
-                  key={item.title}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setActiveEquiv(idx)}
-                  className={`p-6 rounded-2xl cursor-pointer transition-all duration-300 ${
-                    isSelected
-                      ? 'bg-emerald-950/50 border-2 border-emerald-400 shadow-eco-glow-lg'
-                      : 'glass-eco hover:border-emerald-500/40'
-                  }`}
-                >
-                  <div className={`w-12 h-12 rounded-xl bg-dark-950 flex items-center justify-center mb-4 ${item.color}`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <span className={`text-2xl font-extrabold font-display block mb-1 ${item.color}`}>{item.stat}</span>
-                  <h4 className="text-base font-bold text-white mb-2">{item.title}</h4>
-                  <p className="text-xs text-dark-300 leading-relaxed">{item.desc}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ========== GLOBAL STATS (SEI DATASET) ========== */}
-      <section className="section-padding relative" id="stats-section">
-        <div className="container-max mx-auto">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-            {stats.map((stat, i) => (
-              <StatCard key={stat.label} {...stat} delay={i * 0.1} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ========== FEATURES GRID ========== */}
-      <section className="section-padding relative" id="features-section">
-        <div className="absolute inset-0 mesh-bg opacity-50 pointer-events-none" />
-        <div className="container-max mx-auto relative">
-          <SectionHeading
-            badge="Platform Features"
-            title="Everything you need for"
-            highlight="sustainable living"
-            description="Cutting-edge tools designed to make carbon reduction engaging, measurable, and rewarding."
-          />
-
-          <motion.div
-            variants={stagger}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true, margin: '-50px' }}
-            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
-          >
-            {features.map((feature, i) => (
-              <motion.div key={feature.title} variants={fadeUp}>
-                <Card
-                  icon={feature.icon}
-                  title={feature.title}
-                  description={feature.description}
-                  iconColor={feature.color}
-                />
+                <p className="text-[10px] mt-2" style={{ color: 'var(--text-muted)' }}>{stat.note}</p>
               </motion.div>
             ))}
+          </div>
+
+          <motion.div {...fadeUp} viewport={{ once: true }} className="mt-6 flex items-center gap-3 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+            <Shield className="w-3.5 h-3.5" style={{ color: 'var(--color-primary)' }} />
+            <span>All data sourced from {nationalStats.metadata.source}. Last updated: {nationalStats.metadata.lastUpdated}.</span>
           </motion.div>
         </div>
       </section>
 
-      {/* ========== CLIMATE QUIZ / FLASHCARDS SECTION ========== */}
-      <section className="section-padding relative bg-emerald-950/20 border-y border-emerald-500/15">
-        <div className="container-max mx-auto">
-          <SectionHeading
-            badge="Test Your Eco IQ"
-            title="Interactive Flashcards:"
-            highlight="Climate Myths vs Facts"
-            description="Click any card below to flip and discover the science behind carbon footprint myths!"
-          />
-
-          <div className="grid md:grid-cols-3 gap-6 mt-10">
-            {climateQuizData.map((quiz) => {
-              const isFlipped = !!flippedCards[quiz.id];
-              return (
-                <div
-                  key={quiz.id}
-                  onClick={() => toggleCard(quiz.id)}
-                  className="perspective-1000 h-64 cursor-pointer"
-                >
-                  <motion.div
-                    animate={{ rotateY: isFlipped ? 180 : 0 }}
-                    transition={{ duration: 0.6 }}
-                    className="w-full h-full transform-style-3d relative"
-                  >
-                    {/* Front of Card */}
-                    <div className="absolute inset-0 backface-hidden glass-eco p-6 rounded-2xl flex flex-col justify-between border border-emerald-500/30 hover:border-emerald-400">
-                      <div>
-                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 inline-block mb-4">
-                          {quiz.badge}
-                        </span>
-                        <h4 className="text-lg font-display font-bold text-white leading-snug">
-                          {quiz.question}
-                        </h4>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-emerald-400 font-semibold pt-4 border-t border-emerald-500/20">
-                        <span className="flex items-center gap-1.5">
-                          <RotateCw className="w-4 h-4" /> Click to reveal answer
-                        </span>
-                        <HelpCircle className="w-5 h-5 text-emerald-400" />
-                      </div>
-                    </div>
-
-                    {/* Back of Card */}
-                    <div className="absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br from-emerald-900 to-dark-950 p-6 rounded-2xl flex flex-col justify-between border-2 border-emerald-400 shadow-eco-glow">
-                      <div>
-                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-400 text-dark-950 inline-block mb-3">
-                          Verified Science
-                        </span>
-                        <p className="text-sm font-medium text-emerald-100 leading-relaxed">
-                          {quiz.answer}
-                        </p>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-emerald-300 pt-3 border-t border-emerald-500/30">
-                        <span className="flex items-center gap-1">
-                          <Leaf className="w-4 h-4 text-emerald-400" /> Knowledge power!
-                        </span>
-                        <span className="text-[10px] text-dark-400">Click to flip back</span>
-                      </div>
-                    </div>
-                  </motion.div>
-                </div>
-              );
-            })}
-          </div>
+      {/* ═══ METHODOLOGY ════════════════════════════════════════════════ */}
+      <section className="section-compact relative" style={{ background: 'var(--bg-primary)', borderTop: '1px solid var(--border-subtle)' }}>
+        <div className="layout-editorial">
+          <motion.div {...fadeUp} viewport={{ once: true }} className="max-w-3xl">
+            <span className="t-label-lg block mb-3" style={{ color: 'var(--color-primary)' }}>How It Works</span>
+            <h2 className="t-display-md mb-6">Scientific. <span className="gradient-text">Transparent.</span></h2>
+            <div className="space-y-4">
+              {[
+                { step: '01', title: 'Input Your Lifestyle', desc: 'Commute distance, diet, electricity use, and flights — the four biggest levers of personal carbon emissions.' },
+                { step: '02', title: 'Government-Verified Factors', desc: 'CEA grid factors for 36 states, ARAI transport emission coefficients, IPCC dietary impact data.' },
+                { step: '03', title: 'Real-Time Calculation', desc: 'Your inputs are multiplied against India-specific scientific factors. No rounding until display. Results in tonnes CO₂e per year.' },
+                { step: '04', title: 'Actionable Insights', desc: 'Compare against India average, national benchmarks, and get AI-powered recommendations to reduce your footprint.' },
+              ].map((item, i) => (
+                <motion.div key={item.step} {...fadeUp} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
+                  className="flex gap-5 p-5 rounded-2xl transition-colors" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)' }}>
+                  <span className="text-lg font-bold tabular-nums shrink-0" style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-primary)' }}>{item.step}</span>
+                  <div>
+                    <h3 className="text-sm font-bold mb-1" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>{item.title}</h3>
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>{item.desc}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* ========== HOW IT WORKS ========== */}
-      <section className="section-padding relative" id="how-it-works-section">
-        <div className="container-max mx-auto">
-          <SectionHeading
-            badge="Simple Process"
-            title="Three steps to a"
-            highlight="greener lifestyle"
-            description="Empowering you with AI precision to make measurable environmental progress."
-          />
-
-          <div className="grid md:grid-cols-3 gap-8 lg:gap-12 mt-8">
-            {steps.map((step, i) => (
-              <motion.div
-                key={step.step}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.15 }}
-                className="relative text-center group"
-              >
-                {/* Connector Line */}
-                {i < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-px bg-gradient-to-r from-emerald-500/40 to-transparent pointer-events-none" />
-                )}
-
-                <div className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 mb-6 group-hover:border-emerald-400 transition-colors duration-300 shadow-eco-glow">
-                  <span className="text-2xl font-display font-bold gradient-text">{step.step}</span>
-                </div>
-                <h3 className="text-xl font-display font-bold text-white mb-3">{step.title}</h3>
-                <p className="text-sm text-dark-300 leading-relaxed max-w-xs mx-auto">{step.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ========== CALL TO ACTION ========== */}
-      <section className="section-padding relative" id="cta-section">
-        <div className="container-max mx-auto">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="relative glass-eco p-10 sm:p-16 text-center overflow-hidden rounded-3xl border border-emerald-500/30 shadow-eco-glow-lg"
-          >
-            {/* Background glows */}
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-500/15 rounded-full blur-3xl pointer-events-none" />
-
-            <div className="relative z-10">
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-extrabold mb-4">
-                Ready to transform your <span className="gradient-text">carbon footprint</span>?
+      {/* ═══ CTA ════════════════════════════════════════════════════════ */}
+      <section className="section-editorial relative">
+        <div className="layout-editorial">
+          <motion.div {...fadeUp} viewport={{ once: true }}
+            className="p-10 sm:p-16 text-center relative overflow-hidden"
+            style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: '28px' }}>
+            <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(52,211,153,0.04)' }} aria-hidden="true" />
+            <div className="relative">
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
+                Ready to know your number?
               </h2>
-              <p className="text-dark-300 text-base sm:text-lg mb-8 max-w-xl mx-auto leading-relaxed">
-                Start tracking for free today and join thousands of climate heroes taking real action.
+              <p className="text-lg mb-8 max-w-xl mx-auto" style={{ color: 'var(--text-tertiary)' }}>
+                {user
+                  ? 'Continue where you left off. Your dashboard is waiting.'
+                  : 'Join thousands of Indians measuring and reducing their carbon footprint. Free forever.'}
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link
-                  to={loading ? '#' : (user ? '/dashboard' : '/register')}
-                  className={`btn-primary text-base w-full sm:w-auto ${loading ? 'opacity-70 pointer-events-none' : ''}`}
-                >
-                  {user ? 'Go to Your Dashboard' : 'Get Started Free Now'}
-                  <ChevronRight className="w-5 h-5" />
+                <Link to={loading ? '#' : (user ? '/assessment' : '/register')}
+                  className={`btn-primary text-base px-10 py-3.5 ${loading ? 'opacity-50 pointer-events-none' : ''}`}>
+                  {user ? 'Take Assessment' : 'Get Started Free'} <ArrowRight className="w-5 h-5" />
                 </Link>
-                <Link to="/about" className="btn-secondary text-base w-full sm:w-auto">
-                  Learn About Our SEI Model
-                </Link>
+                <a href="#simulator" className="btn-ghost text-base px-10 py-3.5">
+                  Try Simulator First
+                </a>
               </div>
             </div>
           </motion.div>
@@ -646,4 +501,3 @@ export default function Home() {
     </div>
   );
 }
-

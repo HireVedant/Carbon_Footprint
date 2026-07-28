@@ -2,6 +2,7 @@ import React from 'react';
 import { Sparkles, Footprints, Flame, Plus, Plane, Recycle, Leaf, ShoppingBag, Droplets } from 'lucide-react';
 import { CalculationResult } from '../../utils/carbonCalculator';
 import { AssessmentAnswers } from '../../utils/calculationEngine';
+import { surface, emerald, fontFamily, water, solar, semantic } from '../../design';
 
 interface ImprovementPreviewProps {
   results: CalculationResult;
@@ -60,7 +61,7 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results,
       description: 'Switching to public transit or carpooling for 3 days/week saves approximately 25% of your vehicle emissions.',
       reduction: Math.round(transportEmissions * 0.25),
       icon: Footprints,
-      color: 'text-blue-400 bg-blue-500/10',
+      color: `${water.river}`,
     });
   } else if (transportEmissions > 0) {
     pool.push({
@@ -68,7 +69,7 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results,
       description: 'Walking or cycling for trips under 3 km instead of transit reduces emissions further.',
       reduction: Math.round(transportEmissions * 0.10),
       icon: Footprints,
-      color: 'text-blue-400 bg-blue-500/10',
+      color: `${water.river}`,
     });
   }
 
@@ -81,7 +82,7 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results,
         : 'Consider replacing some air travel with rail or video conferencing for shorter routes.',
       reduction: Math.round(transportEmissions * 0.35),
       icon: Plane,
-      color: 'text-sky-400 bg-sky-500/10',
+      color: `${water.sky}`,
     });
   }
 
@@ -92,7 +93,7 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results,
       description: 'Opting for meatless meals twice weekly significantly lowers food emissions. Some meat types carry a high carbon cost.',
       reduction: Math.round(foodEmissions * 0.20),
       icon: Flame,
-      color: 'text-emerald-400 bg-emerald-500/10',
+      color: `${emerald[400]}`,
     });
   }
 
@@ -104,7 +105,7 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results,
       description: 'Planning meals and storing food properly can cut food waste by half, reducing both emissions and cost.',
       reduction: Math.round(foodEmissions * 0.08),
       icon: Leaf,
-      color: 'text-lime-400 bg-lime-500/10',
+      color: `${emerald[400]}`,
     });
   }
 
@@ -115,7 +116,7 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results,
       description: 'Enabling smart plugs and upgrading to BEE 5-star rated appliances and LED lighting can cut energy emissions by ~12%.',
       reduction: Math.round(energyEmissions * 0.12),
       icon: Plus,
-      color: 'text-amber-400 bg-amber-500/10',
+      color: `${solar.amber}`,
     });
   }
 
@@ -126,7 +127,7 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results,
       description: 'A 3 kW rooftop solar system offsets ~360 kWh/month from the grid, significantly reducing energy emissions.',
       reduction: Math.round(energyEmissions * 0.30),
       icon: Droplets,
-      color: 'text-cyan-400 bg-cyan-500/10',
+      color: `${water.lake}`,
     });
   }
 
@@ -137,7 +138,7 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results,
       description: 'Composting organic kitchen waste diverts methane-generating material from landfills.',
       reduction: Math.round(wasteEmissions * 0.12),
       icon: Recycle,
-      color: 'text-green-400 bg-green-500/10',
+      color: `${emerald[500]}`,
     });
   }
 
@@ -147,7 +148,7 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results,
       description: 'Separating recyclables diverts waste from landfills and reduces manufacturing emissions.',
       reduction: Math.round(wasteEmissions * 0.15),
       icon: Recycle,
-      color: 'text-green-400 bg-green-500/10',
+      color: `${emerald[500]}`,
     });
   }
 
@@ -157,7 +158,7 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results,
       description: 'Buying fewer clothes or choosing second-hand cuts manufacturing and textile emissions significantly.',
       reduction: Math.round(wasteEmissions * 0.10),
       icon: ShoppingBag,
-      color: 'text-pink-400 bg-pink-500/10',
+      color: `${semantic.waste}`,
     });
   }
 
@@ -174,41 +175,44 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results,
       description: 'Set a monthly carbon budget and track your progress with EcoTrack AI to build lasting habits.',
       reduction: Math.round(totalEmissions * 0.05),
       icon: Sparkles,
-      color: 'text-primary-400 bg-primary-500/10',
+      color: `${emerald[500]}`,
     });
   }
 
   return (
-    <div className="glass p-6 hover:border-white/15 transition-all duration-300 h-full flex flex-col justify-between relative">
+    <div className="glass-eco p-6 rounded-3xl hover:border-white/15 transition-all duration-300 h-full flex flex-col justify-between relative">
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-primary-400" />
-          <h3 className="text-sm font-semibold text-white">Improvement Potential</h3>
+          <Sparkles className="w-5 h-5" style={{ color: emerald[400] }} />
+          <h3 className="text-sm font-semibold" style={{ color: surface.textPrimary }}>Improvement Potential</h3>
         </div>
         
         <div className="space-y-3">
           {improvements.map((item, idx) => (
             <div
               key={idx}
-              className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-white/[0.04] transition-all"
+              className="p-3.5 rounded-2xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 transition-all"
+              style={{ background: `${surface.base}30`, border: `1px solid ${surface.border}40` }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = `${surface.base}50`; }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = `${surface.base}30`; }}
             >
               <div className="flex items-start gap-3">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5 ${item.color}`}>
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: `${item.color}14`, color: item.color }}>
                   <item.icon className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-semibold text-white leading-normal">{item.title}</h4>
-                  <p className="text-[10px] text-dark-400 mt-0.5 leading-snug">{item.description}</p>
+                  <h4 className="text-xs font-semibold leading-normal" style={{ color: surface.textPrimary }}>{item.title}</h4>
+                  <p className="text-[10px] mt-0.5 leading-snug" style={{ color: surface.textSecondary }}>{item.description}</p>
                 </div>
               </div>
               
-              <div className="text-left sm:text-right border-t sm:border-t-0 border-white/5 pt-2 sm:pt-0 flex sm:flex-col justify-between items-center sm:items-end">
-                <span className="text-[10px] text-dark-500 font-semibold sm:hidden">Est. Saving</span>
+              <div className="text-left sm:text-right pt-2 sm:pt-0 flex sm:flex-col justify-between items-center sm:items-end" style={{ borderTop: `1px solid ${surface.border}30` }}>
+                <span className="text-[10px] font-semibold sm:hidden" style={{ color: surface.textSecondary }}>Est. Saving</span>
                 <div>
-                  <p className="text-xs font-bold text-emerald-400 leading-tight">
+                  <p className="text-xs font-bold leading-tight" style={{ color: emerald[400] }}>
                     -{item.reduction.toLocaleString()} <span className="text-[10px] font-normal">kg/yr</span>
                   </p>
-                  <span className="text-[9px] text-dark-500 block">CO₂ reduction</span>
+                  <span className="text-[9px] block" style={{ color: surface.textSecondary }}>CO₂ reduction</span>
                 </div>
               </div>
             </div>

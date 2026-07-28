@@ -3,6 +3,7 @@ import { Sparkles, TrendingUp, HelpCircle, CheckCircle } from 'lucide-react';
 import { CalculationResult } from '../../utils/carbonCalculator';
 import { AssessmentAnswers } from '../../utils/calculationEngine';
 import { motion } from 'framer-motion';
+import { emerald, surface } from '../../design/colors';
 
 interface InsightCardProps {
   results: CalculationResult;
@@ -89,11 +90,11 @@ export const InsightCard: React.FC<InsightCardProps> = ({ results, answers }) =>
   const [activeInsight, setActiveInsight] = useState(0);
 
   return (
-    <div className="glass p-6 hover:border-white/15 transition-all duration-300 h-full flex flex-col justify-between">
+    <div className="glass-eco p-6 rounded-3xl hover:border-white/15 transition-all duration-300 h-full flex flex-col justify-between">
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 text-primary-400 animate-pulse" />
-          <h3 className="text-sm font-semibold text-white">AI Carbon Insights</h3>
+          <Sparkles className="w-5 h-5 animate-pulse" style={{ color: emerald[400] }} />
+          <h3 className="text-sm font-semibold" style={{ color: surface.textPrimary }}>AI Carbon Insights</h3>
         </div>
         
         <div className="space-y-4">
@@ -107,15 +108,36 @@ export const InsightCard: React.FC<InsightCardProps> = ({ results, answers }) =>
                 onClick={() => setActiveInsight(idx)}
                 whileHover={{ scale: 1.02, y: -2 }}
                 transition={{ duration: 0.2 }}
-                className={`p-4 rounded-2xl border text-xs leading-relaxed flex gap-3 cursor-pointer transition-all duration-300 ${
-                  isActive
-                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300 shadow-lg shadow-emerald-500/10'
-                    : 'border-slate-700/40 bg-slate-900/30 text-slate-300'
-                }`}
+                style={{
+                  padding: '1rem',
+                  borderRadius: '1rem',
+                  border: `1px solid ${isActive ? `${emerald[500]}30` : `${surface.border}40`}`,
+                  background: isActive ? `${emerald[500]}10` : `${surface.base}30`,
+                  color: isActive ? emerald[300] : surface.textSecondary,
+                  boxShadow: isActive ? `0 10px 15px -3px ${emerald[500]}10` : 'none',
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  gap: '0.75rem',
+                  fontSize: '0.75rem',
+                  lineHeight: '1.625',
+                }}
+                className="text-xs leading-relaxed"
               >
-                <div className={`w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-300 ${
-                  isActive ? 'bg-emerald-500/10 text-emerald-400' : 'bg-white/5 text-dark-400'
-                }`}>
+                <div
+                  style={{
+                    width: '1.5rem',
+                    height: '1.5rem',
+                    borderRadius: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    background: isActive ? `${emerald[500]}10` : 'rgba(255,255,255,0.05)',
+                    color: isActive ? emerald[400] : surface.textSecondary,
+                    transition: 'all 0.3s ease',
+                  }}
+                >
                   <Icon className="w-3.5 h-3.5" />
                 </div>
                 <span>{obs.text}</span>
@@ -125,7 +147,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ results, answers }) =>
         </div>
       </div>
       
-      <p className="text-[10px] text-dark-500 mt-4 text-center italic">
+      <p className="text-[10px] mt-4 text-center italic" style={{ color: surface.textSecondary }}>
         Observations are dynamically computed from your assessment answers and emission breakdown.
       </p>
     </div>

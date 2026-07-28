@@ -52,10 +52,18 @@ src/
     calculator/             # Adaptive Assessment Questionnaire Components
     dashboard/              # User Footprint Analytics & What-If Simulator
     admin/                  # Admin Operations Suite Components
-    layout/                 # Navigation & Footer Structure
+    layout/                 # Navigation, Footer & Layout Structure
     ui/                     # Design System Primitives (Buttons, Cards, Badges)
-  context/                  # Global Context Providers (AuthContext, CalculatorContext)
+  context/                  # Global Context Providers (AuthContext, AssessmentContext)
   data/
+    providers/              # Data Provider Layer (abstraction over all data sources)
+      index.ts              # Central provider exports
+      NationalDataProvider.ts      # India national statistics (CEA, MoEFCC, Global Carbon Project)
+      StateDataProvider.ts         # Indian state-level environmental data
+      CommunityDataProvider.ts     # Community aggregate data
+      AssessmentDataProvider.ts    # Assessment-driven data
+      EnvironmentalEquivalentProvider.ts  # Indian environmental equivalents (LPG, metro, flights)
+      MockProvider.ts              # Mock data for development
     datasets/               # Scientific Datasets (CEA, ARAI, ICAO, BEE)
       electricity/          # CEA India State/UT Electricity Grid Factors
       transport/            # ARAI Vehicle Factors, Airport Engine, Transit
@@ -65,15 +73,76 @@ src/
       shopping/             # Clothing, Electronics & E-Commerce Datasets
       locations/            # Indian States, UTs, Districts & Cities Registry
   firebase/                 # Firebase Initialization, Auth & Firestore Client
-  pages/                    # Application Top-Level Views (Calculator, History, Admin, etc.)
+  pages/                    # Application Top-Level Views
+    Home.tsx                # Landing page with India map, charts, simulator
+    About.tsx               # Methodology, data sources, editorial design
+    Assessment.tsx          # 7-step carbon footprint calculator
+    Dashboard.tsx           # Visualization-first analytics dashboard
+    History.tsx             # Assessment history, reports, PDF export
+    Community.tsx           # Leaderboard, eco-forests, challenges
+    Admin.tsx               # Admin operations suite
+    Login.tsx / Register.tsx  # Authentication
   services/                 # Integration Services (AI Coach, Audit, Newsletter)
+  visualization/            # Visualization Architecture (charts, maps, widgets)
+    index.ts                # Central visualization exports
+    types/
+      react-simple-maps.d.ts  # TypeScript declarations for react-simple-maps
+    providers/
+      VisualizationDataProvider.ts  # Typed data factory for all charts
+    charts/
+      PremiumRadarChart.tsx   # User vs India vs Community radar
+      PremiumDoughnut.tsx     # Emission breakdown with center metric
+      PolarTimeline.tsx       # 24-hour emission rhythm polar chart
+      TrendChart.tsx          # Line/bar/stacked-bar chart
+      GaugeWidget.tsx         # Animated circular gauge
+      Sparkline.tsx           # Inline trend sparkline
+    maps/
+      IndiaMap.tsx            # Interactive SVG India map (7 data layers)
+    widgets/
+      KPIWidget.tsx           # Metric panel with sparkline and trend
   types/                    # TypeScript Data Models & RBAC Definitions
+  hooks/                    # Custom React Hooks
+    useAssessmentCalculation.ts  # Assessment calculation engine
   utils/                    # Pure Calculation Engines & Report Generators
+  index.css                 # Editorial Design System (t-* tokens, glass-eco, etc.)
 ```
 
 ---
 
-## 4. Scientific Data & Calculation Architecture
+## 4. Visualization Architecture
+
+The visualization system (`src/visualization/`) provides production-quality, data-driven charts and maps that consume typed data from `VisualizationDataProvider`. Components never format raw values internally — formatting belongs inside adapters.
+
+### Components
+
+| Component | Purpose | Data Source |
+|-----------|---------|-------------|
+| `IndiaMap` | Interactive SVG India map with 7 switchable data layers (participation, eco score, carbon footprint, renewable adoption, grid intensity, transport emissions, household emissions) | `VisualizationDataProvider.getMapLayers()` |
+| `PremiumRadarChart` | Radar chart comparing user vs India avg vs community avg | `VisualizationDataProvider.getRadarData()` |
+| `PremiumDoughnut` | Doughnut chart with center metric and hover expansion | `VisualizationDataProvider.getDoughnutData()` |
+| `PolarTimeline` | Polar area chart showing 24-hour emission rhythm | `VisualizationDataProvider.getPolarTimelineData()` |
+| `TrendChart` | Line/bar/stacked-bar chart with premium dark styling | Chart.js with custom adapters |
+| `GaugeWidget` | Animated circular gauge with color-coded thresholds | Direct props |
+| `Sparkline` | Inline trend sparkline for KPI panels | `VisualizationDataProvider.getSparklineData()` |
+| `KPIWidget` | Metric panel with value, trend, sparkline, comparison, status | Direct props |
+
+### Data Flow
+
+```
+NationalDataProvider ──┐
+StateDataProvider ─────┤
+CommunityDataProvider ─┤
+AssessmentDataProvider ┤──→ VisualizationDataProvider ──→ Chart Components
+                       │                                     │
+                       │                                     ▼
+                       └───────────────────────────→ Premium UI (glass-eco, dark theme)
+```
+
+Switching from mock → government API → Firestore → CSV → JSON requires ZERO component modifications.
+
+---
+
+## 5. Scientific Data & Calculation Architecture
 
 All carbon calculations are 100% deterministic and data-driven. **The AI model never calculates emissions.**
 
@@ -82,6 +151,18 @@ All carbon calculations are 100% deterministic and data-driven. **The AI model n
 2. **Aviation**: Great Circle Distance calculated between ICAO airport coordinates using the Haversine formula + 8% RFI (Radiative Forcing Index) multiplier + cabin class factor (Economy: 1.0, Business: 1.5, First: 2.0).
 3. **Vehicles**: Mileage & Fuel Type emissions derived from Automotive Research Association of India (ARAI) & BEE benchmarks.
 4. **Appliance Rating Engine**: Energy usage adjustments based on BEE (Bureau of Energy Efficiency) Star Ratings (1-Star to 5-Star Inverter).
+
+### Data Provider Layer (`src/data/providers/`)
+The Data Provider Layer provides an abstraction between components and data sources. Components never know where data originates — they consume typed interfaces only. Switching from mock → government API → Firestore → CSV → JSON requires ZERO component modifications.
+
+**Providers:**
+- `NationalDataProvider` — India national statistics (per-capita CO₂, population, renewable share) sourced from Global Carbon Project 2024 / IEA India.
+- `EnvironmentalEquivalentProvider` — Computes Indian-contextual environmental equivalents (LPG cylinders, metro trips, Delhi–Mumbai flights, tree plantation, rice production, solar units) from government-sourced emission factors.
+
+**Type contracts** (`src/types/dataProviders.ts`):
+- `DatasetMetadata` — Source attribution for every dataset.
+- `ProviderResponse<T>` — Generic wrapper returning `{ metadata, data }`.
+- `IEnvironmentalEquivalentProvider`, `INationalDataProvider`, `IStateDataProvider`, `ICommunityDataProvider`, `IAssessmentDataProvider` — Provider contracts.
 
 ### Central Dataset Registry (`DatasetRegistry.ts`)
 - All 9 scientific datasets (`electricity_grid`, `transport_vehicles`, `transport_aviation`, `transport_public`, `energy_appliances`, `energy_fuels`, `food_dietary`, `waste_streams`, `shopping_consumer`) self-register on import with the `DatasetRegistry` singleton.

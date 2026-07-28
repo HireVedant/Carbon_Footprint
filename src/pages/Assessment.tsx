@@ -4,14 +4,15 @@ import { useAssessment, AssessmentStep } from '../context/AssessmentContext';
 import { useAuth } from '../context/AuthContext';
 import { saveV2Assessment } from '../firebase/firestore';
 import { LocationSelector } from '../components/calculator/LocationSelector';
-import { VehicleSelector } from '../components/calculator/VehicleSelector';
 import { FlightPlanner } from '../components/calculator/FlightPlanner';
 import { ApplianceSelector } from '../components/calculator/ApplianceSelector';
 import { ConfidenceBreakdownCard } from '../components/calculator/ConfidenceBadge';
+import { TRANSPORT_MODES, PUBLIC_TRANSIT_MODES, TransportEntry } from '../data/configs/transportConfig';
+import { FOOD_CATEGORIES, DietMixEntry } from '../data/configs/foodConfig';
 import {
   MapPin, Car, Zap, UtensilsCrossed, Trash2, ShoppingBag,
   ClipboardCheck, Sparkles, Leaf, ChevronLeft, ChevronRight,
-  Timer, FileText
+  Timer, FileText, Plus, X, GripVertical
 } from 'lucide-react';
 import SectionHeading from '../components/ui/SectionHeading';
 
@@ -164,7 +165,7 @@ export default function Assessment() {
                 Calculating Your Footprint...
               </h3>
               <p className="text-sm text-dark-300">
-                AI Scientific Calculation Engine v2.0 is processing your answers against verified CEA, ARAI, and SEI datasets.
+                AI Scientific Calculation Engine v2.1 is processing your answers against verified CEA, ARAI, and SEI datasets.
               </p>
             </div>
           </div>
@@ -235,7 +236,7 @@ export default function Assessment() {
             className="max-w-3xl mx-auto space-y-8"
           >
             <SectionHeading
-              badge="Scientific Assessment v2.0"
+              badge="Scientific Assessment v2.1"
               title="Calculate Your"
               highlight="Carbon Footprint"
               description="India-first assessment powered by CEA grid factors, ARAI vehicle benchmarks, and ICAO aviation data."
@@ -263,6 +264,30 @@ export default function Assessment() {
               >
                 <FileText className="w-4 h-4" /> Detailed Assessment (8-10 min)
               </button>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span style={{ color: 'var(--text-tertiary)' }}>
+                  Step {currentVisibleIndex + 1} of {visibleSteps.length}
+                </span>
+                <span className="font-medium tabular-nums" style={{ color: 'var(--color-primary)', fontFamily: 'var(--font-mono)' }}>
+                  {Math.round(((currentVisibleIndex) / (visibleSteps.length - 1)) * 100)}%
+                </span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-elevated)' }}>
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ background: 'linear-gradient(90deg, var(--color-primary), #34d399)' }}
+                  initial={false}
+                  animate={{ width: `${((currentVisibleIndex) / (visibleSteps.length - 1)) * 100}%` }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                />
+              </div>
+              <p className="text-center text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                {mode === 'quick' ? '2–3 min total' : '8–10 min total'} · ~{Math.max(1, Math.round((visibleSteps.length - currentVisibleIndex - 1) * (mode === 'quick' ? 0.5 : 1.2)))} min remaining
+              </p>
             </div>
 
             {/* Step Progress Indicator */}
@@ -315,55 +340,13 @@ export default function Assessment() {
                   )}
 
                   {currentStep === 'transport' && (
-                    <div className="space-y-6">
-                      <VehicleSelector
-                        ownsVehicle={!!answers.ownsVehicle}
-                        vehicleCategoryKey={answers.vehicleCategoryKey || ''}
-                        dailyVehicleKm={answers.dailyVehicleKm || 25}
-                        vehicleOccupancy={answers.vehicleOccupancy || 1}
-                        onOwnershipChange={(owns) => updateAnswers({ ownsVehicle: owns })}
-                        onChange={(u) => updateAnswers(u)}
-                      />
-
-                      {/* Public Transit (Quick & Detailed) */}
-                      <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-4">
-                        <h3 className="text-lg font-semibold text-white">Public Transit Usage</h3>
-                        <p className="text-xs text-gray-400">Approximate weekly kilometers by transit mode.</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {[
-                            { key: 'metroKmWeekly', label: 'Metro (km/week)' },
-                            { key: 'suburbanTrainKmWeekly', label: 'Local Train (km/week)' },
-                            { key: 'busKmWeekly', label: 'City Bus (km/week)' },
-                            { key: 'autoKmWeekly', label: 'Auto Rickshaw (km/week)' },
-                            { key: 'taxiKmWeekly', label: 'Taxi / Ride-Hail (km/week)' }
-                          ].map(tm => (
-                            <div key={tm.key}>
-                              <label className="block text-xs font-medium text-gray-300 mb-1">{tm.label}</label>
-                              <input
-                                type="number"
-                                min={0}
-                                max={500}
-                                value={numVal((answers.publicTransitModes as any)?.[tm.key], false)}
-                                onChange={(e) => {
-                                  updateAnswers({
-                                    publicTransitModes: {
-                                      ...(answers.publicTransitModes || {}),
-                                      [tm.key]: parseNum(e.target.value)
-                                    }
-                                  });
-                                }}
-                                className="w-full bg-gray-800/90 border border-gray-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Flights (Detailed only) */}
-                      {mode === 'detailed' && (
-                        <FlightPlanner flights={flights} onChange={setFlights} />
-                      )}
-                    </div>
+                    <TransportSection
+                      answers={answers}
+                      updateAnswers={updateAnswers}
+                      mode={mode}
+                      flights={flights}
+                      setFlights={setFlights}
+                    />
                   )}
 
                   {currentStep === 'energy' && (
@@ -470,64 +453,10 @@ export default function Assessment() {
                   )}
 
                   {currentStep === 'food' && (
-                    <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-5">
-                      <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-                        <div className="p-2.5 bg-rose-500/10 rounded-xl text-rose-400">
-                          <UtensilsCrossed className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">Diet & Food Habits</h3>
-                          <p className="text-xs text-gray-400">Based on ICAR & EAT-Lancet India dietary benchmarks.</p>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium text-gray-300 mb-2">Dietary Pattern</label>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                          {[
-                            { value: 'vegan', label: 'Plant-Based Vegan' },
-                            { value: 'lacto_vegetarian', label: 'Vegetarian (Indian Veg)' },
-                            { value: 'eggetarian', label: 'Eggetarian' },
-                            { value: 'pescatarian', label: 'Fish / Seafood' },
-                            { value: 'chicken_moderate', label: 'Chicken (1-2x/week)' },
-                            { value: 'mixed_non_veg', label: 'Mixed Non-Veg' },
-                            { value: 'other_diet', label: 'Other' }
-                          ].map(d => (
-                            <button
-                              key={d.value}
-                              type="button"
-                              onClick={() => updateAnswers({ dietType: d.value as any })}
-                              className={`p-3 rounded-xl border text-xs font-medium text-left transition-all ${
-                                answers.dietType === d.value
-                                  ? 'border-rose-500 bg-rose-500/10 text-white'
-                                  : 'border-gray-700/60 bg-gray-800/50 text-gray-400 hover:border-gray-600'
-                              }`}
-                            >{d.label}</button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-300 mb-1.5">Food Waste Level</label>
-                          <select value={answers.foodWasteLevel || 'MODERATE'}
-                            onChange={(e) => updateAnswers({ foodWasteLevel: e.target.value as any })}
-                            className="w-full bg-gray-800/90 border border-gray-700 focus:border-rose-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
-                          >
-                            <option value="LOW">Low (&lt; 5% food wasted)</option>
-                            <option value="MODERATE">Moderate (5-15% wasted)</option>
-                            <option value="HIGH">High (&gt; 15% wasted)</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-300 mb-1.5">Dining Out (meals/week)</label>
-                          <input type="number" min={0} max={21} value={numVal(answers.diningOutMealsWeekly)}
-                            onChange={(e) => updateAnswers({ diningOutMealsWeekly: parseNum(e.target.value, 1) })}
-                            className="w-full bg-gray-800/90 border border-gray-700 focus:border-rose-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
-                          />
-                        </div>
-                      </div>
-                    </div>
+                    <FoodSection
+                      answers={answers}
+                      updateAnswers={updateAnswers}
+                    />
                   )}
 
                   {currentStep === 'waste' && (
@@ -614,18 +543,7 @@ export default function Assessment() {
                   )}
 
                   {currentStep === 'review' && (
-                    <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-4">
-                      <h3 className="text-lg font-semibold text-white">Review Your Answers</h3>
-                      <p className="text-xs text-gray-400">Confirm your inputs before running the scientific calculation engine.</p>
-                      <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">State:</span> <span className="text-white ml-1">{answers.state}</span></div>
-                        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">Mode:</span> <span className="text-white ml-1 capitalize">{mode}</span></div>
-                        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">Vehicle:</span> <span className="text-white ml-1">{answers.ownsVehicle ? answers.vehicleCategoryKey?.replace(/_/g, ' ') || 'Yes' : 'No'}</span></div>
-                        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">Diet:</span> <span className="text-white ml-1">{answers.dietType?.replace(/_/g, ' ')}</span></div>
-                        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">Flights:</span> <span className="text-white ml-1">{flights.length} routes</span></div>
-                        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">Appliances:</span> <span className="text-white ml-1">{appliances.length} tracked</span></div>
-                      </div>
-                    </div>
+                    <ReviewSection answers={answers} mode={mode} flights={flights} appliances={appliances} />
                   )}
                 </motion.div>
               </AnimatePresence>
@@ -659,6 +577,385 @@ export default function Assessment() {
             </div>
           </motion.div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Transport Section (Multi-Select) ────────────────────────────────────────
+
+function TransportSection({
+  answers,
+  updateAnswers,
+  mode,
+  flights,
+  setFlights,
+}: {
+  answers: any;
+  updateAnswers: (u: any) => void;
+  mode: string;
+  flights: any[];
+  setFlights: (f: any[]) => void;
+}) {
+  const entries: TransportEntry[] = answers.transportEntries || [];
+
+  const addEntry = (modeId: string) => {
+    const mode = TRANSPORT_MODES.find(m => m.id === modeId);
+    if (!mode) return;
+    // Check if already added
+    if (entries.some(e => e.modeId === modeId)) return;
+    const newEntry: TransportEntry = {
+      modeId,
+      dailyKm: mode.defaultDailyKm,
+      occupancy: mode.supportsOccupancy ? 1 : 1,
+      label: mode.label,
+    };
+    updateAnswers({ transportEntries: [...entries, newEntry] });
+  };
+
+  const removeEntry = (idx: number) => {
+    const updated = entries.filter((_, i) => i !== idx);
+    updateAnswers({ transportEntries: updated });
+  };
+
+  const updateEntry = (idx: number, field: keyof TransportEntry, value: number) => {
+    const updated = [...entries];
+    updated[idx] = { ...updated[idx], [field]: value };
+    updateAnswers({ transportEntries: updated });
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Personal Transport — Multi-Select */}
+      <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-5">
+        <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+          <div className="p-2.5 bg-cyan-500/10 rounded-xl text-cyan-400">
+            <Car className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-white">Personal Transport</h3>
+            <p className="text-xs text-gray-400">Add all modes of transport you use. Emission factors from ARAI/BEE datasets.</p>
+          </div>
+        </div>
+
+        {/* Available modes to add */}
+        <div>
+          <label className="block text-xs font-medium text-gray-300 mb-2">Add a transport mode:</label>
+          <div className="flex flex-wrap gap-2">
+            {TRANSPORT_MODES.map(mode => {
+              const alreadyAdded = entries.some(e => e.modeId === mode.id);
+              return (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => addEntry(mode.id)}
+                  disabled={alreadyAdded}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
+                    alreadyAdded
+                      ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 cursor-default'
+                      : 'bg-gray-800/50 text-gray-400 border-gray-700/60 hover:border-gray-600 hover:text-white'
+                  }`}
+                >
+                  <span>{mode.icon}</span>
+                  <span>{mode.label}</span>
+                  {alreadyAdded && <span className="text-emerald-400 ml-1">✓</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Added entries */}
+        {entries.length > 0 && (
+          <div className="space-y-3">
+            {entries.map((entry, idx) => {
+              const mode = TRANSPORT_MODES.find(m => m.id === entry.modeId);
+              if (!mode) return null;
+              const annualKm = entry.dailyKm * 365;
+              const annualEmission = Math.round((annualKm * mode.defaultEmissionFactorKgCO2PerKm) / Math.max(1, entry.occupancy));
+
+              return (
+                <div key={`${entry.modeId}-${idx}`} className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">{mode.icon}</span>
+                      <span className="text-sm font-medium text-white">{entry.label}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeEntry(idx)}
+                      className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-[10px] text-gray-400 mb-1">Daily km</label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={500}
+                        value={entry.dailyKm}
+                        onChange={(e) => updateEntry(idx, 'dailyKm', Math.max(0, parseNum(e.target.value)))}
+                        className="w-full bg-gray-800/90 border border-gray-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-white text-xs outline-none transition-all"
+                      />
+                    </div>
+                    {mode.supportsOccupancy && (
+                      <div>
+                        <label className="block text-[10px] text-gray-400 mb-1">Passengers</label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={8}
+                          value={entry.occupancy}
+                          onChange={(e) => updateEntry(idx, 'occupancy', Math.max(1, parseNum(e.target.value, 1)))}
+                          className="w-full bg-gray-800/90 border border-gray-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-white text-xs outline-none transition-all"
+                        />
+                      </div>
+                    )}
+                    <div className="flex items-end">
+                      <div className="text-xs text-gray-400">
+                        <span className="text-cyan-400 font-bold">~{annualEmission.toLocaleString()}</span> kg CO₂/yr
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {entries.length === 0 && (
+          <div className="text-center py-4">
+            <p className="text-xs text-gray-500">No transport modes selected. Click a mode above to add it.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Public Transit */}
+      <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-4">
+        <h3 className="text-lg font-semibold text-white">Public Transit Usage</h3>
+        <p className="text-xs text-gray-400">Approximate weekly kilometers by transit mode.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {PUBLIC_TRANSIT_MODES.map(tm => (
+            <div key={tm.id}>
+              <label className="block text-xs font-medium text-gray-300 mb-1">{tm.icon} {tm.label} (km/week)</label>
+              <input
+                type="number"
+                min={0}
+                max={500}
+                value={numVal((answers.publicTransitModes as any)?.[tm.weeklyKmKey], false)}
+                onChange={(e) => {
+                  updateAnswers({
+                    publicTransitModes: {
+                      ...(answers.publicTransitModes || {}),
+                      [tm.weeklyKmKey]: parseNum(e.target.value)
+                    }
+                  });
+                }}
+                className="w-full bg-gray-800/90 border border-gray-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Flights (Detailed only) */}
+      {mode === 'detailed' && (
+        <FlightPlanner flights={flights} onChange={setFlights} />
+      )}
+    </div>
+  );
+}
+
+// ─── Food Section (Multi-Select) ─────────────────────────────────────────────
+
+function FoodSection({
+  answers,
+  updateAnswers,
+}: {
+  answers: any;
+  updateAnswers: (u: any) => void;
+}) {
+  const dietMix: DietMixEntry[] = answers.dietMix || [];
+  const totalWeight = dietMix.reduce((sum, d) => sum + d.weight, 0);
+
+  const toggleCategory = (foodId: string) => {
+    const category = FOOD_CATEGORIES.find(c => c.id === foodId);
+    if (!category) return;
+    
+    const existing = dietMix.find(d => d.foodId === foodId);
+    let updated: DietMixEntry[];
+
+    if (existing) {
+      // Remove
+      updated = dietMix.filter(d => d.foodId !== foodId);
+    } else {
+      // Add with equal weight
+      const newCount = dietMix.length + 1;
+      const equalWeight = Math.round((1 / newCount) * 100) / 100;
+      const newEntry: DietMixEntry = {
+        foodId,
+        weight: equalWeight,
+        label: category.label,
+      };
+      updated = [...dietMix, newEntry];
+      // Redistribute weights equally
+      const redistributeWeight = Math.round((1 / updated.length) * 100) / 100;
+      updated = updated.map(d => ({ ...d, weight: redistributeWeight }));
+    }
+
+    updateAnswers({ dietMix: updated });
+  };
+
+  const updateWeight = (foodId: string, weight: number) => {
+    const updated = dietMix.map(d =>
+      d.foodId === foodId ? { ...d, weight: Math.max(0, Math.min(1, weight)) } : d
+    );
+    updateAnswers({ dietMix: updated });
+  };
+
+  return (
+    <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-5">
+      <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+        <div className="p-2.5 bg-rose-500/10 rounded-xl text-rose-400">
+          <UtensilsCrossed className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-white">Diet & Food Habits</h3>
+          <p className="text-xs text-gray-400">Select all categories that apply to your diet. Weight them by how much of your diet falls into each category. Based on ICAR & EAT-Lancet benchmarks.</p>
+        </div>
+      </div>
+
+      {/* Multi-select food categories */}
+      <div>
+        <label className="block text-xs font-medium text-gray-300 mb-2">Select your dietary categories:</label>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          {FOOD_CATEGORIES.map(cat => {
+            const isSelected = dietMix.some(d => d.foodId === cat.id);
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => toggleCategory(cat.id)}
+                className={`p-3 rounded-xl border text-xs font-medium text-left transition-all ${
+                  isSelected
+                    ? 'border-rose-500 bg-rose-500/10 text-white'
+                    : 'border-gray-700/60 bg-gray-800/50 text-gray-400 hover:border-gray-600'
+                }`}
+              >
+                <span className="text-base mr-1">{cat.icon}</span>
+                <span className="font-medium">{cat.label}</span>
+                {isSelected && <span className="ml-1 text-rose-300">✓</span>}
+                <p className="text-[10px] text-gray-500 mt-0.5">{cat.description}</p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Weight sliders for selected categories */}
+      {dietMix.length > 0 && (
+        <div className="space-y-3">
+          <p className="text-xs text-gray-400">Adjust the proportion of your diet that falls into each category:</p>
+          {dietMix.map(entry => {
+            const category = FOOD_CATEGORIES.find(c => c.id === entry.foodId);
+            if (!category) return null;
+            const pct = Math.round(entry.weight * 100);
+            return (
+              <div key={entry.foodId} className="bg-gray-800/40 rounded-xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-medium text-white">{category.icon} {entry.label}</span>
+                  <span className="text-xs font-bold text-rose-400">{pct}%</span>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={pct}
+                  onChange={(e) => updateWeight(entry.foodId, parseInt(e.target.value) / 100)}
+                  className="w-full h-1.5 rounded-full appearance-none bg-gray-700 accent-rose-500"
+                />
+              </div>
+            );
+          })}
+          <p className="text-[10px] text-gray-500">
+            Total: {Math.round(totalWeight * 100)}% · Emissions are weighted by proportion.
+          </p>
+        </div>
+      )}
+
+      {dietMix.length === 0 && (
+        <p className="text-xs text-gray-500 text-center py-2">Select at least one dietary category above.</p>
+      )}
+
+      {/* Food waste and dining out */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+        <div>
+          <label className="block text-xs font-medium text-gray-300 mb-1.5">Food Waste Level</label>
+          <select value={answers.foodWasteLevel || 'MODERATE'}
+            onChange={(e) => updateAnswers({ foodWasteLevel: e.target.value as any })}
+            className="w-full bg-gray-800/90 border border-gray-700 focus:border-rose-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+          >
+            <option value="LOW">{"Low (< 5% food wasted)"}</option>
+            <option value="MODERATE">{"Moderate (5-15% wasted)"}</option>
+            <option value="HIGH">{"High (> 15% wasted)"}</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-300 mb-1.5">Dining Out (meals/week)</label>
+          <input type="number" min={0} max={21} value={numVal(answers.diningOutMealsWeekly)}
+            onChange={(e) => updateAnswers({ diningOutMealsWeekly: parseNum(e.target.value, 1) })}
+            className="w-full bg-gray-800/90 border border-gray-700 focus:border-rose-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Review Section ──────────────────────────────────────────────────────────
+
+function ReviewSection({
+  answers,
+  mode,
+  flights,
+  appliances,
+}: {
+  answers: any;
+  mode: string;
+  flights: any[];
+  appliances: any[];
+}) {
+  const transportEntries: TransportEntry[] = answers.transportEntries || [];
+  const dietMix: DietMixEntry[] = answers.dietMix || [];
+
+  const transportSummary = transportEntries.length > 0
+    ? transportEntries.map(e => e.label).join(', ')
+    : answers.ownsVehicle
+    ? answers.vehicleCategoryKey?.replace(/_/g, ' ') || 'Yes'
+    : 'No vehicle';
+
+  const foodSummary = dietMix.length > 0
+    ? dietMix.map(d => {
+        const cat = FOOD_CATEGORIES.find(c => c.id === d.foodId);
+        return `${cat?.label || d.foodId} (${Math.round(d.weight * 100)}%)`;
+      }).join(', ')
+    : answers.dietType?.replace(/_/g, ' ') || 'Not selected';
+
+  return (
+    <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-4">
+      <h3 className="text-lg font-semibold text-white">Review Your Answers</h3>
+      <p className="text-xs text-gray-400">Confirm your inputs before running the scientific calculation engine.</p>
+      <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">State:</span> <span className="text-white ml-1">{answers.state}</span></div>
+        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">Mode:</span> <span className="text-white ml-1 capitalize">{mode}</span></div>
+        <div className="bg-gray-800/40 p-3 rounded-xl col-span-2"><span className="text-gray-500">Transport:</span> <span className="text-white ml-1">{transportSummary}</span></div>
+        <div className="bg-gray-800/40 p-3 rounded-xl col-span-2"><span className="text-gray-500">Diet:</span> <span className="text-white ml-1">{foodSummary}</span></div>
+        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">Flights:</span> <span className="text-white ml-1">{flights.length} routes</span></div>
+        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">Appliances:</span> <span className="text-white ml-1">{appliances.length} tracked</span></div>
       </div>
     </div>
   );

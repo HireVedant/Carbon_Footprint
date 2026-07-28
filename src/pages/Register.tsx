@@ -85,8 +85,8 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center px-4 py-20 relative">
       {/* Background */}
       <div className="absolute inset-0 mesh-bg" />
-      <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-primary-500/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-1/3 left-1/4 w-96 h-96 bg-accent-500/5 rounded-full blur-3xl" />
+      <div className="absolute top-1/3 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(52,211,153,0.04)' }} />
+      <div className="absolute bottom-1/3 left-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(45,212,191,0.04)' }} />
 
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -94,24 +94,24 @@ export default function Register() {
         transition={{ duration: 0.6, ease: 'easeOut' }}
         className="relative w-full max-w-md"
       >
-        <div className="glass-strong p-8 sm:p-10">
+        <div className="p-8 sm:p-10" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-3xl)' }}>
           {/* Logo */}
           <div className="flex items-center justify-center gap-2.5 mb-8">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
-              <Leaf className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #34d399, #2dd4bf)', boxShadow: '0 2px 12px rgba(52,211,153,0.25)' }}>
+              <Leaf className="w-5 h-5" style={{ color: 'var(--bg-primary)' }} />
             </div>
-            <span className="text-xl font-display font-bold">
+            <span className="text-xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
               Eco<span className="gradient-text">Track</span>
-              <span className="text-dark-400 font-light ml-1">AI</span>
+              <span className="font-light ml-1" style={{ color: 'var(--text-tertiary)' }}>AI</span>
             </span>
           </div>
 
           {/* Heading */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-display font-bold text-white mb-2">
+            <h1 className="text-2xl font-bold mb-2" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
               Create your account
             </h1>
-            <p className="text-sm text-dark-400">
+            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
               Start your sustainability journey today
             </p>
           </div>
@@ -159,7 +159,10 @@ export default function Register() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[38px] text-dark-400 hover:text-white transition-colors"
+                className="absolute right-3 top-[38px] transition-colors"
+                style={{ color: 'var(--text-muted)' }}
+                onMouseEnter={(e) => { (e.target as HTMLElement).style.color = 'var(--text-primary)'; }}
+                onMouseLeave={(e) => { (e.target as HTMLElement).style.color = 'var(--text-muted)'; }}
                 id="register-toggle-password"
                 aria-label="Toggle password visibility"
               >
@@ -179,14 +182,15 @@ export default function Register() {
                     <div
                       key={level}
                       className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                        passwordStrength.level >= level ? passwordStrength.color : 'bg-white/10'
+                        passwordStrength.level >= level ? passwordStrength.color : ''
                       }`}
+                      style={passwordStrength.level < level ? { background: 'var(--border-subtle)' } : {}}
                     />
                   ))}
                 </div>
-                <p className="text-xs text-dark-400">
+                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                   Password strength:{' '}
-                  <span className="font-medium text-white">{passwordStrength.text}</span>
+                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{passwordStrength.text}</span>
                 </p>
               </motion.div>
             )}
@@ -212,19 +216,22 @@ export default function Register() {
           {/* Benefits */}
           <div className="mt-6 space-y-2">
             {['AI-powered carbon tracking', 'Personalized insights', 'Gemini AI recommendations'].map((benefit) => (
-              <div key={benefit} className="flex items-center gap-2 text-xs text-dark-400">
-                <CheckCircle2 className="w-3.5 h-3.5 text-primary-500 flex-shrink-0" />
+              <div key={benefit} className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-primary)' }} />
                 {benefit}
               </div>
             ))}
           </div>
 
           {/* Footer */}
-          <p className="mt-6 text-center text-sm text-dark-400">
+          <p className="mt-6 text-center text-sm" style={{ color: 'var(--text-tertiary)' }}>
             Already have an account?{' '}
             <Link
               to="/login"
-              className="text-primary-400 hover:text-primary-300 font-medium transition-colors"
+              className="font-medium transition-colors"
+              style={{ color: 'var(--color-primary)' }}
+              onMouseEnter={(e) => { (e.target as HTMLElement).style.color = 'var(--color-primary-hover)'; }}
+              onMouseLeave={(e) => { (e.target as HTMLElement).style.color = 'var(--color-primary)'; }}
               id="register-login-link"
             >
               Sign in
@@ -232,7 +239,7 @@ export default function Register() {
           </p>
         </div>
 
-        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-20 bg-primary-500/10 blur-3xl rounded-full" />
+        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-20 blur-3xl rounded-full" style={{ background: 'rgba(52,211,153,0.08)' }} />
       </motion.div>
     </div>
   );

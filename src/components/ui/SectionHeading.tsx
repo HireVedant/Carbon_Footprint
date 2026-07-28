@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
+import { viewport } from '../../design/motion';
 
 interface SectionHeadingProps {
   badge?: string;
@@ -24,16 +25,19 @@ export default function SectionHeading({
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-50px' }}
+      viewport={viewport}
       transition={{ duration: 0.6, ease: 'easeOut' }}
       className={`flex flex-col ${alignClasses} mb-12 sm:mb-16`}
     >
       {badge && (
-        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-400 text-xs font-semibold uppercase tracking-wider mb-4">
+        <span
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-400 text-xs font-semibold uppercase tracking-wider mb-4"
+          aria-hidden="true"
+        >
           {badge}
         </span>
       )}
-      <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white text-balance ${align === 'center' ? 'max-w-3xl' : ''}`}>
+      <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white text-balance leading-tight ${align === 'center' ? 'max-w-3xl' : ''}`}>
         {title}{' '}
         {highlight && <span className="gradient-text">{highlight}</span>}
       </h2>

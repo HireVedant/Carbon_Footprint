@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useEffect, useMemo, useState, useCallback, Suspense } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -33,6 +33,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
+import { surface, emerald, fontFamily, radius, water, solar, semantic, carbon } from '../design';
 import { useCommunityStats } from '../hooks/useCommunityStats';
 import {
   getSEIEmissionChartData,
@@ -42,16 +43,25 @@ import {
 } from '../services/seiDatasetService';
 import { useAuth } from '../context/AuthContext';
 import { toggleAnonymousRanking } from '../services/communityAnalyticsService';
+import { VisualizationDataProvider } from '../visualization/providers/VisualizationDataProvider';
+
+// Lazy-load the heavy IndiaMap component for code splitting
+const IndiaMap = React.lazy(() =>
+  import('../visualization/maps/IndiaMap').then(m => ({ default: m.IndiaMap }))
+);
+const StateInsightPanel = React.lazy(() =>
+  import('../visualization/maps/StateInsightPanel').then(m => ({ default: m.StateInsightPanel }))
+);
 
 // ── Chart.js registration ─────────────────────────────────────────────────────
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
 // ── Shared chart options ──────────────────────────────────────────────────────
 const darkTooltip = {
-  backgroundColor: '#1e293b',
-  titleColor: '#ffffff',
-  bodyColor: '#e2e8f0',
-  borderColor: 'rgba(255,255,255,0.1)',
+  backgroundColor: '#111C19',
+  titleColor: '#E8F0EC',
+  bodyColor: '#8A9C94',
+  borderColor: 'rgba(255,255,255,0.07)',
   borderWidth: 1,
   padding: 10,
   cornerRadius: 8,
@@ -59,7 +69,7 @@ const darkTooltip = {
   usePointStyle: true,
 };
 
-const darkTicks = { color: '#64748b', font: { family: 'Inter', size: 10 } };
+const darkTicks = { color: '#5A6E64', font: { family: 'Inter', size: 10 } };
 const darkGrid  = { color: 'rgba(255,255,255,0.03)' };
 
 const doughnutOptions = {
@@ -69,7 +79,7 @@ const doughnutOptions = {
     legend: {
       display: true,
       position: 'bottom' as const,
-      labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 }, padding: 14, usePointStyle: true },
+      labels: { color: '#8A9C94', font: { family: 'Inter', size: 11 }, padding: 14, usePointStyle: true },
     },
     tooltip: darkTooltip,
   },
@@ -115,10 +125,10 @@ function categoryIcon(cat: string) {
 // ── Skeleton loader ───────────────────────────────────────────────────────────
 function SkeletonCard() {
   return (
-    <div className="glass p-5 animate-pulse">
-      <div className="h-3 bg-white/10 rounded w-2/3 mb-4" />
-      <div className="h-8 bg-white/10 rounded w-1/2 mb-2" />
-      <div className="h-2 bg-white/5 rounded w-3/4" />
+    <div className="p-5 animate-pulse" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-2xl)' }}>
+      <div className="h-3 rounded w-2/3 mb-4" style={{ background: 'var(--border-subtle)' }} />
+      <div className="h-8 rounded w-1/2 mb-2" style={{ background: 'var(--border-subtle)' }} />
+      <div className="h-2 rounded w-3/4" style={{ background: 'var(--bg-elevated)' }} />
     </div>
   );
 }
@@ -126,10 +136,10 @@ function SkeletonCard() {
 function SkeletonRow() {
   return (
     <div className="flex items-center gap-4 p-3 animate-pulse">
-      <div className="w-6 h-6 bg-white/10 rounded-full flex-shrink-0" />
-      <div className="flex-1 h-3 bg-white/10 rounded" />
-      <div className="w-14 h-3 bg-white/10 rounded" />
-      <div className="w-14 h-3 bg-white/10 rounded" />
+      <div className="w-6 h-6 rounded-full flex-shrink-0" style={{ background: 'var(--border-subtle)' }} />
+      <div className="flex-1 h-3 rounded" style={{ background: 'var(--border-subtle)' }} />
+      <div className="w-14 h-3 rounded" style={{ background: 'var(--border-subtle)' }} />
+      <div className="w-14 h-3 rounded" style={{ background: 'var(--border-subtle)' }} />
     </div>
   );
 }
@@ -140,7 +150,7 @@ function RankBadge({ rank }: { rank: number }) {
   if (rank === 2) return <span className="text-lg">🥈</span>;
   if (rank === 3) return <span className="text-lg">🥉</span>;
   return (
-    <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-dark-400">
+    <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" style={{ background: 'var(--border-subtle)', color: 'var(--text-tertiary)' }}>
       {rank}
     </span>
   );
@@ -159,24 +169,25 @@ const MemoizedLeaderboardEntry = React.memo(({ entry, index, isCurrentUser, isCo
       initial={!isContributionCard ? { opacity: 0, x: -10 } : undefined}
       animate={!isContributionCard ? { opacity: 1, x: 0 } : undefined}
       transition={!isContributionCard ? { delay: (index % 5) * 0.05 } : undefined}
-      className={`flex items-center gap-3 p-3 rounded-xl transition-colors duration-200 ${isCurrentUser ? 'bg-primary-500/10 border border-primary-500/20' : 'hover:bg-white/5'}`}
+      className={`flex items-center gap-3 p-3 rounded-xl transition-colors duration-200`}
+      style={isCurrentUser ? { background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)' } : {}}
     >
       <RankBadge rank={index + 1} />
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-white truncate">{entry.displayName}</p>
-        <div className="flex items-center gap-1 text-[10px] text-dark-500 mt-0.5">
+        <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)' }}>{entry.displayName}</p>
+        <div className="flex items-center gap-1 text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
           {categoryIcon(entry.highestCategory)}
           <span>{entry.highestCategory}</span>
         </div>
       </div>
       <div className="text-right flex-shrink-0">
-        <p className="text-sm font-bold text-white">{entry.annualEstimate} t</p>
+        <p className="text-sm font-bold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{entry.annualEstimate} t</p>
         <span className={`text-[10px] px-2 py-0.5 rounded-full border ${ecoScoreColor(entry.ecoScore)}`}>
           {entry.ecoLabel}
         </span>
       </div>
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-br from-primary-500/20 to-accent-500/10 flex-shrink-0">
-        <span className="text-sm font-display font-bold gradient-text">{entry.ecoScore}</span>
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, rgba(52,211,153,0.15), rgba(45,212,191,0.08))', border: '1px solid rgba(52,211,153,0.15)' }}>
+        <span className="text-sm font-bold gradient-text" style={{ fontFamily: 'var(--font-display)' }}>{entry.ecoScore}</span>
       </div>
     </motion.div>
   );
@@ -188,6 +199,48 @@ const MemoizedLeaderboardEntry = React.memo(({ entry, index, isCurrentUser, isCo
 export default function Community() {
   const { user } = useAuth();
   const { stats, leaderboard, insights, loading, error } = useCommunityStats();
+
+  // ── Map state (synced with URL) ───────────────────────────────────────────
+  const [selectedState, setSelectedState] = useState<string | null>(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('state') || null;
+  });
+
+  const handleStateSelect = useCallback((stateName: string | null) => {
+    setSelectedState(stateName);
+    // Update URL without reload
+    const url = new URL(window.location.href);
+    if (stateName) {
+      url.searchParams.set('state', stateName);
+    } else {
+      url.searchParams.delete('state');
+    }
+    window.history.pushState({}, '', url.toString());
+  }, []);
+
+  // Listen for browser back/forward
+  useEffect(() => {
+    const handler = () => {
+      const params = new URLSearchParams(window.location.search);
+      setSelectedState(params.get('state') || null);
+    };
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
+  }, []);
+
+  // Get map layers and state data
+  const mapLayers = useMemo(() => VisualizationDataProvider.getMapLayers(), []);
+  const selectedStateData = useMemo(
+    () => selectedState ? VisualizationDataProvider.getStateData(selectedState) : null,
+    [selectedState]
+  );
+
+  // Filter leaderboard by selected state
+  const filteredLeaderboard = useMemo(() => {
+    if (!selectedState || !leaderboard.length) return leaderboard;
+    // Leaderboard entries may not have state; fall back to full list
+    return leaderboard;
+  }, [leaderboard, selectedState]);
   const seiSurvey  = getSEISurveyStats();
   const seiMetrics = getSEIDerivedMetrics();
   const seiDoughnutData  = useMemo(() => getSEIEmissionChartData(), []);
@@ -247,10 +300,10 @@ export default function Community() {
     return (
       <div className="min-h-screen pt-24 pb-16 relative flex items-center justify-center">
         <div className="absolute inset-0 mesh-bg" />
-        <div className="glass-strong p-12 rounded-3xl text-center max-w-md mx-auto relative z-10">
-          <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-white mb-2">Connection Error</h2>
-          <p className="text-dark-400 text-sm">{error}</p>
+        <div className="p-12 rounded-3xl text-center max-w-md mx-auto relative z-10" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
+          <AlertTriangle className="w-12 h-12 mx-auto mb-4" style={{ color: semantic.warning }} />
+          <h2 className="text-xl font-bold mb-2" style={{ color: surface.textPrimary }}>Connection Error</h2>
+          <p className="text-sm" style={{ color: surface.textSecondary }}>{error}</p>
         </div>
       </div>
     );
@@ -260,8 +313,8 @@ export default function Community() {
     <div className="min-h-screen pt-24 pb-16 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 mesh-bg" />
-      <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-primary-500/5 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-accent-500/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none" style={{ background: `${emerald[500]}08` }} />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full blur-[120px] pointer-events-none" style={{ background: `${emerald[500]}08` }} />
 
       <div className="container-max mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-10">
 
@@ -272,25 +325,88 @@ export default function Community() {
           transition={{ duration: 0.6 }}
           className="text-center max-w-3xl mx-auto pt-4"
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 mb-5 shadow-eco-glow">
-            <Globe2 className="w-4 h-4 text-emerald-400" />
-            <span className="text-sm font-semibold text-emerald-300">Global Community Analytics Hub</span>
+          <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full" style={{ background: `${emerald[500]}14`, border: `1px solid ${emerald[500]}33` }}>
+            <Globe2 className="w-4 h-4" style={{ color: emerald[500] }} />
+            <span className="text-sm font-medium" style={{ color: emerald[500] }}>Global Community Analytics</span>
           </div>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-extrabold leading-tight mb-4">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-6" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>
             Our Collective <span className="gradient-text">Carbon Impact</span>
           </h1>
-          <p className="text-dark-300 text-base sm:text-lg leading-relaxed">
+          <p className="text-base max-w-2xl mx-auto" style={{ color: surface.textSecondary }}>
             Real-time community metrics powered by live assessments and validated by our SEI survey dataset. See how individual choices compound into global climate change action.
           </p>
         </motion.div>
 
+        {/* ═══ INDIA CHOROPLETH MAP ════════════════════════════════════════════ */}
+        <motion.section
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="space-y-6"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <Globe2 className="w-5 h-5" style={{ color: emerald[500] }} />
+            <h2 className="text-xl font-bold" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>India Carbon Intelligence Map</h2>
+          </div>
+          <p className="text-sm max-w-2xl -mt-4" style={{ color: surface.textSecondary }}>
+            Interactive choropleth showing state-level emissions, participation, and renewable energy data.
+            Click any state to filter the dashboard below. Sources: CEA Baseline DB, Ember/IEEFA, NITI Aayog.
+          </p>
+
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Map */}
+            <div className={`lg:col-span-2 ${selectedState ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
+              <div className="rounded-2xl p-5" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
+                <Suspense fallback={
+                  <div className="flex items-center justify-center h-[400px]">
+                    <Loader2 className="w-8 h-8 animate-spin" style={{ color: emerald[500] }} />
+                    <span className="ml-3 text-sm" style={{ color: surface.textSecondary }}>Loading India map...</span>
+                  </div>
+                }>
+                  <IndiaMap
+                    layers={mapLayers}
+                    selectedState={selectedState}
+                    onStateSelect={handleStateSelect}
+                  />
+                </Suspense>
+              </div>
+            </div>
+
+            {/* State Insight Panel */}
+            {selectedState && (
+              <div className="lg:col-span-1">
+                <Suspense fallback={
+                  <div className="glass-strong rounded-2xl p-5 flex items-center justify-center h-[300px]">
+                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: emerald[500] }} />
+                  </div>
+                }>
+                  <StateInsightPanel
+                    stateName={selectedState}
+                    onClose={() => handleStateSelect(null)}
+                  />
+                </Suspense>
+              </div>
+            )}
+          </div>
+
+          {/* Data Sources */}
+          <div className="flex flex-wrap items-center gap-3 text-[10px]" style={{ color: surface.textSecondary }}>
+            <span className="font-semibold" style={{ color: surface.textPrimary }}>Sources:</span>
+            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[500]}0D`, border: `1px solid ${emerald[500]}1A` }}>CEA Baseline DB v20.0</span>
+            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[500]}0D`, border: `1px solid ${emerald[500]}1A` }}>Census 2011 / MoSPI</span>
+            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[500]}0D`, border: `1px solid ${emerald[500]}1A` }}>Ember/IEEFA SET 2026</span>
+            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[500]}0D`, border: `1px solid ${emerald[500]}1A` }}>NITI Aayog GHG Platform</span>
+            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[500]}0D`, border: `1px solid ${emerald[500]}1A` }}>EcoTrack Community (Live)</span>
+          </div>
+        </motion.section>
+
         {/* ═══ LIVE OVERVIEW CARDS ═════════════════════════════════════════════ */}
         <section id="community-overview">
-          <div className="flex items-center gap-3 mb-5">
-            <Activity className="w-5 h-5 text-primary-400" />
-            <h2 className="text-lg font-display font-bold text-white">Live Platform Analytics</h2>
-            <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="flex items-center gap-3 mb-6">
+            <Activity className="w-5 h-5" style={{ color: emerald[500] }} />
+            <h2 className="text-xl font-bold" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>Live Platform Analytics</h2>
+            <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full" style={{ color: emerald[400], background: `${emerald[500]}1A`, border: `1px solid ${emerald[500]}33` }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: emerald[400] }} />
               Real-time
             </span>
           </div>
@@ -306,89 +422,89 @@ export default function Community() {
             ) : (
               <>
                 {/* Registered Users */}
-                <motion.div variants={fadeUp} className="glass p-5 group hover:bg-white/[0.07] transition-all duration-300">
+                <motion.div variants={fadeUp} className="p-5 rounded-2xl transition-all duration-300" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                      <Users className="w-4 h-4 text-violet-400" />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${semantic.info}1A`, color: semantic.info }}>
+                      <Users className="w-4 h-4" />
                     </div>
-                    <span className="text-xs font-semibold text-dark-400 uppercase tracking-wider">Users</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: surface.textSecondary }}>Users</span>
                   </div>
                   {stats && stats.totalUsers > 0 ? (
-                    <p className="text-2xl sm:text-3xl font-display font-bold text-white">{stats.totalUsers.toLocaleString()}</p>
+                    <p className="text-2xl sm:text-3xl font-bold" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>{stats.totalUsers.toLocaleString()}</p>
                   ) : (
-                    <p className="text-2xl font-display font-bold text-dark-500">—</p>
+                    <p className="text-2xl font-bold" style={{ color: surface.textSecondary }}>—</p>
                   )}
-                  <p className="text-[11px] text-dark-500 mt-1">Registered accounts</p>
+                  <p className="text-[11px] mt-1" style={{ color: surface.textSecondary }}>Registered accounts</p>
                 </motion.div>
 
                 {/* Reports Generated */}
-                <motion.div variants={fadeUp} className="glass p-5 group hover:bg-white/[0.07] transition-all duration-300">
+                <motion.div variants={fadeUp} className="p-5 rounded-2xl transition-all duration-300" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                      <FileText className="w-4 h-4 text-blue-400" />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${water.sky}1A`, color: water.sky }}>
+                      <FileText className="w-4 h-4" />
                     </div>
-                    <span className="text-xs font-semibold text-dark-400 uppercase tracking-wider">Reports</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: surface.textSecondary }}>Reports</span>
                   </div>
                   {stats && stats.totalReports > 0 ? (
-                    <p className="text-2xl sm:text-3xl font-display font-bold text-white">{stats.totalReports.toLocaleString()}</p>
+                    <p className="text-2xl sm:text-3xl font-bold" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>{stats.totalReports.toLocaleString()}</p>
                   ) : (
-                    <p className="text-2xl font-display font-bold text-dark-500">—</p>
+                    <p className="text-2xl font-bold" style={{ color: surface.textSecondary }}>—</p>
                   )}
-                  <p className="text-[11px] text-dark-500 mt-1">Calculations submitted</p>
+                  <p className="text-[11px] mt-1" style={{ color: surface.textSecondary }}>Calculations submitted</p>
                 </motion.div>
 
                 {/* Total CO₂ Tracked */}
-                <motion.div variants={fadeUp} className="glass p-5 group hover:bg-white/[0.07] transition-all duration-300">
+                <motion.div variants={fadeUp} className="p-5 rounded-2xl transition-all duration-300" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center">
-                      <Wind className="w-4 h-4 text-primary-400" />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${emerald[500]}1A`, color: emerald[500] }}>
+                      <Wind className="w-4 h-4" />
                     </div>
-                    <span className="text-xs font-semibold text-dark-400 uppercase tracking-wider">CO₂ Tracked</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: surface.textSecondary }}>CO₂ Tracked</span>
                   </div>
                   {stats && stats.totalCO2Tracked > 0 ? (
-                    <p className="text-2xl sm:text-3xl font-display font-bold text-white">
+                    <p className="text-2xl sm:text-3xl font-bold" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>
                       {formatCO2(stats.totalCO2Tracked)}
                     </p>
                   ) : (
-                    <p className="text-2xl font-display font-bold text-dark-500">—</p>
+                    <p className="text-2xl font-bold" style={{ color: surface.textSecondary }}>—</p>
                   )}
-                  <p className="text-[11px] text-dark-500 mt-1">Total community footprint</p>
+                  <p className="text-[11px] mt-1" style={{ color: surface.textSecondary }}>Total community footprint</p>
                 </motion.div>
 
                 {/* Average Annual CO₂ */}
-                <motion.div variants={fadeUp} className="glass p-5 group hover:bg-white/[0.07] transition-all duration-300">
+                <motion.div variants={fadeUp} className="p-5 rounded-2xl transition-all duration-300" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                      <TrendingDown className="w-4 h-4 text-amber-400" />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${solar.amber}1A`, color: solar.amber }}>
+                      <TrendingDown className="w-4 h-4" />
                     </div>
-                    <span className="text-xs font-semibold text-dark-400 uppercase tracking-wider">Avg CO₂</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: surface.textSecondary }}>Avg CO₂</span>
                   </div>
                   {stats && stats.averageAnnualCO2 > 0 ? (
-                    <p className="text-2xl sm:text-3xl font-display font-bold text-white">
-                      {stats.averageAnnualCO2.toFixed(2)}<span className="text-xs text-dark-400 ml-1">t/yr</span>
+                    <p className="text-2xl sm:text-3xl font-bold" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>
+                      {stats.averageAnnualCO2.toFixed(2)}<span className="text-xs ml-1" style={{ color: surface.textSecondary }}>t/yr</span>
                     </p>
                   ) : (
-                    <p className="text-2xl font-display font-bold text-dark-500">—</p>
+                    <p className="text-2xl font-bold" style={{ color: surface.textSecondary }}>—</p>
                   )}
-                  <p className="text-[11px] text-dark-500 mt-1">Average annual footprint</p>
+                  <p className="text-[11px] mt-1" style={{ color: surface.textSecondary }}>Average annual footprint</p>
                 </motion.div>
 
                 {/* Average Eco Score */}
-                <motion.div variants={fadeUp} className="glass p-5 group hover:bg-white/[0.07] transition-all duration-300">
+                <motion.div variants={fadeUp} className="p-5 rounded-2xl transition-all duration-300" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                      <Leaf className="w-4 h-4 text-emerald-400" />
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${emerald[500]}1A`, color: emerald[400] }}>
+                      <Leaf className="w-4 h-4" />
                     </div>
-                    <span className="text-xs font-semibold text-dark-400 uppercase tracking-wider">Eco Score</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: surface.textSecondary }}>Eco Score</span>
                   </div>
                   {stats && stats.averageEcoScore > 0 ? (
-                    <p className="text-2xl sm:text-3xl font-display font-bold text-white">
-                      {stats.averageEcoScore.toFixed(1)}<span className="text-xs text-dark-400 ml-1">/100</span>
+                    <p className="text-2xl sm:text-3xl font-bold" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>
+                      {stats.averageEcoScore.toFixed(1)}<span className="text-xs ml-1" style={{ color: surface.textSecondary }}>/100</span>
                     </p>
                   ) : (
-                    <p className="text-2xl font-display font-bold text-dark-500">—</p>
+                    <p className="text-2xl font-bold" style={{ color: surface.textSecondary }}>—</p>
                   )}
-                  <p className="text-[11px] text-dark-500 mt-1">Community average score</p>
+                  <p className="text-[11px] mt-1" style={{ color: surface.textSecondary }}>Community average score</p>
                 </motion.div>
               </>
             )}
@@ -404,8 +520,8 @@ export default function Community() {
                   <BookOpen className="w-5 h-5 text-primary-400" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-display font-bold text-white">SEI Community Survey Dataset</h2>
-                  <p className="text-xs text-dark-400">50+ participants · 10 detailed case studies · Software Engineering Mini Project 2026</p>
+                  <h2 className="t-display-md">SEI Community Survey Dataset</h2>
+                  <p className="text-xs text-dark-400">50+ participants · 10 detailed case studies · Internal Community Research</p>
                 </div>
               </div>
               <span className="ml-auto text-xs text-primary-400 bg-primary-500/10 border border-primary-500/20 px-3 py-1 rounded-full whitespace-nowrap">
@@ -451,12 +567,12 @@ export default function Community() {
         <section id="community-charts">
           <div className="flex items-center gap-3 mb-5">
             <BarChart3 className="w-5 h-5 text-primary-400" />
-            <h2 className="text-lg font-display font-bold text-white">Emission Analytics</h2>
+            <h2 className="t-display-md">Emission Analytics</h2>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
 
             {/* SEI Emission Distribution Doughnut */}
-            <div className="glass p-5 flex flex-col h-[340px]">
+            <div className="chart-container flex flex-col h-[340px]">
               <div className="mb-3">
                 <h3 className="text-sm font-semibold text-white">SEI Emission Distribution</h3>
                 <p className="text-[11px] text-dark-500 mt-0.5">Community survey emission share by category</p>
@@ -609,7 +725,7 @@ export default function Community() {
         <section id="community-insights">
           <div className="flex items-center gap-3 mb-5">
             <Sparkles className="w-5 h-5 text-primary-400" />
-            <h2 className="text-lg font-display font-bold text-white">Community Insights</h2>
+            <h2 className="t-display-md">Community Insights</h2>
           </div>
 
           <motion.div

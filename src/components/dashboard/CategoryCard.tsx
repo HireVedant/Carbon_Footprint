@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Car, Zap, Utensils, Trash2, ArrowUpRight } from 'lucide-react';
 import { CalculationResult } from '../../utils/carbonCalculator';
+import { semantic, surface } from '../../design/colors';
 
 interface CategoryCardProps {
   results: CalculationResult;
@@ -33,10 +34,9 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ results }) => {
       tons: transportTons,
       pct: transportPct,
       icon: Car,
-      color: 'bg-blue-500',
-      textColor: 'text-blue-400',
-      borderColor: 'border-blue-500/10',
-      glow: 'shadow-[0_0_15px_rgba(59,130,246,0.1)]',
+      color: semantic.transport,
+      textColor: semantic.transport,
+      glow: `${semantic.transport}20`,
     },
     {
       name: 'Household Energy',
@@ -44,10 +44,9 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ results }) => {
       tons: energyTons,
       pct: energyPct,
       icon: Zap,
-      color: 'bg-amber-500',
-      textColor: 'text-amber-400',
-      borderColor: 'border-amber-500/10',
-      glow: 'shadow-[0_0_15px_rgba(245,158,11,0.1)]',
+      color: semantic.energy,
+      textColor: semantic.energy,
+      glow: `${semantic.energy}20`,
     },
     {
       name: 'Diet & Food Sourcing',
@@ -55,10 +54,9 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ results }) => {
       tons: foodTons,
       pct: foodPct,
       icon: Utensils,
-      color: 'bg-emerald-500',
-      textColor: 'text-emerald-400',
-      borderColor: 'border-emerald-500/10',
-      glow: 'shadow-[0_0_15px_rgba(16,185,129,0.1)]',
+      color: semantic.food,
+      textColor: semantic.food,
+      glow: `${semantic.food}20`,
     },
     {
       name: 'Waste & Shopping',
@@ -66,10 +64,9 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ results }) => {
       tons: wasteTons,
       pct: wastePct,
       icon: Trash2,
-      color: 'bg-pink-500',
-      textColor: 'text-pink-400',
-      borderColor: 'border-pink-500/10',
-      glow: 'shadow-[0_0_15px_rgba(236,72,153,0.1)]',
+      color: semantic.waste,
+      textColor: semantic.waste,
+      glow: `${semantic.waste}20`,
     },
   ];
 
@@ -79,8 +76,8 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ results }) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-white">Carbon Breakdown Details</h3>
-        <span className="text-[10px] font-bold text-dark-500 uppercase tracking-wider">Sector Specifics</span>
+        <h3 className="text-sm font-semibold" style={{ color: surface.textPrimary }}>Carbon Breakdown Details</h3>
+        <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: surface.textSecondary }}>Sector Specifics</span>
       </div>
 
       <div className="space-y-3">
@@ -91,43 +88,46 @@ export const CategoryCard: React.FC<CategoryCardProps> = ({ results }) => {
           return (
             <div
               key={cat.name}
-              className={`p-4 rounded-2xl border transition-all duration-300 ${
-                isHighest
-                  ? `bg-white/[0.04] border-primary-500/30 ${cat.glow} scale-[1.01]`
-                  : 'bg-white/[0.02] border-white/5'
-              }`}
+              className="p-4 rounded-2xl transition-all duration-300"
+              style={{
+                background: isHighest ? `${surface.panel}80` : `${surface.base}30`,
+                border: isHighest ? `1px solid ${cat.color}40` : `1px solid ${surface.border}40`,
+                boxShadow: isHighest ? `0 0 15px ${cat.glow}` : 'none',
+                transform: isHighest ? 'scale(1.01)' : 'scale(1)',
+              }}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center ${cat.textColor}`}>
-                    <Icon className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${surface.base}50`, border: `1px solid ${surface.border}40` }}>
+                    <Icon className="w-4 h-4" style={{ color: cat.textColor }} />
                   </div>
                   <div>
-                    <h4 className="text-xs font-semibold text-white flex items-center gap-1.5">
+                    <h4 className="text-xs font-semibold flex items-center gap-1.5" style={{ color: surface.textPrimary }}>
                       {cat.name}
                       {isHighest && (
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase bg-red-500/10 text-red-400 border border-red-500/20">
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase" style={{ background: `${semantic.danger}10`, color: semantic.danger, border: `1px solid ${semantic.danger}20` }}>
                           Highest <ArrowUpRight className="w-2.5 h-2.5" />
                         </span>
                       )}
                     </h4>
-                    <span className="text-[10px] text-dark-500">Annual emission stats</span>
+                    <span className="text-[10px]" style={{ color: surface.textSecondary }}>Annual emission stats</span>
                   </div>
                 </div>
                 
                 <div className="text-right">
-                  <p className="text-sm font-bold text-white leading-tight">
-                    {cat.tons} <span className="text-[10px] text-dark-400 font-normal">t CO₂</span>
+                  <p className="text-sm font-bold leading-tight" style={{ color: surface.textPrimary }}>
+                    {cat.tons} <span className="text-[10px] font-normal" style={{ color: surface.textSecondary }}>t CO₂</span>
                   </p>
-                  <span className="text-[10px] text-dark-500 font-semibold">{cat.pct}% of footprint</span>
+                  <span className="text-[10px] font-semibold" style={{ color: surface.textSecondary }}>{cat.pct}% of footprint</span>
                 </div>
               </div>
 
               {/* Progress bar */}
               <div className="space-y-1">
-                <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: surface.base }}>
                   <motion.div
-                    className={`h-full ${cat.color} rounded-full`}
+                    className="h-full rounded-full"
+                    style={{ background: cat.color }}
                     initial={{ width: 0 }}
                     animate={{ width: `${cat.pct}%` }}
                     transition={{ duration: 0.8, delay: 0.1 * i, ease: 'easeOut' }}

@@ -23,7 +23,9 @@ export const initialAssessmentAnswers: AssessmentAnswers = {
   solarInstalledKw: 0,
   appliances: [],
 
-  // Transport
+  // Transport (new multi-entry system)
+  transportEntries: [],
+  // Transport (legacy single vehicle — kept for backward compat)
   ownsVehicle: false,
   vehicleCategoryKey: '',
   dailyVehicleKm: 25,
@@ -37,7 +39,9 @@ export const initialAssessmentAnswers: AssessmentAnswers = {
   },
   flightDetails: [],
 
-  // Food
+  // Food (new multi-select diet mix)
+  dietMix: [],
+  // Food (legacy single diet — kept for backward compat)
   dietType: 'lacto_vegetarian',
   foodWasteLevel: 'MODERATE',
   diningOutMealsWeekly: 1,

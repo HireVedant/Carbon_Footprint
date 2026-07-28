@@ -2,46 +2,43 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  Leaf,
   Globe2,
   Heart,
-  Users,
   Target,
   Lightbulb,
   Shield,
   ArrowRight,
-  CheckCircle2,
 } from 'lucide-react';
 import SectionHeading from '../components/ui/SectionHeading';
 import Card from '../components/ui/Card';
 import StatCard from '../components/ui/StatCard';
-import { TrendingDown, FileText } from 'lucide-react';
 import { getSEIAboutStats } from '../services/seiDatasetService';
+import { surface, emerald, fontFamily, radius } from '../design';
 
 const values = [
   {
     icon: Globe2,
     title: 'Planet First',
     description: 'Every decision we make is guided by its impact on the environment. Sustainability isn\'t a feature — it\'s our foundation.',
-    color: 'from-blue-500 to-cyan-500',
+    color: '#0EA5E9',
   },
   {
     icon: Shield,
     title: 'Trust & Transparency',
     description: 'Open methodology, transparent calculations, and privacy-first data handling. Your trust is paramount.',
-    color: 'from-violet-500 to-purple-500',
+    color: '#8b5cf6',
   },
   {
     icon: Lightbulb,
     title: 'Innovation Through AI',
     description: 'We leverage cutting-edge AI to make sustainability accessible, accurate, and actionable for everyone.',
-    color: 'from-amber-500 to-orange-500',
+    color: '#F59E0B',
   },
   {
     icon: Target,
     title: 'Community Driven',
     description: 'Real change happens together. We build tools that connect and empower communities for collective impact.',
-    color: 'from-primary-500 to-accent-500',
+    color: '#10b981',
   },
 ];
 
@@ -50,17 +47,20 @@ const team = [
   {
     name: 'Tanay Daware',
     role: 'Project Lead & Full Stack Developer',
-    emoji: '🚀',
+    initials: 'TD',
+    color: '#34d399',
   },
   {
     name: 'Vedant Hire',
     role: 'Frontend Developer & UI Designer',
-    emoji: '🎨',
+    initials: 'VH',
+    color: '#06b6d4',
   },
   {
     name: 'Jeevan Sagale',
     role: 'Backend Developer & Firebase Integration',
-    emoji: '🔥',
+    initials: 'JS',
+    color: '#8b5cf6',
   },
 ];
 
@@ -70,24 +70,24 @@ const team = [
 // ── Task 4: Updated timeline ──────────────────────────────────────────────────
 const milestones = [
   {
-    year: '2026',
-    title: 'Project Started',
-    description: 'Started as a Software Engineering Mini Project focused on carbon footprint awareness.',
+    year: 'Jan 2026',
+    title: 'Research & Design',
+    description: 'Researched Indian emission factors across transport, energy, food, and waste. Designed the scientific calculation methodology.',
   },
   {
-    year: '2026',
-    title: 'Carbon Calculator',
-    description: 'Implemented emission calculation for transportation, household energy, food and waste.',
+    year: 'Feb 2026',
+    title: 'Core Calculator',
+    description: 'Built the emission calculation engine with CEA grid factors for 36 states and ARAI transport coefficients.',
   },
   {
-    year: '2026',
+    year: 'Mar 2026',
     title: 'AI Integration',
-    description: 'Integrated Gemini AI to generate sustainability recommendations.',
+    description: 'Integrated Gemini AI for personalized sustainability recommendations and carbon coaching.',
   },
   {
-    year: '2026',
-    title: 'Prototype Completed',
-    description: 'Prepared the application for Software Engineering presentation.',
+    year: 'Apr 2026',
+    title: 'Platform Launch',
+    description: 'Launched community leaderboard, India visualizations, and the full environmental intelligence platform.',
   },
 ];
 
@@ -106,7 +106,7 @@ export default function About() {
       {/* ========== HERO ========== */}
       <section className="relative pt-32 pb-16 sm:pt-40 sm:pb-20" id="about-hero">
         <div className="absolute inset-0 mesh-bg" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] hero-glow opacity-40" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-[120px] pointer-events-none" style={{ background: `${emerald[500]}0F` }} />
 
         <div className="container-max mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="max-w-3xl mx-auto text-center">
@@ -114,17 +114,19 @@ export default function About() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 border border-primary-500/20 mb-6"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6"
+              style={{ background: `${emerald[500]}14`, border: `1px solid ${emerald[500]}33` }}
             >
-              <Heart className="w-4 h-4 text-primary-400" />
-              <span className="text-sm font-medium text-primary-300">Our Mission</span>
+              <Heart className="w-4 h-4" style={{ color: emerald[500] }} />
+              <span className="text-sm font-medium" style={{ color: emerald[500] }}>Our Mission</span>
             </motion.div>
 
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1 }}
-              className="text-4xl sm:text-5xl lg:text-6xl font-display font-bold leading-[1.1] mb-6"
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] mb-6"
+              style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}
             >
               Making sustainability
               <br />
@@ -135,7 +137,8 @@ export default function About() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-lg text-dark-400 leading-relaxed max-w-2xl mx-auto"
+              className="text-lg leading-relaxed max-w-2xl mx-auto"
+              style={{ color: surface.textSecondary }}
             >
               We believe every individual has the power to fight climate change.
               EcoTrack AI empowers you with the tools and intelligence to understand
@@ -209,13 +212,13 @@ export default function About() {
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className="card text-center group w-full sm:w-64"
               >
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-primary-500/20 to-accent-500/10 border border-primary-500/20 flex items-center justify-center mx-auto mb-4 text-3xl sm:text-4xl group-hover:border-primary-500/40 transition-colors duration-300">
-                  {member.emoji}
-                </div>
-                <h3 className="text-sm sm:text-base font-display font-semibold text-white mb-1">
-                  {member.name}
-                </h3>
-                <p className="text-xs text-dark-400 leading-relaxed">{member.role}</p>
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 transition-colors duration-300" style={{ background: `linear-gradient(135deg, ${member.color}18, ${member.color}08)`, border: `1px solid ${member.color}25` }}>
+                   <span className="text-xl sm:text-2xl font-bold" style={{ fontFamily: fontFamily.display, color: member.color }}>{member.initials}</span>
+                 </div>
+                 <h3 className="text-sm sm:text-base font-semibold mb-1" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>
+                   {member.name}
+                 </h3>
+                 <p className="text-xs leading-relaxed" style={{ color: surface.textSecondary }}>{member.role}</p>
               </motion.div>
             ))}
           </div>
@@ -243,16 +246,16 @@ export default function About() {
               >
                 {/* Line */}
                 {i < milestones.length - 1 && (
-                  <div className="absolute left-[11px] top-6 bottom-0 w-px bg-gradient-to-b from-primary-500/30 to-transparent" />
+                  <div className="absolute left-[11px] top-6 bottom-0 w-px" style={{ background: `linear-gradient(to bottom, ${emerald[500]}50, transparent)` }} />
                 )}
                 {/* Dot */}
-                <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-primary-500/20 border-2 border-primary-500 flex items-center justify-center">
-                  <div className="w-2 h-2 rounded-full bg-primary-400" />
+                <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full flex items-center justify-center" style={{ background: `${emerald[500]}26`, border: `2px solid ${emerald[500]}` }}>
+                  <div className="w-2 h-2 rounded-full" style={{ background: emerald[500] }} />
                 </div>
 
-                <span className="text-xs font-semibold text-primary-400 uppercase tracking-wider">{milestone.year}</span>
-                <h3 className="text-lg font-display font-bold text-white mt-1 mb-1">{milestone.title}</h3>
-                <p className="text-sm text-dark-400">{milestone.description}</p>
+                <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: emerald[500] }}>{milestone.year}</span>
+                <h3 className="text-lg font-bold mt-1 mb-1" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>{milestone.title}</h3>
+                <p className="text-sm" style={{ color: surface.textSecondary }}>{milestone.description}</p>
               </motion.div>
             ))}
           </div>
@@ -267,16 +270,17 @@ export default function About() {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="glass-strong p-10 sm:p-16 text-center relative overflow-hidden rounded-3xl"
+            className="p-10 sm:p-16 text-center relative overflow-hidden"
+            style={{ background: surface.panel, border: `1px solid ${surface.border}`, borderRadius: '24px' }}
           >
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-3xl" />
-            <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent-500/10 rounded-full blur-3xl" />
+            <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full blur-3xl pointer-events-none" style={{ background: `${emerald[500]}0F` }} />
+            <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full blur-3xl pointer-events-none" style={{ background: `${emerald[500]}08` }} />
 
             <div className="relative">
-              <h2 className="text-3xl sm:text-4xl font-display font-bold mb-4">
+              <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>
                 Join the <span className="gradient-text">movement</span>
               </h2>
-              <p className="text-dark-400 text-lg mb-8 max-w-xl mx-auto">
+              <p className="text-lg mb-8 max-w-xl mx-auto" style={{ color: surface.textSecondary }}>
                 Be part of the community that's redefining how we track and reduce our environmental impact.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

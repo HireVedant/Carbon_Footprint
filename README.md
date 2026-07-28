@@ -52,12 +52,29 @@ EcoTrack AI implements a modular calculation engine that combines multiple emiss
 Features include:
 
 - Category-based emission modelling
-- Regional electricity emission factors
-- Transportation-specific calculations
+- Regional electricity emission factors (CEA 36 States/UTs)
+- Transportation-specific calculations (ARAI benchmarks)
 - Household energy estimation
 - Food impact modelling
 - Confidence scoring
 - Versioned calculation engine
+
+---
+
+### Data Provider Layer
+
+The application implements a **Data Provider Layer** (`src/data/providers/`) that abstracts data sources from components. Components never know where data originates — they consume typed interfaces only.
+
+**Key Providers:**
+- `NationalDataProvider` — India national statistics (per-capita CO₂, population, renewable share) sourced from Global Carbon Project 2024 / IEA India.
+- `EnvironmentalEquivalentProvider` — Computes Indian-contextual environmental equivalents (LPG cylinders, metro trips, Delhi–Mumbai flights, tree plantation, rice production, solar units) from government-sourced emission factors.
+
+**Type Contracts** (`src/types/dataProviders.ts`):
+- `DatasetMetadata` — Source attribution for every dataset.
+- `ProviderResponse<T>` — Generic wrapper returning `{ metadata, data }`.
+- `IEnvironmentalEquivalentProvider`, `INationalDataProvider` — Provider contracts.
+
+Switching data sources (mock → government API → Firestore → CSV → JSON) requires **ZERO component modifications**.
 
 ---
 
@@ -106,17 +123,22 @@ Features include:
 
 ---
 
-### Interactive Visualizations
+### Visualization Architecture
 
-Assessment data is presented using multiple visualization techniques including:
+The platform includes a comprehensive visualization system (`src/visualization/`) with production-quality, data-driven charts and maps:
 
-- Bar Charts
-- Doughnut Charts
-- Line Charts
-- Confidence Distribution
-- Category Comparisons
+| Component | Purpose |
+|-----------|---------|
+| `IndiaMap` | Interactive SVG India map with 7 switchable data layers (participation, eco score, carbon footprint, renewable adoption, grid intensity, transport, household emissions) |
+| `PremiumRadarChart` | Radar chart comparing user vs India avg vs community avg |
+| `PremiumDoughnut` | Doughnut chart with center metric and hover expansion |
+| `PolarTimeline` | Polar area chart showing 24-hour emission rhythm |
+| `TrendChart` | Line/bar/stacked-bar chart with premium dark styling |
+| `GaugeWidget` | Animated circular gauge with color-coded thresholds |
+| `Sparkline` | Inline trend sparkline for KPI panels |
+| `KPIWidget` | Metric panel with value, trend, sparkline, comparison, status indicator |
 
-These visualizations provide intuitive insight into the user's largest emission sources.
+All visualizations consume typed data from `VisualizationDataProvider` and follow the editorial dark-theme design system.
 
 ---
 
@@ -148,15 +170,16 @@ EcoTrack AI also includes community-focused functionality including:
 | Category | Technologies |
 |-----------|--------------|
 | Frontend | React 19, TypeScript |
-| Routing | React Router |
-| Styling | Tailwind CSS |
-| Animations | Framer Motion |
-| Charts | Chart.js, react-chartjs-2 |
-| Authentication | Firebase Authentication |
-| Database | Cloud Firestore |
-| PDF Generation | jsPDF, jsPDF-AutoTable |
-| Build Tool | Vite |
-| Language | TypeScript |
+| Routing | React Router v7 |
+| Styling | Tailwind CSS 3.4 + Editorial Design System |
+| Animations | Framer Motion 12 |
+| Charts | Chart.js 4, react-chartjs-2, react-simple-maps |
+| Maps | react-simple-maps (SVG India map with 30 state choropleth) |
+| Authentication | Firebase Authentication 11 |
+| Database | Cloud Firestore 11 |
+| PDF Generation | jsPDF, jsPDF-AutoTable, html2canvas, @react-pdf/renderer |
+| Build Tool | Vite 6.4 |
+| Language | TypeScript 5.8 |
 
 ---
 
@@ -192,33 +215,42 @@ Assessment Result
 ```text
 src/
 ├── components/
-│   ├── assessment/
-│   ├── dashboard/
-│   ├── charts/
-│   ├── layout/
-│   └── ui/
+│   ├── auth/              # Route guards, RBAC
+│   ├── calculator/        # Assessment question UI
+│   ├── dashboard/         # Dashboard sub-components
+│   ├── layout/            # Navbar, Footer, Layout
+│   └── ui/                # Design system primitives
 │
 ├── context/
-│   ├── AuthContext
-│   └── AssessmentContext
+│   ├── AuthContext        # Firebase Auth + role management
+│   └── AssessmentContext  # Multi-step assessment state
 │
 ├── data/
-│   └── datasets/
+│   ├── providers/         # Data Provider Layer (abstraction)
+│   │   ├── NationalDataProvider.ts
+│   │   ├── EnvironmentalEquivalentProvider.ts
+│   │   ├── StateDataProvider.ts
+│   │   ├── CommunityDataProvider.ts
+│   │   └── MockProvider.ts
+│   └── datasets/          # Scientific datasets (CEA, ARAI, BEE)
 │
-├── firebase/
+├── firebase/              # Firebase config, auth, Firestore CRUD
+├── hooks/                 # Custom hooks (useAssessmentCalculation)
+├── pages/                 # Top-level views (Home, Assessment, Dashboard, etc.)
+├── services/              # AI Coach, Audit, Newsletter services
+├── types/                 # TypeScript models & data provider contracts
+├── utils/                 # Pure calculation engines & PDF generators
 │
-├── hooks/
+├── visualization/         # Visualization Architecture
+│   ├── charts/            # PremiumRadarChart, PremiumDoughnut, TrendChart, etc.
+│   ├── maps/              # IndiaMap (SVG choropleth)
+│   ├── widgets/           # KPIWidget, GaugeWidget, Sparkline
+│   └── providers/         # VisualizationDataProvider
 │
-├── pages/
-│
-├── services/
-│
-├── types/
-│
-└── utils/
+└── index.css              # Editorial Design System (t-* tokens, glass-eco, etc.)
 ```
 
-The project follows a modular architecture that separates user interface components, business logic, scientific calculations, Firebase services, datasets, and application state management.
+The project follows a modular architecture that separates user interface components, business logic, scientific calculations, Firebase services, datasets, visualization, and application state management.
 
 ---
 

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { calculateEmissions, AssessmentAnswers } from '../../utils/calculationEngine';
 import { Zap, Car, Plane, Sun, Recycle, TrendingDown } from 'lucide-react';
+import { surface, emerald, fontFamily, radius, solar, water, semantic } from '../../design';
 
 interface WhatIfSimulatorProps {
   baseAnswers: AssessmentAnswers;
@@ -88,22 +89,23 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({ baseAnswers, b
   };
 
   return (
-    <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-6">
+    <div className="p-6 rounded-3xl space-y-6" style={{ background: surface.panel, border: `1px solid ${surface.border}`, borderRadius: radius['2xl'] }}>
       {/* Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-white/10">
+      <div className="flex items-center justify-between pb-4" style={{ borderBottom: `1px solid ${surface.border}` }}>
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-400">
+          <div className="p-2.5 rounded-xl" style={{ background: `${emerald[500]}1A`, color: emerald[400] }}>
             <TrendingDown className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">What-If Simulator</h3>
-            <p className="text-xs text-gray-400">Toggle scenarios to see your projected footprint reduction.</p>
+            <h3 className="text-lg font-semibold" style={{ color: surface.textPrimary }}>What-If Simulator</h3>
+            <p className="text-xs" style={{ color: surface.textSecondary }}>Toggle scenarios to see your projected footprint reduction.</p>
           </div>
         </div>
         {activeScenarios.size > 0 && (
           <button
             onClick={() => setActiveScenarios(new Set())}
-            className="text-xs text-gray-500 hover:text-gray-300 transition-colors"
+            className="text-xs transition-colors"
+            style={{ color: surface.textSecondary }}
           >
             Reset all
           </button>
@@ -119,19 +121,20 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({ baseAnswers, b
             <button
               key={s.id}
               onClick={() => toggleScenario(s.id)}
-              className={`text-left p-4 rounded-xl border transition-all ${
-                isActive
-                  ? `${s.color} ring-1 ring-current/20`
-                  : 'border-gray-700/60 bg-gray-800/50 text-gray-400 hover:border-gray-600'
-              }`}
+              className="text-left p-4 rounded-xl border transition-all"
+              style={{
+                borderColor: isActive ? `${s.color}33` : surface.border,
+                background: isActive ? `${s.color}14` : surface.base,
+                color: isActive ? surface.textPrimary : surface.textSecondary,
+              }}
             >
               <div className="flex items-start gap-3">
-                <div className={`p-1.5 rounded-lg ${isActive ? 'opacity-100' : 'opacity-50'}`}>
+                <div className="p-1.5 rounded-lg" style={{ opacity: isActive ? 1 : 0.5, color: s.color }}>
                   <Icon className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className={`text-sm font-semibold ${isActive ? 'text-white' : 'text-gray-300'}`}>{s.label}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">{s.description}</p>
+                  <p className="text-sm font-semibold" style={{ color: isActive ? surface.textPrimary : surface.textSecondary }}>{s.label}</p>
+                  <p className="text-xs mt-0.5 leading-relaxed" style={{ color: surface.textSecondary }}>{s.description}</p>
                 </div>
               </div>
             </button>
@@ -145,41 +148,42 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({ baseAnswers, b
         initial={{ opacity: 0.7, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="bg-gray-800/50 rounded-xl p-5 space-y-4"
+        className="rounded-xl p-5 space-y-4"
+        style={{ background: surface.base }}
       >
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Current</p>
-            <p className="text-xl font-bold text-white">{(baseTotalKg / 1000).toFixed(2)}</p>
-            <p className="text-[10px] text-gray-500">tonnes CO₂/yr</p>
+            <p className="text-[10px] uppercase tracking-wider font-semibold mb-1" style={{ color: surface.textSecondary }}>Current</p>
+            <p className="text-xl font-bold" style={{ color: surface.textPrimary }}>{(baseTotalKg / 1000).toFixed(2)}</p>
+            <p className="text-[10px]" style={{ color: surface.textSecondary }}>tonnes CO₂/yr</p>
           </div>
           <div className="flex flex-col items-center justify-center">
-            <TrendingDown className={`w-6 h-6 ${savingPercent > 0 ? 'text-emerald-400' : 'text-gray-600'}`} />
-            <p className={`text-lg font-bold ${savingPercent > 0 ? 'text-emerald-400' : 'text-gray-500'}`}>
+            <TrendingDown className="w-6 h-6" style={{ color: savingPercent > 0 ? emerald[400] : surface.textSecondary }} />
+            <p className="text-lg font-bold" style={{ color: savingPercent > 0 ? emerald[400] : surface.textSecondary }}>
               -{savingPercent}%
             </p>
           </div>
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Projected</p>
-            <p className={`text-xl font-bold ${savingPercent > 0 ? 'text-emerald-400' : 'text-white'}`}>
+            <p className="text-[10px] uppercase tracking-wider font-semibold mb-1" style={{ color: surface.textSecondary }}>Projected</p>
+            <p className="text-xl font-bold" style={{ color: savingPercent > 0 ? emerald[400] : surface.textPrimary }}>
               {projectedResult.totalTonnesCO2PerYear}
             </p>
-            <p className="text-[10px] text-gray-500">tonnes CO₂/yr</p>
+            <p className="text-[10px]" style={{ color: surface.textSecondary }}>tonnes CO₂/yr</p>
           </div>
         </div>
 
         {savingKg > 0 && (
-          <div className="text-center pt-3 border-t border-white/10">
-            <p className="text-sm text-gray-300">
+          <div className="text-center pt-3" style={{ borderTop: `1px solid ${surface.border}` }}>
+            <p className="text-sm" style={{ color: surface.textSecondary }}>
               Combined scenarios would save{' '}
-              <span className="font-bold text-emerald-400">{savingKg.toLocaleString()} kg CO₂/year</span>
+              <span className="font-bold" style={{ color: emerald[400] }}>{savingKg.toLocaleString()} kg CO₂/year</span>
               {' '}— equivalent to planting ~{Math.round(savingKg / 21)} trees annually.
             </p>
           </div>
         )}
 
         {activeScenarios.size === 0 && (
-          <p className="text-center text-xs text-gray-500">Select scenarios above to simulate potential reductions.</p>
+          <p className="text-center text-xs" style={{ color: surface.textSecondary }}>Select scenarios above to simulate potential reductions.</p>
         )}
       </motion.div>
     </div>
