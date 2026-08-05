@@ -16,12 +16,9 @@ const sizeClasses = {
 };
 
 const variantClasses = {
-  primary: `bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold 
-            shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/40 
-            hover:from-emerald-500 hover:to-emerald-400`,
-  secondary: `bg-white/5 backdrop-blur-sm border border-white/10 text-white font-semibold 
-              hover:bg-white/10 hover:border-white/20`,
-  ghost: `text-slate-300 font-medium hover:text-white hover:bg-white/5`,
+  primary: 'bg-[var(--color-primary)] text-[#03120a] font-semibold shadow-[0_1px_2px_rgba(0,0,0,0.45)] hover:bg-[color:var(--color-accent)]',
+  secondary: 'bg-[var(--bg-elevated)] border border-[var(--border-default)] text-[var(--text-primary)] font-semibold hover:border-[var(--border-strong)] hover:bg-[var(--bg-hover)]',
+  ghost: 'text-[var(--text-secondary)] font-medium hover:text-[var(--text-primary)] hover:bg-[var(--bg-elevated)]',
 };
 
 export default function Button({
@@ -34,17 +31,18 @@ export default function Button({
 }: ButtonProps) {
   return (
     <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className={`relative inline-flex items-center justify-center gap-2 
-                  transition-all duration-${duration.medium} ease-out disabled:opacity-50 disabled:cursor-not-allowed
+      whileHover={{ scale: 1.01 }}
+      whileTap={{ scale: 0.99 }}
+      className={`relative inline-flex items-center justify-center gap-2 border-none outline-none
+                  transition-all duration-200 ease-out disabled:opacity-50 disabled:cursor-not-allowed
+                  focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-primary)]
                   ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       style={{ borderRadius: radius.pill }}
       disabled={isLoading || props.disabled}
       {...(props as any)}
     >
       {isLoading ? (
-        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
       ) : (
         children
       )}

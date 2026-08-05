@@ -85,3 +85,10 @@ desktop.ini
 # Misc
 # ==============================
 *.seed
+
+
+.agents/
+no-ai-slop/
+skills-lock.json
+ALWAYES_READ.md
+Agent.md

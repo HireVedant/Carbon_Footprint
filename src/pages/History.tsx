@@ -54,7 +54,7 @@ export default function History() {
         <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight flex items-center gap-3" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>
-              <HistoryIcon style={{ color: emerald[500] }} className="w-8 h-8" />
+              <HistoryIcon style={{ color: emerald[600] }} className="w-8 h-8" />
               Assessment <span className="gradient-text">History</span>
             </h1>
             <p className="text-sm mt-2" style={{ color: surface.textSecondary }}>
@@ -71,7 +71,7 @@ export default function History() {
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <Loader2 className="w-8 h-8 animate-spin" style={{ color: emerald[500] }} />
+            <Loader2 className="w-8 h-8 animate-spin" style={{ color: emerald[600] }} />
           </div>
         ) : history.length === 0 ? (
           <div className="p-10 text-center max-w-2xl mx-auto mt-10 space-y-4" style={{ background: surface.panel, border: `1px solid ${surface.border}`, borderRadius: radius['2xl'] }}>
@@ -83,7 +83,7 @@ export default function History() {
             <Link
               to="/assessment"
               className="inline-block px-6 py-3 rounded-xl text-sm font-medium transition-all mt-2"
-              style={{ background: `${emerald[500]}1A`, color: emerald[400], border: `1px solid ${emerald[500]}4D` }}
+              style={{ background: `${emerald[600]}12`, color: emerald[700], border: `1px solid ${emerald[600]}30` }}
             >
               Start Assessment
             </Link>
@@ -122,7 +122,7 @@ export default function History() {
           >
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold" style={{ color: surface.textPrimary }}>Delete Report</h3>
-              <button onClick={() => setDeleteTarget(null)} style={{ color: surface.textSecondary }} className="hover:text-white transition-colors">
+              <button onClick={() => setDeleteTarget(null)} style={{ color: surface.textSecondary }} className="hover:text-text-primary transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -169,10 +169,10 @@ const MemoizedHistoryItem = React.memo(({ item, onDelete }: { item: UnifiedHisto
     <div className="p-6 rounded-2xl flex flex-col group transition-all space-y-4" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-2 text-xs font-semibold" style={{ color: surface.textSecondary }}>
-          <Calendar className="w-4 h-4" style={{ color: emerald[500] }} />
+          <Calendar className="w-4 h-4" style={{ color: emerald[600] }} />
           {item.date}
           {item.isV2 && (
-            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: `${emerald[500]}20`, color: emerald[400], border: `1px solid ${emerald[500]}40` }}>v2.0</span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: `${emerald[600]}12`, color: emerald[700], border: `1px solid ${emerald[600]}30` }}>v2.0</span>
           )}
         </div>
         <span className="text-xs px-2 py-1 rounded-full" style={{ 

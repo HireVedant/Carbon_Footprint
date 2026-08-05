@@ -16,15 +16,15 @@ export default function StatCard({ icon: Icon, value, label, delay = 0 }: StatCa
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={viewport}
       transition={{ duration: 0.5, delay, ease: 'easeOut' }}
-      className="glass text-center p-6 group hover:bg-white/[0.08] rounded-2xl transition-all duration-300"
+      className="glass text-center p-6 group hover:bg-primary-50 rounded-2xl transition-all duration-300"
     >
-      <div className="w-12 h-12 rounded-xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-500/20 transition-colors duration-300">
-        <Icon className="w-6 h-6 text-primary-400" aria-hidden="true" />
+      <div className="w-12 h-12 rounded-xl bg-primary-50 border border-primary-200 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary-100 transition-colors duration-300">
+        <Icon className="w-6 h-6 text-primary-700" aria-hidden="true" />
       </div>
-      <p className="text-2xl sm:text-3xl font-display font-bold text-white mb-1 tabular-nums">
+      <p className="text-2xl sm:text-3xl font-display font-bold text-text-primary mb-1 tabular-nums">
         {value}
       </p>
-      <p className="text-xs sm:text-sm text-dark-400 font-medium">{label}</p>
+      <p className="text-xs sm:text-sm text-dark-500 font-medium">{label}</p>
     </motion.div>
   );
 }

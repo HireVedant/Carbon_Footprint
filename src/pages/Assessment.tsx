@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAssessment, AssessmentStep } from '../context/AssessmentContext';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +15,7 @@ import {
   Timer, FileText, Plus, X, GripVertical
 } from 'lucide-react';
 import SectionHeading from '../components/ui/SectionHeading';
+import { calculateEcoScore } from '../core/calculation/ecoScore';
 
 const STEPS: { key: AssessmentStep; label: string; icon: React.ElementType }[] = [
   { key: 'location', label: 'Location', icon: MapPin },
@@ -33,6 +34,29 @@ function parseNum(val: string, fallback: number = 0): number {
   return isNaN(n) ? fallback : Math.max(0, n);
 }
 
+/** Per-field ceiling limits to prevent absurd inputs causing NaN / Infinity emissions */
+const INPUT_CEILINGS: Record<string, number> = {
+  dailyVehicleKm: 1_000,        // 1,000 km/day maximum
+  electricityKWh: 2_000,        // 2,000 kWh/month maximum
+  monthlyBillRupees: 100_000,   // ₹1,00,000 maximum bill
+  solarInstalledKw: 500,        // 500 kW rooftop solar maximum
+  householdMembers: 30,         // 30 members maximum
+  diningOutMealsWeekly: 21,     // 3x/day every day maximum
+  apparelItemsMonthly: 20,      // 20 items/month maximum
+  electronicsItemsYearly: 50,   // 50 items/year maximum
+  onlineParcelsMonthly: 100,    // 100 parcels/month maximum
+};
+
+/**
+ * parseNum with a field-specific ceiling clamp.
+ * Falls back to uncapped parseNum for fields not in INPUT_CEILINGS.
+ */
+function parseNumClamped(field: string, val: string, fallback: number = 0): number {
+  const raw = parseNum(val, fallback);
+  const ceiling = INPUT_CEILINGS[field];
+  return ceiling !== undefined ? Math.min(raw, ceiling) : raw;
+}
+
 /** Returns string representation for controlled input: '' when 0 or undefined */
 function numVal(v: number | undefined, showZero: boolean = true): string | number {
   if (v === undefined || v === null) return '';
@@ -49,6 +73,7 @@ export default function Assessment() {
   } = useAssessment();
 
   const [calculating, setCalculating] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
 
   const stepIndex = STEPS.findIndex(s => s.key === currentStep);
 
@@ -108,19 +133,14 @@ export default function Assessment() {
         foodEmission: computedResult.breakdown.food || 0,
         wasteEmission: computedResult.breakdown.waste || 0,
         totalEmission: computedResult.totalKgCO2PerYear,
-        ecoScore: Math.max(
-          0,
-          Math.min(
-            100,
-            Math.round(100 - computedResult.totalKgCO2PerYear / 100)
-          )
-        ),
+        ecoScore: calculateEcoScore(computedResult.totalTonnesCO2PerYear).score,
         ecoLabel: 'Calculated',
         annualEstimate: computedResult.totalTonnesCO2PerYear,
         totalUsers,
       });
     } catch (err) {
       console.error('Failed to auto-save assessment:', err);
+      setSaveFailed(true);
     }
   }
 
@@ -128,11 +148,15 @@ export default function Assessment() {
 };
 
   // Skip steps in quick mode (waste & shopping are auto-estimated)
-  const visibleSteps = mode === 'quick'
-    ? STEPS.filter(s => !['waste', 'shopping'].includes(s.key))
-    : STEPS;
+  const visibleSteps = useMemo(
+    () => (mode === 'quick' ? STEPS.filter(s => !['waste', 'shopping'].includes(s.key)) : STEPS),
+    [mode]
+  );
 
-  const currentVisibleIndex = visibleSteps.findIndex(s => s.key === currentStep);
+  const currentVisibleIndex = useMemo(
+    () => visibleSteps.findIndex(s => s.key === currentStep),
+    [visibleSteps, currentStep]
+  );
 
   const goNextVisible = () => {
     if (currentVisibleIndex < visibleSteps.length - 1) {
@@ -156,15 +180,15 @@ export default function Assessment() {
         {calculating && (
           <div className="max-w-md mx-auto text-center py-20 space-y-6">
             <div className="relative inline-flex items-center justify-center">
-              <div className="w-20 h-20 rounded-full border-4 border-emerald-500/20 border-t-emerald-400 animate-spin shadow-eco-glow" />
-              <Leaf className="w-8 h-8 text-emerald-300 absolute animate-pulse" />
+              <div className="w-20 h-20 rounded-full border-4 border-primary-200 border-t-primary-500 animate-spin shadow-eco-glow" />
+              <Leaf className="w-8 h-8 text-primary-600 absolute animate-pulse" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-2xl font-display font-bold text-white flex items-center justify-center gap-2">
-                <Sparkles className="w-5 h-5 text-emerald-400 animate-pulse" />
+              <h3 className="text-2xl font-display font-bold text-text-primary flex items-center justify-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary-500 animate-pulse" />
                 Calculating Your Footprint...
               </h3>
-              <p className="text-sm text-dark-300">
+              <p className="text-sm text-dark-500">
                 AI Scientific Calculation Engine v2.1 is processing your answers against verified CEA, ARAI, and SEI datasets.
               </p>
             </div>
@@ -185,22 +209,40 @@ export default function Assessment() {
               description="Scientific assessment powered by CEA, ARAI, and ICAO emissions datasets."
             />
 
+            {/* Save Failure Warning Toast */}
+            {saveFailed && (
+              <div className="flex items-start gap-3 px-4 py-3 rounded-xl border border-amber-200 bg-amber-50 text-amber-700 text-sm">
+                <span className="mt-0.5 shrink-0">⚠️</span>
+                <span className="flex-1">
+                  Your footprint was calculated successfully, but we couldn't save it to the cloud right now.
+                  Please check your connection and try again, or take a screenshot of your results.
+                </span>
+                <button
+                  onClick={() => setSaveFailed(false)}
+                  aria-label="Dismiss save warning"
+                  className="shrink-0 opacity-60 hover:opacity-100 transition-opacity"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
             {/* Total Emission Card */}
-            <div className="glass-eco p-8 rounded-3xl text-center space-y-4 shadow-eco-glow-lg border border-emerald-500/30">
-              <p className="text-xs uppercase tracking-widest text-emerald-400 font-bold">Annual Carbon Footprint</p>
-              <p className="text-6xl font-extrabold text-white tracking-tight">{result.totalTonnesCO2PerYear} <span className="text-2xl text-emerald-300 font-normal">tonnes CO₂e/year</span></p>
-              <p className="text-sm text-dark-300">{result.totalKgCO2PerYear.toLocaleString()} kg CO₂e · Grid Factor: {result.metadata.gridFactorUsed} kg CO₂/kWh ({result.metadata.state})</p>
+            <div className="glass-eco p-8 rounded-3xl text-center space-y-4 shadow-eco-glow-lg border border-emerald-200">
+              <p className="text-xs uppercase tracking-widest text-emerald-700 font-bold">Annual Carbon Footprint</p>
+              <p className="text-6xl font-extrabold text-text-primary tracking-tight">{result.totalTonnesCO2PerYear} <span className="text-2xl text-emerald-700 font-normal">tonnes CO₂e/year</span></p>
+              <p className="text-sm text-dark-500">{result.totalKgCO2PerYear.toLocaleString()} kg CO₂e · Grid Factor: {result.metadata.gridFactorUsed} kg CO₂/kWh ({result.metadata.state})</p>
             </div>
 
             {/* Category Breakdown */}
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {Object.entries(result.breakdown).map(([key, value]) => {
                 const colors: Record<string, string> = {
-                  energy: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-                  transport: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
-                  food: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
-                  waste: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
-                  shopping: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20'
+                  energy: 'text-amber-700 bg-amber-50 border-amber-200',
+                  transport: 'text-cyan-700 bg-cyan-50 border-cyan-200',
+                  food: 'text-rose-700 bg-rose-50 border-rose-200',
+                  waste: 'text-violet-700 bg-violet-50 border-violet-200',
+                  shopping: 'text-indigo-700 bg-indigo-50 border-indigo-200'
                 };
                 return (
                   <div key={key} className={`p-4 rounded-xl border ${colors[key]} text-center`}>
@@ -219,7 +261,7 @@ export default function Assessment() {
             <div className="text-center">
               <button
                 onClick={resetAssessment}
-                className="px-6 py-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition-all text-sm font-medium"
+                className="px-6 py-3 rounded-xl bg-primary-50 text-primary-700 border border-primary-200 hover:bg-primary-100 transition-all text-sm font-medium"
               >
                 Start New Assessment
               </button>
@@ -248,8 +290,8 @@ export default function Assessment() {
                 onClick={() => setMode('quick')}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border transition-all ${
                   mode === 'quick'
-                    ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
-                    : 'bg-gray-800/80 text-gray-400 border-gray-700 hover:border-gray-600'
+                    ? 'bg-primary-600 text-white border-primary-600 shadow-lg shadow-primary-600/15'
+                    : 'bg-surface text-dark-500 border-border hover:border-primary-300'
                 }`}
               >
                 <Timer className="w-4 h-4" /> Quick Assessment (2-3 min)
@@ -258,8 +300,8 @@ export default function Assessment() {
                 onClick={() => setMode('detailed')}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium border transition-all ${
                   mode === 'detailed'
-                    ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
-                    : 'bg-gray-800/80 text-gray-400 border-gray-700 hover:border-gray-600'
+                    ? 'bg-primary-600 text-white border-primary-600 shadow-lg shadow-primary-600/15'
+                    : 'bg-surface text-dark-500 border-border hover:border-primary-300'
                 }`}
               >
                 <FileText className="w-4 h-4" /> Detailed Assessment (8-10 min)
@@ -302,10 +344,10 @@ export default function Assessment() {
                     onClick={() => setCurrentStep(step.key)}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                       isCurrent
-                        ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/20'
+                        ? 'bg-primary-600 text-white shadow-md shadow-primary-600/15'
                         : isPast
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-gray-800/60 text-gray-500 border border-gray-700/50 hover:text-gray-300'
+                        ? 'bg-primary-50 text-primary-700 border border-primary-200'
+                        : 'bg-panel text-dark-500 border border-border hover:text-text-primary'
                     }`}
                   >
                     <Icon className="w-3 h-3" />
@@ -351,44 +393,44 @@ export default function Assessment() {
 
                   {currentStep === 'energy' && (
                     <div className="space-y-6">
-                      <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-5">
-                        <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-                          <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-400">
+                      <div className="surface-matte p-6 rounded-2xl space-y-5">
+                        <div className="flex items-center gap-3 pb-4 border-b border-border">
+                          <div className="p-2.5 bg-amber-50 rounded-xl text-amber-700">
                             <Zap className="w-5 h-5" />
                           </div>
                           <div>
-                            <h3 className="text-lg font-semibold text-white">Household Energy</h3>
-                            <p className="text-xs text-gray-400">Monthly electricity and cooking fuel usage.</p>
+                            <h3 className="text-lg font-semibold text-text-primary">Household Energy</h3>
+                            <p className="text-xs text-dark-500">Monthly electricity and cooking fuel usage.</p>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                           {/* Electricity */}
                           <div className="space-y-3">
-                            <label className="block text-xs font-medium text-gray-300">Do you know your monthly kWh?</label>
-                            <div className="grid grid-cols-2 gap-2 p-1 bg-gray-800/80 rounded-xl border border-gray-700/80">
+                            <label className="block text-xs font-medium text-text-secondary">Do you know your monthly kWh?</label>
+                            <div className="grid grid-cols-2 gap-2 p-1 bg-panel rounded-xl border border-border">
                               <button type="button" onClick={() => updateAnswers({ electricityKWhKnown: true })}
-                                className={`py-2 text-xs font-medium rounded-lg transition-all ${answers.electricityKWhKnown ? 'bg-emerald-500 text-white' : 'text-gray-400 hover:text-white'}`}
+                                className={`py-2 text-xs font-medium rounded-lg transition-all ${answers.electricityKWhKnown ? 'bg-primary-600 text-white' : 'text-dark-500 hover:text-text-primary'}`}
                               >Yes, exact kWh</button>
                               <button type="button" onClick={() => updateAnswers({ electricityKWhKnown: false })}
-                                className={`py-2 text-xs font-medium rounded-lg transition-all ${!answers.electricityKWhKnown ? 'bg-emerald-500 text-white' : 'text-gray-400 hover:text-white'}`}
+                                className={`py-2 text-xs font-medium rounded-lg transition-all ${!answers.electricityKWhKnown ? 'bg-primary-600 text-white' : 'text-dark-500 hover:text-text-primary'}`}
                               >No, bill amount</button>
                             </div>
 
                             {answers.electricityKWhKnown ? (
                               <div>
-                                <label className="block text-[11px] text-gray-400 mb-1">Monthly kWh</label>
+                                <label className="block text-[11px] text-dark-500 mb-1">Monthly kWh</label>
                                 <input type="number" min={0} value={numVal(answers.electricityKWh, false)}
-                                  onChange={(e) => updateAnswers({ electricityKWh: parseNum(e.target.value) })}
-                                  className="w-full bg-gray-800/90 border border-gray-700 focus:border-amber-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+                                  onChange={(e) => updateAnswers({ electricityKWh: parseNumClamped('electricityKWh', e.target.value) })}
+                                  className="w-full bg-surface border border-border focus:border-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
                                 />
                               </div>
                             ) : (
                               <div>
-                                <label className="block text-[11px] text-gray-400 mb-1">Monthly Bill (₹)</label>
+                                <label className="block text-[11px] text-dark-500 mb-1">Monthly Bill (₹)</label>
                                 <input type="number" min={0} value={numVal(answers.monthlyBillRupees, false)}
-                                  onChange={(e) => updateAnswers({ monthlyBillRupees: parseNum(e.target.value) })}
-                                  className="w-full bg-gray-800/90 border border-gray-700 focus:border-amber-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+                                  onChange={(e) => updateAnswers({ monthlyBillRupees: parseNumClamped('monthlyBillRupees', e.target.value) })}
+                                  className="w-full bg-surface border border-border focus:border-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
                                 />
                               </div>
                             )}
@@ -396,16 +438,16 @@ export default function Assessment() {
 
                           {/* Cooking fuel (Hidden for Hostel / PG) */}
                           {['HOSTEL', 'PG'].includes(answers.dwelling || '') ? (
-                            <div className="p-4 bg-gray-800/40 rounded-xl border border-gray-700/50 flex items-center gap-3">
-                              <span className="text-xs text-amber-400">ℹ️ Cooking fuel & solar panel inputs skipped for Hostel/PG residents.</span>
+                            <div className="p-4 bg-amber-50 rounded-xl border border-amber-200 flex items-center gap-3">
+                              <span className="text-xs text-amber-700">ℹ️ Cooking fuel & solar panel inputs skipped for Hostel/PG residents.</span>
                             </div>
                           ) : (
                             <>
                               <div className="space-y-3">
-                                <label className="block text-xs font-medium text-gray-300">Cooking Fuel</label>
+                                <label className="block text-xs font-medium text-text-secondary">Cooking Fuel</label>
                                 <select value={answers.cookingFuel || 'lpg'}
                                   onChange={(e) => updateAnswers({ cookingFuel: e.target.value as any })}
-                                  className="w-full bg-gray-800/90 border border-gray-700 focus:border-amber-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+                                  className="w-full bg-surface border border-border focus:border-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
                                 >
                                   <option value="lpg">LPG Cylinder (14.2 kg)</option>
                                   <option value="png">Piped Natural Gas (PNG)</option>
@@ -414,32 +456,32 @@ export default function Assessment() {
                                 </select>
 
                                 <div>
-                                  <label className="block text-[11px] text-gray-400 mb-1">Monthly consumption ({answers.cookingFuel === 'lpg' ? 'cylinders' : 'units'})</label>
+                                  <label className="block text-[11px] text-dark-500 mb-1">Monthly consumption ({answers.cookingFuel === 'lpg' ? 'cylinders' : 'units'})</label>
                                   <input type="number" min={0} step={0.5} value={numVal(answers.cookingFuelConsumptionMonthly)}
                                     onChange={(e) => updateAnswers({ cookingFuelConsumptionMonthly: parseNum(e.target.value, 1) })}
-                                    className="w-full bg-gray-800/90 border border-gray-700 focus:border-amber-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+                                    className="w-full bg-surface border border-border focus:border-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
                                   />
                                 </div>
                               </div>
 
                               {/* Solar */}
                               <div>
-                                <label className="block text-xs font-medium text-gray-300 mb-1">Solar Panels (kW capacity)</label>
+                                <label className="block text-xs font-medium text-text-secondary mb-1">Solar Panels (kW capacity)</label>
                                 <input type="number" min={0} step={0.5} value={numVal(answers.solarInstalledKw, false)}
-                                  onChange={(e) => updateAnswers({ solarInstalledKw: parseNum(e.target.value) })}
-                                  className="w-full bg-gray-800/90 border border-gray-700 focus:border-amber-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+                                  onChange={(e) => updateAnswers({ solarInstalledKw: parseNumClamped('solarInstalledKw', e.target.value) })}
+                                  className="w-full bg-surface border border-border focus:border-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
                                 />
-                                <p className="text-[10px] text-gray-500 mt-1">Enter 0 if no solar panels.</p>
+                                <p className="text-[10px] text-dark-500 mt-1">Enter 0 if no solar panels.</p>
                               </div>
                             </>
                           )}
 
                           {/* Household size */}
                           <div>
-                            <label className="block text-xs font-medium text-gray-300 mb-1">Household Members</label>
+                            <label className="block text-xs font-medium text-text-secondary mb-1">Household Members</label>
                             <input type="number" min={1} max={20} value={numVal(answers.householdMembers)}
-                              onChange={(e) => updateAnswers({ householdMembers: parseNum(e.target.value, 1) })}
-                              className="w-full bg-gray-800/90 border border-gray-700 focus:border-amber-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+                              onChange={(e) => updateAnswers({ householdMembers: parseNumClamped('householdMembers', e.target.value, 1) })}
+                              className="w-full bg-surface border border-border focus:border-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
                             />
                           </div>
                         </div>
@@ -460,14 +502,14 @@ export default function Assessment() {
                   )}
 
                   {currentStep === 'waste' && (
-                    <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-5">
-                      <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-                        <div className="p-2.5 bg-violet-500/10 rounded-xl text-violet-400">
+                    <div className="surface-matte p-6 rounded-2xl space-y-5">
+                      <div className="flex items-center gap-3 pb-4 border-b border-border">
+                        <div className="p-2.5 bg-violet-50 rounded-xl text-violet-700">
                           <Trash2 className="w-5 h-5" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-white">Waste Management</h3>
-                          <p className="text-xs text-gray-400">Based on CPCB municipal solid waste benchmarks.</p>
+                          <h3 className="text-lg font-semibold text-text-primary">Waste Management</h3>
+                          <p className="text-xs text-dark-500">Based on CPCB municipal solid waste benchmarks.</p>
                         </div>
                       </div>
                       <div className="space-y-4">
@@ -476,16 +518,16 @@ export default function Assessment() {
                           { key: 'compostingOrganic', label: 'Do you compost organic / kitchen waste?', value: answers.compostingOrganic },
                           { key: 'recyclingDryWaste', label: 'Do you recycle plastic, paper, and e-waste?', value: answers.recyclingDryWaste }
                         ].map(q => (
-                          <div key={q.key} className="flex items-center justify-between bg-gray-800/40 px-4 py-3 rounded-xl">
-                            <span className="text-sm text-gray-300">{q.label}</span>
+                          <div key={q.key} className="flex items-center justify-between bg-panel px-4 py-3 rounded-xl">
+                            <span className="text-sm text-text-primary">{q.label}</span>
                             <div className="flex gap-2">
                               <button type="button"
                                 onClick={() => updateAnswers({ [q.key]: true })}
-                                className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${q.value ? 'bg-emerald-500 text-white' : 'bg-gray-800 text-gray-500 hover:text-white'}`}
+                                className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${q.value ? 'bg-primary-600 text-white' : 'bg-surface text-dark-500 hover:text-text-primary'}`}
                               >Yes</button>
                               <button type="button"
                                 onClick={() => updateAnswers({ [q.key]: false })}
-                                className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${!q.value ? 'bg-emerald-500 text-white' : 'bg-gray-800 text-gray-500 hover:text-white'}`}
+                                className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${!q.value ? 'bg-primary-600 text-white' : 'bg-surface text-dark-500 hover:text-text-primary'}`}
                               >No</button>
                             </div>
                           </div>
@@ -495,46 +537,46 @@ export default function Assessment() {
                   )}
 
                   {currentStep === 'shopping' && (
-                    <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-5">
-                      <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-                        <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-400">
+                    <div className="surface-matte p-6 rounded-2xl space-y-5">
+                      <div className="flex items-center gap-3 pb-4 border-b border-border">
+                        <div className="p-2.5 bg-indigo-50 rounded-xl text-indigo-700">
                           <ShoppingBag className="w-5 h-5" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-white">Shopping & Consumption</h3>
-                          <p className="text-xs text-gray-400">Estimate purchases from UNEP lifecycle factors.</p>
+                          <h3 className="text-lg font-semibold text-text-primary">Shopping & Consumption</h3>
+                          <p className="text-xs text-dark-500">Estimate purchases from UNEP lifecycle factors.</p>
                         </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                          <label className="block text-xs font-medium text-gray-300 mb-1">Clothing items / month</label>
+                          <label className="block text-xs font-medium text-text-secondary mb-1">Clothing items / month</label>
                           <input type="number" min={0} value={numVal(answers.apparelItemsMonthly)}
-                            onChange={(e) => updateAnswers({ apparelItemsMonthly: parseNum(e.target.value, 1) })}
-                            className="w-full bg-gray-800/90 border border-gray-700 focus:border-indigo-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+                            onChange={(e) => updateAnswers({ apparelItemsMonthly: parseNumClamped('apparelItemsMonthly', e.target.value, 1) })}
+                            className="w-full bg-surface border border-border focus:border-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-gray-300 mb-1">Electronics purchased / year</label>
+                          <label className="block text-xs font-medium text-text-secondary mb-1">Electronics purchased / year</label>
                           <input type="number" min={0} step={0.5} value={numVal(answers.electronicsItemsYearly)}
-                            onChange={(e) => updateAnswers({ electronicsItemsYearly: parseNum(e.target.value, 1) })}
-                            className="w-full bg-gray-800/90 border border-gray-700 focus:border-indigo-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+                            onChange={(e) => updateAnswers({ electronicsItemsYearly: parseNumClamped('electronicsItemsYearly', e.target.value, 1) })}
+                            className="w-full bg-surface border border-border focus:border-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-gray-300 mb-1">Online parcels / month</label>
+                          <label className="block text-xs font-medium text-text-secondary mb-1">Online parcels / month</label>
                           <input type="number" min={0} value={numVal(answers.onlineParcelsMonthly)}
-                            onChange={(e) => updateAnswers({ onlineParcelsMonthly: parseNum(e.target.value, 4) })}
-                            className="w-full bg-gray-800/90 border border-gray-700 focus:border-indigo-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+                            onChange={(e) => updateAnswers({ onlineParcelsMonthly: parseNumClamped('onlineParcelsMonthly', e.target.value, 4) })}
+                            className="w-full bg-surface border border-border focus:border-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
                           />
                         </div>
-                        <div className="flex items-center justify-between bg-gray-800/40 px-4 py-3 rounded-xl">
-                          <span className="text-sm text-gray-300">Prefer second-hand?</span>
+                        <div className="flex items-center justify-between bg-panel px-4 py-3 rounded-xl">
+                          <span className="text-sm text-text-primary">Prefer second-hand?</span>
                           <div className="flex gap-2">
                             <button type="button" onClick={() => updateAnswers({ preferSecondHand: true })}
-                              className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${answers.preferSecondHand ? 'bg-emerald-500 text-white' : 'bg-gray-800 text-gray-500'}`}
+                              className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${answers.preferSecondHand ? 'bg-primary-600 text-white' : 'bg-surface text-dark-500'}`}
                             >Yes</button>
                             <button type="button" onClick={() => updateAnswers({ preferSecondHand: false })}
-                              className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${!answers.preferSecondHand ? 'bg-emerald-500 text-white' : 'bg-gray-800 text-gray-500'}`}
+                              className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${!answers.preferSecondHand ? 'bg-primary-600 text-white' : 'bg-surface text-dark-500'}`}
                             >No</button>
                           </div>
                         </div>
@@ -554,7 +596,7 @@ export default function Assessment() {
               <button
                 onClick={goPrevVisible}
                 disabled={currentVisibleIndex === 0}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-gray-800/80 text-gray-400 border border-gray-700 hover:border-gray-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-surface text-dark-500 border border-border hover:border-primary-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
               >
                 <ChevronLeft className="w-4 h-4" /> Previous
               </button>
@@ -562,14 +604,14 @@ export default function Assessment() {
               {currentStep === 'review' ? (
                 <button
                   onClick={handleCalculate}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all"
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold bg-primary-600 text-white shadow-lg shadow-primary-600/15 hover:bg-primary-700 transition-all"
                 >
                   <Sparkles className="w-4 h-4" /> Calculate Footprint
                 </button>
               ) : (
                 <button
                   onClick={goNextVisible}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20 transition-all"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium bg-primary-50 text-primary-700 border border-primary-200 hover:bg-primary-100 transition-all"
                 >
                   Next <ChevronRight className="w-4 h-4" />
                 </button>
@@ -627,20 +669,20 @@ function TransportSection({
   return (
     <div className="space-y-6">
       {/* Personal Transport — Multi-Select */}
-      <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-5">
-        <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-          <div className="p-2.5 bg-cyan-500/10 rounded-xl text-cyan-400">
+      <div className="surface-matte p-6 rounded-2xl space-y-5">
+        <div className="flex items-center gap-3 pb-4 border-b border-border">
+          <div className="p-2.5 bg-cyan-50 rounded-xl text-cyan-700">
             <Car className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Personal Transport</h3>
-            <p className="text-xs text-gray-400">Add all modes of transport you use. Emission factors from ARAI/BEE datasets.</p>
+            <h3 className="text-lg font-semibold text-text-primary">Personal Transport</h3>
+            <p className="text-xs text-dark-500">Add all modes of transport you use. Emission factors from ARAI/BEE datasets.</p>
           </div>
         </div>
 
         {/* Available modes to add */}
         <div>
-          <label className="block text-xs font-medium text-gray-300 mb-2">Add a transport mode:</label>
+          <label className="block text-xs font-medium text-text-secondary mb-2">Add a transport mode:</label>
           <div className="flex flex-wrap gap-2">
             {TRANSPORT_MODES.map(mode => {
               const alreadyAdded = entries.some(e => e.modeId === mode.id);
@@ -652,13 +694,13 @@ function TransportSection({
                   disabled={alreadyAdded}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border transition-all ${
                     alreadyAdded
-                      ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30 cursor-default'
-                      : 'bg-gray-800/50 text-gray-400 border-gray-700/60 hover:border-gray-600 hover:text-white'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 cursor-default'
+                      : 'bg-surface text-dark-500 border-border hover:border-primary-300 hover:text-text-primary'
                   }`}
                 >
                   <span>{mode.icon}</span>
                   <span>{mode.label}</span>
-                  {alreadyAdded && <span className="text-emerald-400 ml-1">✓</span>}
+                  {alreadyAdded && <span className="text-emerald-600 ml-1">✓</span>}
                 </button>
               );
             })}
@@ -675,16 +717,16 @@ function TransportSection({
               const annualEmission = Math.round((annualKm * mode.defaultEmissionFactorKgCO2PerKm) / Math.max(1, entry.occupancy));
 
               return (
-                <div key={`${entry.modeId}-${idx}`} className="bg-gray-800/50 border border-gray-700/50 rounded-xl p-4 space-y-3">
+                <div key={`${entry.modeId}-${idx}`} className="bg-panel border border-border rounded-xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-base">{mode.icon}</span>
-                      <span className="text-sm font-medium text-white">{entry.label}</span>
+                      <span className="text-sm font-medium text-text-primary">{entry.label}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => removeEntry(idx)}
-                      className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                      className="p-1.5 rounded-lg text-dark-400 hover:text-red-600 hover:bg-red-500/10 transition-all"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -692,32 +734,32 @@ function TransportSection({
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="block text-[10px] text-gray-400 mb-1">Daily km</label>
+                      <label className="block text-[10px] text-dark-500 mb-1">Daily km</label>
                       <input
                         type="number"
                         min={0}
                         max={500}
                         value={entry.dailyKm}
-                        onChange={(e) => updateEntry(idx, 'dailyKm', Math.max(0, parseNum(e.target.value)))}
-                        className="w-full bg-gray-800/90 border border-gray-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-white text-xs outline-none transition-all"
+                        onChange={(e) => updateEntry(idx, 'dailyKm', Math.min(INPUT_CEILINGS.dailyVehicleKm, Math.max(0, parseNum(e.target.value))))}
+                        className="w-full bg-surface border border-border focus:border-primary-500 rounded-lg px-3 py-2 text-text-primary text-xs outline-none transition-all"
                       />
                     </div>
                     {mode.supportsOccupancy && (
                       <div>
-                        <label className="block text-[10px] text-gray-400 mb-1">Passengers</label>
+                        <label className="block text-[10px] text-dark-500 mb-1">Passengers</label>
                         <input
                           type="number"
                           min={1}
                           max={8}
                           value={entry.occupancy}
                           onChange={(e) => updateEntry(idx, 'occupancy', Math.max(1, parseNum(e.target.value, 1)))}
-                          className="w-full bg-gray-800/90 border border-gray-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-white text-xs outline-none transition-all"
+                          className="w-full bg-surface border border-border focus:border-primary-500 rounded-lg px-3 py-2 text-text-primary text-xs outline-none transition-all"
                         />
                       </div>
                     )}
                     <div className="flex items-end">
-                      <div className="text-xs text-gray-400">
-                        <span className="text-cyan-400 font-bold">~{annualEmission.toLocaleString()}</span> kg CO₂/yr
+                      <div className="text-xs text-dark-500">
+                        <span className="text-cyan-700 font-bold">~{annualEmission.toLocaleString()}</span> kg CO₂/yr
                       </div>
                     </div>
                   </div>
@@ -729,19 +771,19 @@ function TransportSection({
 
         {entries.length === 0 && (
           <div className="text-center py-4">
-            <p className="text-xs text-gray-500">No transport modes selected. Click a mode above to add it.</p>
+            <p className="text-xs text-dark-500">No transport modes selected. Click a mode above to add it.</p>
           </div>
         )}
       </div>
 
       {/* Public Transit */}
-      <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-4">
-        <h3 className="text-lg font-semibold text-white">Public Transit Usage</h3>
-        <p className="text-xs text-gray-400">Approximate weekly kilometers by transit mode.</p>
+      <div className="surface-matte p-6 rounded-2xl space-y-4">
+        <h3 className="text-lg font-semibold text-text-primary">Public Transit Usage</h3>
+        <p className="text-xs text-dark-500">Approximate weekly kilometers by transit mode.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {PUBLIC_TRANSIT_MODES.map(tm => (
             <div key={tm.id}>
-              <label className="block text-xs font-medium text-gray-300 mb-1">{tm.icon} {tm.label} (km/week)</label>
+              <label className="block text-xs font-medium text-text-secondary mb-1">{tm.icon} {tm.label} (km/week)</label>
               <input
                 type="number"
                 min={0}
@@ -755,7 +797,7 @@ function TransportSection({
                     }
                   });
                 }}
-                className="w-full bg-gray-800/90 border border-gray-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+                className="w-full bg-surface border border-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
               />
             </div>
           ))}
@@ -818,20 +860,20 @@ function FoodSection({
   };
 
   return (
-    <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-5">
-      <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-        <div className="p-2.5 bg-rose-500/10 rounded-xl text-rose-400">
+    <div className="surface-matte p-6 rounded-2xl space-y-5">
+      <div className="flex items-center gap-3 pb-4 border-b border-border">
+        <div className="p-2.5 bg-rose-50 rounded-xl text-rose-700">
           <UtensilsCrossed className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-white">Diet & Food Habits</h3>
-          <p className="text-xs text-gray-400">Select all categories that apply to your diet. Weight them by how much of your diet falls into each category. Based on ICAR & EAT-Lancet benchmarks.</p>
+          <h3 className="text-lg font-semibold text-text-primary">Diet & Food Habits</h3>
+          <p className="text-xs text-dark-500">Select all categories that apply to your diet. Weight them by how much of your diet falls into each category. Based on ICAR & EAT-Lancet benchmarks.</p>
         </div>
       </div>
 
       {/* Multi-select food categories */}
       <div>
-        <label className="block text-xs font-medium text-gray-300 mb-2">Select your dietary categories:</label>
+        <label className="block text-xs font-medium text-text-secondary mb-2">Select your dietary categories:</label>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {FOOD_CATEGORIES.map(cat => {
             const isSelected = dietMix.some(d => d.foodId === cat.id);
@@ -842,14 +884,14 @@ function FoodSection({
                 onClick={() => toggleCategory(cat.id)}
                 className={`p-3 rounded-xl border text-xs font-medium text-left transition-all ${
                   isSelected
-                    ? 'border-rose-500 bg-rose-500/10 text-white'
-                    : 'border-gray-700/60 bg-gray-800/50 text-gray-400 hover:border-gray-600'
+                    ? 'border-rose-300 bg-rose-50 text-rose-700'
+                    : 'border-border bg-surface text-dark-500 hover:border-rose-300'
                 }`}
               >
                 <span className="text-base mr-1">{cat.icon}</span>
                 <span className="font-medium">{cat.label}</span>
-                {isSelected && <span className="ml-1 text-rose-300">✓</span>}
-                <p className="text-[10px] text-gray-500 mt-0.5">{cat.description}</p>
+                {isSelected && <span className="ml-1 text-rose-600">✓</span>}
+                <p className="text-[10px] text-dark-500 mt-0.5">{cat.description}</p>
               </button>
             );
           })}
@@ -859,16 +901,16 @@ function FoodSection({
       {/* Weight sliders for selected categories */}
       {dietMix.length > 0 && (
         <div className="space-y-3">
-          <p className="text-xs text-gray-400">Adjust the proportion of your diet that falls into each category:</p>
+          <p className="text-xs text-dark-500">Adjust the proportion of your diet that falls into each category:</p>
           {dietMix.map(entry => {
             const category = FOOD_CATEGORIES.find(c => c.id === entry.foodId);
             if (!category) return null;
             const pct = Math.round(entry.weight * 100);
             return (
-              <div key={entry.foodId} className="bg-gray-800/40 rounded-xl p-3 space-y-2">
+              <div key={entry.foodId} className="bg-panel rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-white">{category.icon} {entry.label}</span>
-                  <span className="text-xs font-bold text-rose-400">{pct}%</span>
+                  <span className="text-xs font-medium text-text-primary">{category.icon} {entry.label}</span>
+                  <span className="text-xs font-bold text-rose-700">{pct}%</span>
                 </div>
                 <input
                   type="range"
@@ -876,28 +918,28 @@ function FoodSection({
                   max={100}
                   value={pct}
                   onChange={(e) => updateWeight(entry.foodId, parseInt(e.target.value) / 100)}
-                  className="w-full h-1.5 rounded-full appearance-none bg-gray-700 accent-rose-500"
+                  className="w-full h-1.5 rounded-full appearance-none bg-dark-100 accent-rose-500"
                 />
               </div>
             );
           })}
-          <p className="text-[10px] text-gray-500">
+          <p className="text-[10px] text-dark-500">
             Total: {Math.round(totalWeight * 100)}% · Emissions are weighted by proportion.
           </p>
         </div>
       )}
 
       {dietMix.length === 0 && (
-        <p className="text-xs text-gray-500 text-center py-2">Select at least one dietary category above.</p>
+        <p className="text-xs text-dark-500 text-center py-2">Select at least one dietary category above.</p>
       )}
 
       {/* Food waste and dining out */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
         <div>
-          <label className="block text-xs font-medium text-gray-300 mb-1.5">Food Waste Level</label>
+          <label className="block text-xs font-medium text-text-secondary mb-1.5">Food Waste Level</label>
           <select value={answers.foodWasteLevel || 'MODERATE'}
             onChange={(e) => updateAnswers({ foodWasteLevel: e.target.value as any })}
-            className="w-full bg-gray-800/90 border border-gray-700 focus:border-rose-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+            className="w-full bg-surface border border-border focus:border-rose-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
           >
             <option value="LOW">{"Low (< 5% food wasted)"}</option>
             <option value="MODERATE">{"Moderate (5-15% wasted)"}</option>
@@ -905,10 +947,10 @@ function FoodSection({
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium text-gray-300 mb-1.5">Dining Out (meals/week)</label>
+          <label className="block text-xs font-medium text-text-secondary mb-1.5">Dining Out (meals/week)</label>
           <input type="number" min={0} max={21} value={numVal(answers.diningOutMealsWeekly)}
-            onChange={(e) => updateAnswers({ diningOutMealsWeekly: parseNum(e.target.value, 1) })}
-            className="w-full bg-gray-800/90 border border-gray-700 focus:border-rose-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+            onChange={(e) => updateAnswers({ diningOutMealsWeekly: parseNumClamped('diningOutMealsWeekly', e.target.value, 1) })}
+            className="w-full bg-surface border border-border focus:border-rose-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
           />
         </div>
       </div>
@@ -946,16 +988,16 @@ function ReviewSection({
     : answers.dietType?.replace(/_/g, ' ') || 'Not selected';
 
   return (
-    <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-4">
-      <h3 className="text-lg font-semibold text-white">Review Your Answers</h3>
-      <p className="text-xs text-gray-400">Confirm your inputs before running the scientific calculation engine.</p>
+    <div className="surface-matte p-6 rounded-2xl space-y-4">
+      <h3 className="text-lg font-semibold text-text-primary">Review Your Answers</h3>
+      <p className="text-xs text-dark-500">Confirm your inputs before running the scientific calculation engine.</p>
       <div className="grid grid-cols-2 gap-3 text-sm">
-        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">State:</span> <span className="text-white ml-1">{answers.state}</span></div>
-        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">Mode:</span> <span className="text-white ml-1 capitalize">{mode}</span></div>
-        <div className="bg-gray-800/40 p-3 rounded-xl col-span-2"><span className="text-gray-500">Transport:</span> <span className="text-white ml-1">{transportSummary}</span></div>
-        <div className="bg-gray-800/40 p-3 rounded-xl col-span-2"><span className="text-gray-500">Diet:</span> <span className="text-white ml-1">{foodSummary}</span></div>
-        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">Flights:</span> <span className="text-white ml-1">{flights.length} routes</span></div>
-        <div className="bg-gray-800/40 p-3 rounded-xl"><span className="text-gray-500">Appliances:</span> <span className="text-white ml-1">{appliances.length} tracked</span></div>
+        <div className="bg-panel p-3 rounded-xl"><span className="text-dark-500">State:</span> <span className="text-text-primary ml-1">{answers.state}</span></div>
+        <div className="bg-panel p-3 rounded-xl"><span className="text-dark-500">Mode:</span> <span className="text-text-primary ml-1 capitalize">{mode}</span></div>
+        <div className="bg-panel p-3 rounded-xl col-span-2"><span className="text-dark-500">Transport:</span> <span className="text-text-primary ml-1">{transportSummary}</span></div>
+        <div className="bg-panel p-3 rounded-xl col-span-2"><span className="text-dark-500">Diet:</span> <span className="text-text-primary ml-1">{foodSummary}</span></div>
+        <div className="bg-panel p-3 rounded-xl"><span className="text-dark-500">Flights:</span> <span className="text-text-primary ml-1">{flights.length} routes</span></div>
+        <div className="bg-panel p-3 rounded-xl"><span className="text-dark-500">Appliances:</span> <span className="text-text-primary ml-1">{appliances.length} tracked</span></div>
       </div>
     </div>
   );

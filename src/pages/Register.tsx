@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mail, Lock, Eye, EyeOff, Leaf, ArrowRight, User, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, User, CheckCircle2 } from 'lucide-react';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import { useAuth } from '../context/AuthContext';
+import Toast, { ToastProps } from '../components/ui/Toast';
+import { APP_NAME } from '../constants/app';
 
 function getSignupErrorMessage(code: string): string {
   switch (code) {
@@ -22,8 +24,6 @@ function getSignupErrorMessage(code: string): string {
       return 'Account creation failed. Please try again.';
   }
 }
-
-import Toast, { ToastProps } from '../components/ui/Toast';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -72,7 +72,7 @@ export default function Register() {
     try {
       await signUp(email, password, name.trim());
       showToast('success', 'Account created! Redirecting to your dashboard…');
-      setTimeout(() => navigate('/dashboard'), 1200);
+      navigate('/dashboard');
     } catch (err: any) {
       const code = err?.code || '';
       showToast('error', getSignupErrorMessage(code));
@@ -82,156 +82,242 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-20 relative">
-      {/* Background */}
-      <div className="absolute inset-0 mesh-bg" />
-      <div className="absolute top-1/3 right-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(52,211,153,0.04)' }} />
-      <div className="absolute bottom-1/3 left-1/4 w-96 h-96 rounded-full blur-3xl" style={{ background: 'rgba(45,212,191,0.04)' }} />
+    <div
+      className="min-h-screen flex items-center justify-center px-4 py-16 relative overflow-hidden"
+      style={{ background: 'var(--bg-primary)' }}
+    >
+      {/* Ambient background */}
+      <div className="absolute inset-0 mesh-bg" aria-hidden="true" />
+      <div className="absolute inset-0 grid-bg opacity-[0.12]" aria-hidden="true" />
+      <div
+        className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle, rgba(52,211,153,0.06) 0%, transparent 70%)',
+        }}
+        aria-hidden="true"
+      />
 
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
+        transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         className="relative w-full max-w-md"
       >
-        <div className="p-8 sm:p-10" style={{ background: 'var(--bg-card)', border: '1px solid var(--border-default)', borderRadius: 'var(--radius-3xl)' }}>
-          {/* Logo */}
+        <div
+          className="p-8 sm:p-10"
+          style={{
+            background: 'var(--bg-card)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-2xl)',
+          }}
+        >
+          {/* Logo mark */}
           <div className="flex items-center justify-center gap-2.5 mb-8">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #34d399, #2dd4bf)', boxShadow: '0 2px 12px rgba(52,211,153,0.25)' }}>
-              <Leaf className="w-5 h-5" style={{ color: 'var(--bg-primary)' }} />
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{
+                background: 'linear-gradient(135deg, #34d399 0%, #2dd4bf 100%)',
+                boxShadow: '0 2px 12px rgba(52,211,153,0.25)',
+              }}
+              aria-hidden="true"
+            >
+              {/* Leaf icon placeholder — will be replaced in Epic 8 with SVG logo */}
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#022c17' }}>
+                <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10z" />
+                <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+              </svg>
             </div>
-            <span className="text-xl font-bold" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
+            <span
+              className="text-lg font-bold tracking-tight"
+              style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}
+            >
               Eco<span className="gradient-text">Track</span>
-              <span className="font-light ml-1" style={{ color: 'var(--text-tertiary)' }}>AI</span>
             </span>
           </div>
 
           {/* Heading */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2" style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}>
+          <div className="text-center mb-7">
+            <h1
+              className="text-xl font-semibold mb-1.5"
+              style={{ fontFamily: 'var(--font-display)', color: 'var(--text-primary)' }}
+            >
               Create your account
             </h1>
             <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
-              Start your sustainability journey today
+              Start your sustainability journey with {APP_NAME} today.
             </p>
           </div>
 
           {/* Toast */}
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {toast && <Toast type={toast.type} message={toast.message} />}
           </AnimatePresence>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4" id="register-form">
+          <form onSubmit={handleSubmit} className="space-y-4" id="register-form" noValidate>
             <Input
               id="register-name"
               type="text"
-              label="Full Name"
-              placeholder="John Doe"
+              label="Full name"
+              placeholder="Jane Smith"
               icon={User}
               value={name}
               onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
               required
             />
 
             <Input
               id="register-email"
               type="email"
-              label="Email Address"
+              label="Email address"
               placeholder="you@example.com"
               icon={Mail}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="email"
               required
             />
 
-            <div className="relative">
-              <Input
-                id="register-password"
-                type={showPassword ? 'text' : 'password'}
-                label="Password"
-                placeholder="Create a strong password"
-                icon={Lock}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-[38px] transition-colors"
-                style={{ color: 'var(--text-muted)' }}
-                onMouseEnter={(e) => { (e.target as HTMLElement).style.color = 'var(--text-primary)'; }}
-                onMouseLeave={(e) => { (e.target as HTMLElement).style.color = 'var(--text-muted)'; }}
-                id="register-toggle-password"
-                aria-label="Toggle password visibility"
+            {/* Password field — flex layout eliminates top-[38px] hack */}
+            <div className="space-y-1.5">
+              <label
+                htmlFor="register-password"
+                className="block text-sm font-medium"
+                style={{ color: 'var(--text-secondary)' }}
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
+                Password
+              </label>
+              <div
+                className="flex items-center"
+                style={{
+                  background: 'var(--bg-input, var(--bg-card))',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 'var(--radius-lg)',
+                  transition: 'border-color 180ms ease, box-shadow 180ms ease',
+                }}
+                onFocusCapture={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--color-primary)';
+                  (e.currentTarget as HTMLElement).style.boxShadow = '0 0 0 3px rgba(52,211,153,0.12)';
+                }}
+                onBlurCapture={(e) => {
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    (e.currentTarget as HTMLElement).style.borderColor = 'var(--border-default)';
+                    (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                  }
+                }}
+              >
+                <span className="pl-3.5 flex-shrink-0" style={{ color: 'var(--text-muted)' }} aria-hidden="true">
+                  <Lock className="w-[18px] h-[18px]" />
+                </span>
+                <input
+                  id="register-password"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Create a strong password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                  required
+                  className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm outline-none"
+                  style={{ color: 'var(--text-primary)' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="px-3 flex-shrink-0 flex items-center justify-center transition-colors"
+                  style={{ color: 'var(--text-muted)' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--text-primary)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-muted)')}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
+                  id="register-toggle-password"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
-            {/* Password Strength */}
-            {password.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="space-y-2"
-              >
-                <div className="flex gap-1.5">
-                  {[1, 2, 3].map((level) => (
-                    <div
-                      key={level}
-                      className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                        passwordStrength.level >= level ? passwordStrength.color : ''
-                      }`}
-                      style={passwordStrength.level < level ? { background: 'var(--border-subtle)' } : {}}
-                    />
-                  ))}
-                </div>
-                <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                  Password strength:{' '}
-                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{passwordStrength.text}</span>
-                </p>
-              </motion.div>
-            )}
-
-            <Button
-              type="submit"
-              variant="primary"
-              size="lg"
-              className="w-full mt-2"
-              disabled={isLoading}
-              isLoading={isLoading}
-              id="register-submit-btn"
-            >
-              {!isLoading && (
-                <>
-                  Create Account
-                  <ArrowRight className="w-4 h-4" />
-                </>
+            {/* Password strength indicator */}
+            <AnimatePresence>
+              {password.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-1.5"
+                  aria-live="polite"
+                  aria-label={`Password strength: ${passwordStrength.text}`}
+                >
+                  <div className="flex gap-1.5" role="presentation">
+                    {[1, 2, 3].map((level) => (
+                      <div
+                        key={level}
+                        className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                          passwordStrength.level >= level ? passwordStrength.color : ''
+                        }`}
+                        style={passwordStrength.level < level ? { background: 'var(--border-subtle)' } : {}}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                    Password strength:{' '}
+                    <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {passwordStrength.text}
+                    </span>
+                  </p>
+                </motion.div>
               )}
-            </Button>
+            </AnimatePresence>
+
+            <div className="pt-1">
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                className="w-full"
+                disabled={isLoading}
+                isLoading={isLoading}
+                id="register-submit-btn"
+              >
+                {!isLoading && (
+                  <>
+                    Create Account
+                    <ArrowRight className="w-4 h-4" aria-hidden="true" />
+                  </>
+                )}
+              </Button>
+            </div>
           </form>
 
           {/* Benefits */}
-          <div className="mt-6 space-y-2">
-            {['AI-powered carbon tracking', 'Personalized insights', 'Gemini AI recommendations'].map((benefit) => (
-              <div key={benefit} className="flex items-center gap-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" style={{ color: 'var(--color-primary)' }} />
+          <ul className="mt-5 space-y-1.5" aria-label="Account benefits">
+            {[
+              'AI-powered carbon tracking',
+              'Personalized insights',
+              'Gemini AI recommendations',
+            ].map((benefit) => (
+              <li
+                key={benefit}
+                className="flex items-center gap-2 text-xs"
+                style={{ color: 'var(--text-tertiary)' }}
+              >
+                <CheckCircle2
+                  className="w-3.5 h-3.5 flex-shrink-0"
+                  style={{ color: 'var(--color-primary)' }}
+                  aria-hidden="true"
+                />
                 {benefit}
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
 
-          {/* Footer */}
-          <p className="mt-6 text-center text-sm" style={{ color: 'var(--text-tertiary)' }}>
+          <p className="mt-5 text-center text-sm" style={{ color: 'var(--text-tertiary)' }}>
             Already have an account?{' '}
             <Link
               to="/login"
               className="font-medium transition-colors"
               style={{ color: 'var(--color-primary)' }}
-              onMouseEnter={(e) => { (e.target as HTMLElement).style.color = 'var(--color-primary-hover)'; }}
-              onMouseLeave={(e) => { (e.target as HTMLElement).style.color = 'var(--color-primary)'; }}
               id="register-login-link"
             >
               Sign in
@@ -239,7 +325,12 @@ export default function Register() {
           </p>
         </div>
 
-        <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-3/4 h-20 blur-3xl rounded-full" style={{ background: 'rgba(52,211,153,0.08)' }} />
+        {/* Subtle bottom glow */}
+        <div
+          className="absolute -bottom-8 left-1/2 -translate-x-1/2 w-3/4 h-12 rounded-full blur-2xl pointer-events-none"
+          style={{ background: 'linear-gradient(90deg, transparent, rgba(52,211,153,0.12), transparent)' }}
+          aria-hidden="true"
+        />
       </motion.div>
     </div>
   );

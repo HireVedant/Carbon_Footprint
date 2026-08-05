@@ -48,7 +48,7 @@ export const GaugeWidget: React.FC<GaugeWidgetProps> = ({
             cy={center}
             r={radius}
             fill="none"
-            stroke="rgba(255,255,255,0.06)"
+            stroke="rgba(15,23,42,0.08)"
             strokeWidth={8}
           />
           {/* Animated fill */}
@@ -70,12 +70,12 @@ export const GaugeWidget: React.FC<GaugeWidgetProps> = ({
         {/* Center text */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            <p className="text-2xl font-extrabold text-white">{value}</p>
-            {unit && <p className="text-[9px] text-dark-400">{unit}</p>}
+            <p className="text-2xl font-extrabold text-text-primary">{value}</p>
+            {unit && <p className="text-[9px] text-dark-500">{unit}</p>}
           </div>
         </div>
       </div>
-      <p className="text-[10px] text-dark-300 font-semibold uppercase tracking-wider text-center">{label}</p>
+          <p className="text-[10px] text-dark-500 font-semibold uppercase tracking-wider text-center">{label}</p>
     </div>
   );
 };

@@ -336,8 +336,8 @@ export default function Home() {
                 <div className="mt-3 flex items-center gap-2">
                   <div className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border ${
                     simulatorData.diffFromIndia > 0
-                      ? 'text-red-400 bg-red-500/10 border-red-500/20'
-                      : 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                      ? 'text-red-700 bg-red-50 border-red-200'
+                      : 'text-emerald-700 bg-emerald-50 border-emerald-200'
                   }`}>
                     {simulatorData.diffFromIndia > 0 ? '+' : ''}{simulatorData.diffPct}% vs India avg
                   </div>
@@ -386,7 +386,7 @@ export default function Home() {
               { value: Math.round(simulatorData.totalCO2 * 2.3), label: 'Smartphones\ncharged', icon: Zap, color: '#f59e0b' },
             ].map((eq, i) => (
               <motion.div key={eq.label} {...fadeUp} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-                className="glass-eco rounded-2xl p-5 text-center group hover:border-white/15 transition-all duration-300">
+                className="glass-eco rounded-2xl p-5 text-center group hover:border-primary-200 transition-all duration-300">
                 <div className="w-10 h-10 rounded-xl mx-auto mb-3 flex items-center justify-center" style={{ background: `${eq.color}12`, border: `1px solid ${eq.color}20` }}>
                   <eq.icon className="w-5 h-5" style={{ color: eq.color }} />
                 </div>
@@ -419,7 +419,7 @@ export default function Home() {
               { label: 'Grid Carbon Intensity', value: nationalStats.data.gridAverageFactorKgCO2PerKWh.toFixed(3), unit: 'kg/kWh', note: 'National average', confidence: 'CEA Report', color: '#8b5cf6' },
             ].map((stat, i) => (
               <motion.div key={stat.label} {...fadeUp} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-                className="glass-eco rounded-2xl p-6 group hover:border-white/15 transition-all duration-300">
+                className="glass-eco rounded-2xl p-6 group hover:border-primary-200 transition-all duration-300">
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--text-muted)' }}>{stat.label}</span>
                   <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ background: `${stat.color}12`, color: stat.color, border: `1px solid ${stat.color}20` }}>

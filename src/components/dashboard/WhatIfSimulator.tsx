@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { calculateEmissions, AssessmentAnswers } from '../../utils/calculationEngine';
 import { Zap, Car, Plane, Sun, Recycle, TrendingDown } from 'lucide-react';
-import { surface, emerald, fontFamily, radius, solar, water, semantic } from '../../design';
+import { surface, emerald, fontFamily, radius, solar, water, semantic, forest, carbon, earth } from '../../design';
 
 interface WhatIfSimulatorProps {
   baseAnswers: AssessmentAnswers;
@@ -28,7 +28,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({ baseAnswers, b
       label: 'Install 3kW Solar',
       description: 'Rooftop solar generation offsets ~360 kWh/month from the grid.',
       icon: Sun,
-      color: 'text-amber-400 bg-amber-500/10 border-amber-500/20',
+      color: solar.yellow,
       modifier: (a) => ({ ...a, solarInstalledKw: (a.solarInstalledKw || 0) + 3 }),
     },
     {
@@ -36,7 +36,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({ baseAnswers, b
       label: 'Switch to Electric Car',
       description: 'Replace current petrol/diesel vehicle with an EV (Tata Nexon EV class).',
       icon: Car,
-      color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20',
+      color: water.river,
       modifier: (a) => ({ ...a, ownsVehicle: true, vehicleCategoryKey: 'car_electric' }),
     },
     {
@@ -44,7 +44,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({ baseAnswers, b
       label: 'Eliminate All Flights',
       description: 'Replace domestic air travel with train or video calls for one year.',
       icon: Plane,
-      color: 'text-rose-400 bg-rose-500/10 border-rose-500/20',
+      color: carbon.danger,
       modifier: (a) => ({ ...a, flightDetails: [] }),
     },
     {
@@ -52,7 +52,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({ baseAnswers, b
       label: 'Switch to Vegetarian Diet',
       description: 'Adopt a lacto-vegetarian diet — significant food footprint reduction.',
       icon: Recycle,
-      color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+      color: forest[500],
       modifier: (a) => ({ ...a, dietType: 'lacto_vegetarian' as any }),
     },
     {
@@ -60,7 +60,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({ baseAnswers, b
       label: 'Switch to Induction Cooking',
       description: 'Replace LPG cylinder cooking with an efficient electric induction cooktop.',
       icon: Zap,
-      color: 'text-violet-400 bg-violet-500/10 border-violet-500/20',
+      color: earth.clay,
       modifier: (a) => ({ ...a, cookingFuel: 'induction' as any, cookingFuelConsumptionMonthly: 30 }),
     },
   ];
@@ -93,7 +93,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({ baseAnswers, b
       {/* Header */}
       <div className="flex items-center justify-between pb-4" style={{ borderBottom: `1px solid ${surface.border}` }}>
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl" style={{ background: `${emerald[500]}1A`, color: emerald[400] }}>
+          <div className="p-2.5 rounded-xl" style={{ background: `${emerald[600]}12`, color: emerald[700] }}>
             <TrendingDown className="w-5 h-5" />
           </div>
           <div>
@@ -158,14 +158,14 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({ baseAnswers, b
             <p className="text-[10px]" style={{ color: surface.textSecondary }}>tonnes CO₂/yr</p>
           </div>
           <div className="flex flex-col items-center justify-center">
-            <TrendingDown className="w-6 h-6" style={{ color: savingPercent > 0 ? emerald[400] : surface.textSecondary }} />
-            <p className="text-lg font-bold" style={{ color: savingPercent > 0 ? emerald[400] : surface.textSecondary }}>
+            <TrendingDown className="w-6 h-6" style={{ color: savingPercent > 0 ? emerald[700] : surface.textSecondary }} />
+            <p className="text-lg font-bold" style={{ color: savingPercent > 0 ? emerald[700] : surface.textSecondary }}>
               -{savingPercent}%
             </p>
           </div>
           <div>
             <p className="text-[10px] uppercase tracking-wider font-semibold mb-1" style={{ color: surface.textSecondary }}>Projected</p>
-            <p className="text-xl font-bold" style={{ color: savingPercent > 0 ? emerald[400] : surface.textPrimary }}>
+            <p className="text-xl font-bold" style={{ color: savingPercent > 0 ? emerald[700] : surface.textPrimary }}>
               {projectedResult.totalTonnesCO2PerYear}
             </p>
             <p className="text-[10px]" style={{ color: surface.textSecondary }}>tonnes CO₂/yr</p>
@@ -176,7 +176,7 @@ export const WhatIfSimulator: React.FC<WhatIfSimulatorProps> = ({ baseAnswers, b
           <div className="text-center pt-3" style={{ borderTop: `1px solid ${surface.border}` }}>
             <p className="text-sm" style={{ color: surface.textSecondary }}>
               Combined scenarios would save{' '}
-              <span className="font-bold" style={{ color: emerald[400] }}>{savingKg.toLocaleString()} kg CO₂/year</span>
+              <span className="font-bold" style={{ color: emerald[700] }}>{savingKg.toLocaleString()} kg CO₂/year</span>
               {' '}— equivalent to planting ~{Math.round(savingKg / 21)} trees annually.
             </p>
           </div>

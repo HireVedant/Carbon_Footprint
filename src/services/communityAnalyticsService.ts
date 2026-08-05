@@ -81,24 +81,33 @@ function privacySafeName(name: string | undefined | null, index: number): string
  * Returns an unsubscribe function — always call it on component unmount.
  */
 export function subscribeToCommunityStats(
-  callback: (stats: CommunityStats | null) => void
+  callback: (stats: CommunityStats | null) => void,
+  onError?: (error: string) => void
 ): () => void {
-  return onSnapshot(COMMUNITY_STATS_DOC, (snap) => {
-    if (!snap.exists()) {
+  return onSnapshot(
+    COMMUNITY_STATS_DOC,
+    (snap) => {
+      if (!snap.exists()) {
+        callback(null);
+        return;
+      }
+      const d = snap.data();
+      callback({
+        totalUsers: d.totalUsers ?? 0,
+        totalReports: d.totalReports ?? 0,
+        totalCO2Tracked: d.totalCO2Tracked ?? 0,
+        averageAnnualCO2: d.averageAnnualCO2 ?? 0,
+        averageEcoScore: d.averageEcoScore ?? 0,
+        emissionBreakdown: d.emissionBreakdown ?? { transport: 0, energy: 0, food: 0, waste: 0 },
+        updatedAt: toDate(d.updatedAt),
+      });
+    },
+    (err) => {
+      console.error('[CommunityAnalytics] Error in communityStats listener:', err);
       callback(null);
-      return;
+      onError?.(err?.message || 'Failed to load community statistics. Please try again later.');
     }
-    const d = snap.data();
-    callback({
-      totalUsers: d.totalUsers ?? 0,
-      totalReports: d.totalReports ?? 0,
-      totalCO2Tracked: d.totalCO2Tracked ?? 0,
-      averageAnnualCO2: d.averageAnnualCO2 ?? 0,
-      averageEcoScore: d.averageEcoScore ?? 0,
-      emissionBreakdown: d.emissionBreakdown ?? { transport: 0, energy: 0, food: 0, waste: 0 },
-      updatedAt: toDate(d.updatedAt),
-    });
-  });
+  );
 }
 
 /**
@@ -106,25 +115,34 @@ export function subscribeToCommunityStats(
  * Returns an unsubscribe function.
  */
 export function subscribeToLeaderboard(
-  callback: (entries: LeaderboardEntry[]) => void
+  callback: (entries: LeaderboardEntry[]) => void,
+  onError?: (error: string) => void
 ): () => void {
   const q = query(LEADERBOARD_COL, orderBy('ecoScore', 'desc'), limit(10));
-  return onSnapshot(q, (snap) => {
-    const entries: LeaderboardEntry[] = snap.docs.map((d) => {
-      const data = d.data();
-      return {
-        userId: d.id,
-        displayName: data.isAnonymous ? 'Anonymous User' : (data.displayName ?? 'Anonymous User'),
-        ecoScore: data.ecoScore ?? 0,
-        annualEstimate: data.annualEstimate ?? 0,
-        ecoLabel: data.ecoLabel ?? '',
-        highestCategory: data.highestCategory ?? 'Transport',
-        isAnonymous: !!data.isAnonymous,
-        updatedAt: toDate(data.updatedAt),
-      };
-    });
-    callback(entries);
-  });
+  return onSnapshot(
+    q,
+    (snap) => {
+      const entries: LeaderboardEntry[] = snap.docs.map((d) => {
+        const data = d.data();
+        return {
+          userId: d.id,
+          displayName: data.isAnonymous ? 'Anonymous User' : (data.displayName ?? 'Anonymous User'),
+          ecoScore: data.ecoScore ?? 0,
+          annualEstimate: data.annualEstimate ?? 0,
+          ecoLabel: data.ecoLabel ?? '',
+          highestCategory: data.highestCategory ?? 'Transport',
+          isAnonymous: !!data.isAnonymous,
+          updatedAt: toDate(data.updatedAt),
+        };
+      });
+      callback(entries);
+    },
+    (err) => {
+      console.error('[CommunityAnalytics] Error in leaderboard listener:', err);
+      callback([]);
+      onError?.(err?.message || 'Failed to load the leaderboard. Please try again later.');
+    }
+  );
 }
 
 
@@ -153,84 +171,17 @@ export interface CalcPayload {
  * For production scale, a Cloud Function with increment would be preferable.
  */
 export async function updateCommunityAggregates(payload: CalcPayload): Promise<void> {
-  try {
-    const {
-      userId, calculationId, displayName,
-      transportEmission, energyEmission, foodEmission, wasteEmission,
-      totalEmission, ecoScore, ecoLabel, annualEstimate, totalUsers,
-    } = payload;
-
-    const topCategory = highestCategory(transportEmission, energyEmission, foodEmission, wasteEmission);
-    const safeName = privacySafeName(displayName, -1);
-
-    await runTransaction(db, async (transaction) => {
-      // 1. Fetch current communityStats document
-      const statsSnap = await transaction.get(COMMUNITY_STATS_DOC);
-      const leaderboardRef = doc(db, 'communityLeaderboard', userId);
-      const existingLeader = await transaction.get(leaderboardRef);
-
-      const prev = statsSnap.exists() ? statsSnap.data() : null;
-      const existingScore: number = existingLeader.exists() ? (existingLeader.data().ecoScore ?? 0) : 0;
-
-      const prevReports: number = prev?.totalReports ?? 0;
-      const prevTotal: number = prev?.totalCO2Tracked ?? 0;
-      const prevBreakdown: EmissionBreakdown = prev?.emissionBreakdown ?? { transport: 0, energy: 0, food: 0, waste: 0 };
-      const prevScoreSum: number = (prev?.averageEcoScore ?? 0) * prevReports;
-
-      const newReports = prevReports + 1;
-      const newTotalCO2 = prevTotal + totalEmission;
-      const newAvgCO2 = parseFloat(((newTotalCO2 / 1000) / newReports).toFixed(3));
-      const newAvgScore = parseFloat(((prevScoreSum + ecoScore) / newReports).toFixed(1));
-      const newBreakdown: EmissionBreakdown = {
-        transport: prevBreakdown.transport + transportEmission,
-        energy: prevBreakdown.energy + energyEmission,
-        food: prevBreakdown.food + foodEmission,
-        waste: prevBreakdown.waste + wasteEmission,
-      };
-
-      // 2. Write aggregated stats
-      transaction.set(
-        COMMUNITY_STATS_DOC,
-        {
-          totalUsers,
-          totalReports: newReports,
-          totalCO2Tracked: newTotalCO2,
-          averageAnnualCO2: newAvgCO2,
-          averageEcoScore: newAvgScore,
-          emissionBreakdown: newBreakdown,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true }
-      );
-
-      // 3. Write/overwrite leaderboard entry for this user (best score wins)
-      if (ecoScore >= existingScore) {
-        transaction.set(leaderboardRef, {
-          displayName: safeName,
-          ecoScore,
-          annualEstimate,
-          ecoLabel,
-          highestCategory: topCategory,
-          isAnonymous: existingLeader.exists() ? (existingLeader.data().isAnonymous ?? false) : false,
-          updatedAt: serverTimestamp(),
-        });
-      }
-
-      // 4. Write anonymized recent report
-      const reportRef = doc(db, 'communityReports', calculationId);
-      transaction.set(reportRef, {
-        displayName: safeName,
-        ecoScore,
-        annualEstimate,
-        ecoLabel,
-        highestCategory: topCategory,
-        createdAt: serverTimestamp(),
-      });
-    });
-  } catch (err) {
-    // Non-fatal: analytics failure must never block the user's calculation save
-    console.warn('[CommunityAnalytics] Failed to update aggregates:', err);
-  }
+  // ── 🔒 ARCHITECTURE UPDATE ────────────────────────────────────────────────
+  // Aggregation is now securely handled by Firebase Cloud Functions.
+  // The 'onAssessmentCreated' trigger in functions/src/index.ts automatically 
+  // updates the global 'communityStats' and 'communityLeaderboard' securely 
+  // when a new assessment document is saved to Firestore.
+  // 
+  // This client-side function is retained purely for backward compatibility 
+  // with the existing React context calls, preventing any UI breakage.
+  // ────────────────────────────────────────────────────────────────────────
+  console.log('[CommunityAnalytics] Assessment saved. Cloud Functions will handle the secure aggregation.');
+  return Promise.resolve();
 }
 
 /**
@@ -245,62 +196,12 @@ export async function removeCommunityEntry(payload: {
   removedScore: number;
   removedBreakdown: EmissionBreakdown;
 }): Promise<void> {
-  try {
-    const reportRef = doc(db, 'communityReports', payload.calculationId);
-    const leaderboardRef = doc(db, 'communityLeaderboard', payload.userId);
-
-    await runTransaction(db, async (transaction) => {
-      const statsSnap = await transaction.get(COMMUNITY_STATS_DOC);
-      if (!statsSnap.exists()) return;
-      
-      const prev = statsSnap.data();
-      const prevReports: number = prev.totalReports ?? 1;
-      const newReports = Math.max(0, prevReports - 1);
-
-      if (newReports === 0) {
-        transaction.set(COMMUNITY_STATS_DOC, {
-          totalReports: 0,
-          totalCO2Tracked: 0,
-          averageAnnualCO2: 0,
-          averageEcoScore: 0,
-          emissionBreakdown: { transport: 0, energy: 0, food: 0, waste: 0 },
-          updatedAt: serverTimestamp(),
-        }, { merge: true });
-      } else {
-        const prevTotal: number = prev.totalCO2Tracked ?? 0;
-        const newTotal = Math.max(0, prevTotal - payload.removedEmission);
-        
-        const prevScoreSum: number = (prev.averageEcoScore ?? 0) * prevReports;
-        const newAvgScore = parseFloat(((prevScoreSum - payload.removedScore) / newReports).toFixed(1));
-        const newAvgCO2 = parseFloat(((newTotal / 1000) / newReports).toFixed(3));
-
-        const prevBreakdown = prev.emissionBreakdown ?? { transport: 0, energy: 0, food: 0, waste: 0 };
-        const newBreakdown = {
-          transport: Math.max(0, prevBreakdown.transport - payload.removedBreakdown.transport),
-          energy: Math.max(0, prevBreakdown.energy - payload.removedBreakdown.energy),
-          food: Math.max(0, prevBreakdown.food - payload.removedBreakdown.food),
-          waste: Math.max(0, prevBreakdown.waste - payload.removedBreakdown.waste),
-        };
-
-        transaction.set(COMMUNITY_STATS_DOC, {
-          totalReports: newReports,
-          totalCO2Tracked: newTotal,
-          averageAnnualCO2: newAvgCO2,
-          averageEcoScore: Math.max(0, newAvgScore),
-          emissionBreakdown: newBreakdown,
-          updatedAt: serverTimestamp(),
-        }, { merge: true });
-      }
-
-      transaction.delete(reportRef);
-
-      if (!payload.hasRemaining) {
-        transaction.delete(leaderboardRef);
-      }
-    });
-  } catch (err) {
-    console.warn('[CommunityAnalytics] Failed to remove community entry:', err);
-  }
+  // ── 🔒 ARCHITECTURE UPDATE ────────────────────────────────────────────────
+  // Similar to updateCommunityAggregates, deletions are now handled by the
+  // 'onAssessmentDeleted' Cloud Function.
+  // ────────────────────────────────────────────────────────────────────────
+  console.log('[CommunityAnalytics] Assessment deleted. Cloud Functions will handle the secure aggregation cleanup.');
+  return Promise.resolve();
 }
 
 /**
@@ -323,6 +224,7 @@ export async function updateUserCount(totalUsers: number): Promise<void> {
  * Toggles anonymous mode for a user's leaderboard entry.
  */
 export async function toggleAnonymousRanking(userId: string, isAnonymous: boolean): Promise<void> {
+  if (!userId) return;
   try {
     const leaderboardRef = doc(db, 'communityLeaderboard', userId);
     await setDoc(leaderboardRef, { isAnonymous, updatedAt: serverTimestamp() }, { merge: true });

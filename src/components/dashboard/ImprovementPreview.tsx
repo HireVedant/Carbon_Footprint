@@ -180,10 +180,10 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results,
   }
 
   return (
-    <div className="glass-eco p-6 rounded-3xl hover:border-white/15 transition-all duration-300 h-full flex flex-col justify-between relative">
+    <div className="glass-eco p-6 rounded-3xl hover:border-primary-200 transition-all duration-300 h-full flex flex-col justify-between relative">
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5" style={{ color: emerald[400] }} />
+          <Sparkles className="w-5 h-5" style={{ color: emerald[600] }} />
           <h3 className="text-sm font-semibold" style={{ color: surface.textPrimary }}>Improvement Potential</h3>
         </div>
         
@@ -209,7 +209,7 @@ export const ImprovementPreview: React.FC<ImprovementPreviewProps> = ({ results,
               <div className="text-left sm:text-right pt-2 sm:pt-0 flex sm:flex-col justify-between items-center sm:items-end" style={{ borderTop: `1px solid ${surface.border}30` }}>
                 <span className="text-[10px] font-semibold sm:hidden" style={{ color: surface.textSecondary }}>Est. Saving</span>
                 <div>
-                  <p className="text-xs font-bold leading-tight" style={{ color: emerald[400] }}>
+                  <p className="text-xs font-bold leading-tight" style={{ color: emerald[700] }}>
                     -{item.reduction.toLocaleString()} <span className="text-[10px] font-normal">kg/yr</span>
                   </p>
                   <span className="text-[9px] block" style={{ color: surface.textSecondary }}>CO₂ reduction</span>

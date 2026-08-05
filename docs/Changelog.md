@@ -1,6 +1,100 @@
 # EcoTrack Design System Changelog
 
+## v2.3.0 — Production Stabilization (Epic 4.4)
+
+**Date**: 2026-08-04
+**Status**: Released ✅
+
+### Root Causes Fixed
+
+- **EcoScore formula mismatch** (`Assessment.tsx`): Legacy inline formula `100 - totalKg/100` survived in the community-aggregates payload despite Epic 3 fixes. Removed and replaced with `calculateEcoScore(totalTonnesCO2PerYear).score`. There is now exactly **one EcoScore formula** in the entire codebase: `src/core/calculation/ecoScore.ts`.
+- **Dashboard tab UI non-functional** (`Dashboard.tsx`): Tabs (Overview / Emissions / Goals) existed as a design concept but had no state. All sections rendered simultaneously in a flat vertical stack, causing perceived overlap on smaller screens.
+- **Missing `answers` on Firestore hydration** (`Dashboard.tsx`): When loading the latest assessment from Firestore history (e.g., after a page refresh), the reconstructed `activeResult` object omitted the `answers` field. `InsightCard` and `ImprovementPreview` received `undefined` answers, silently rendering empty AI advice.
+- **Chart container height collapse** (`EmissionsTab.tsx`): `h-full` on chart containers inside a CSS Grid without an explicit parent height caused layout collapse at some viewport sizes. Replaced with `minHeight: '360px'`.
+
+### New Files
+
+- `src/components/dashboard/tabs/OverviewTab.tsx` — KPI widgets, sustainability gauges, InsightCard, EquivalentCard.
+- `src/components/dashboard/tabs/EmissionsTab.tsx` — Radar chart, Doughnut chart, Category contribution bars, Stacked bar chart.
+- `src/components/dashboard/tabs/GoalsTab.tsx` — AI Improvement Preview, What-If Simulator, Action Plan, History/Report buttons.
+
+### Modified Files
+
+#### `src/pages/Dashboard.tsx`
+- Added `activeTab: 'overview' | 'emissions' | 'goals'` state.
+- Added accessible ARIA tab bar (`role="tablist"`, `role="tab"`, `role="tabpanel"`).
+- All derived values computed once at the top level, passed to tabs as typed props.
+- Added `answers: latest.answers ?? {}` to Firestore hydration block.
+- Imports reduced to only what Dashboard.tsx itself needs (tab components own their own rendering imports).
+
+#### `src/pages/Assessment.tsx`
+- Added `import { calculateEcoScore } from '../core/calculation/ecoScore'`.
+- Replaced legacy ecoScore formula in `updateCommunityAggregates` payload with `calculateEcoScore(computedResult.totalTonnesCO2PerYear).score`.
+
+### Not Modified
+- `src/core/calculation/ecoScore.ts` — No benchmark changes.
+- `src/context/AssessmentContext.tsx` — No changes.
+- `src/firebase/firestore.ts` — No schema changes.
+- `functions/src/index.ts` — No changes.
+- `firestore.rules` — No changes.
+
+### Root Cause and Remediation
+
+- **Root cause**: The score-source drift was not coming from the `calculateEmissions()` pipeline itself. The `AssessmentContext.answers -> calculateEmissions() -> totalTonnesCO2PerYear -> calculateEcoScore()` flow was already consistent. The drift appeared in the persistence and cache-reload path where legacy `100 - totalKg / 100` fallbacks continued to exist in `src/firebase/firestore.ts` and the Cloud Function deletion path.
+- **Remediation**: The dashboard/history/community consumers are now aligned to the canonical `calculateEcoScore(totalTonnes).score` source. The Firebase function has been reviewed for readiness, but live deployment needs to be verified in the Firebase project because this environment cannot call the remote project API directly.
+
+### Known Remaining Risk
+
+> Community `communityStats/global` and `communityLeaderboard` collections depend on the Cloud Function `onAssessmentCreated` running in Firebase project `eco-track-2833a`. **Verify deployment status via Firebase Console before launch.** The source code is present in `functions/src/index.ts`, but the current environment does not have the Firebase CLI installed, so deployment status could not be confirmed from the command line.
+
+### Build
+`npm run build` → **Exit Code 0** · 2607 modules · 0 TypeScript errors · 0 warnings (only expected chunk-size advisory for vendor bundles).
+
+---
+
+## v2.2.0 — Assessment System Stabilization (Epic 3)
+
+**Date**: 2026-08-04
+**Status**: Released ✅
+
+### Assessment Context (`src/context/AssessmentContext.tsx`)
+
+- **Draft persistence**: Added `sessionStorage` auto-save (key: `ecotrack_assessment_draft_v2`) on every state mutation (`updateAnswers`, `setFlights`, `setAppliances`, `setCurrentStep`, `setMode`). Restored on mount with safe `JSON.parse` error handling.
+- **Flight state restoration**: Added `mapFlightDetailsToEntries()` helper. `flights` React state now initializes from draft `answers.flightDetails`, resolving UI desynchronization after browser refresh.
+- **Appliance state restoration**: Added `mapAppliancesToUsage()` helper. `appliancesState` now initializes from draft `answers.appliances` with required `id` field generation.
+- **Draft lifecycle**: `clearDraft()` is called on `runCalculation()` success and `resetAssessment()` to prevent stale data.
+- **Removed**: Removed unused `AssessmentDocument` import.
+
+### Assessment Page (`src/pages/Assessment.tsx`)
+
+- **Input ceiling validation**: Added `INPUT_CEILINGS` constant map and `parseNumClamped()` utility function. Applied to all numeric inputs to prevent NaN/Infinity emission calculations.
+- **Indian household ceiling limits**: `electricityKWh: 2,000 kWh/month`, `apparelItemsMonthly: 20 items/month`, `dailyVehicleKm: 1,000 km/day`.
+- **Render optimization**: `visibleSteps` and `currentVisibleIndex` wrapped in `useMemo` hooks to prevent unnecessary recomputation.
+- **Save failure notification**: Dismissible amber warning banner renders when `saveV2Assessment()` fails. Result display is unaffected.
+
+### Dashboard (`src/pages/Dashboard.tsx`)
+
+- **EcoScore unified**: Replaced isolated `100 - totalTonnes * 5.5` formula with `calculateEcoScore(totalTonnes).score` from `src/core/calculation/ecoScore.ts`. EcoScore is now identical across Dashboard, Assessment, History, and Cloud Function.
+
+### No Changes To
+
+- Firestore collections or document schemas
+- `src/core/calculation/` engine files (emission factors, formulas)
+- DatasetRegistry or any scientific dataset
+- V1/V2 backward compatibility layer
+- Any test files
+
+### Build Status
+
+- TypeScript: Zero errors
+- Vite: 2604 modules transformed
+- All routes functional
+- No regressions
+
+---
+
 ## v2.1.0 — Scientific Architecture Refactoring
+
 
 ### Core Calculation Engine (`src/core/calculation/`)
 

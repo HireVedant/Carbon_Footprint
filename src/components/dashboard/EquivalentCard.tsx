@@ -54,10 +54,10 @@ export const EquivalentCard: React.FC<EquivalentCardProps> = ({ results }) => {
   const equivalents = equivalentsSet.equivalents;
 
   return (
-    <div className="glass-eco p-6 rounded-3xl hover:border-white/15 transition-all duration-300 h-full flex flex-col justify-between">
+    <div className="glass-eco p-6 rounded-3xl hover:border-primary-200 transition-all duration-300 h-full flex flex-col justify-between">
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <TreePine className="w-5 h-5" style={{ color: emerald[400] }} />
+          <TreePine className="w-5 h-5" style={{ color: emerald[600] }} />
           <h3 className="text-sm font-semibold" style={{ color: surface.textPrimary }}>Environmental Equivalents</h3>
         </div>
 
@@ -71,7 +71,7 @@ export const EquivalentCard: React.FC<EquivalentCardProps> = ({ results }) => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.05 * i }}
                 whileHover={{ scale: 1.01 }}
-                className={`p-3 rounded-2xl border flex flex-col justify-between hover:bg-white/[0.04] transition-all duration-300 ${eq.colorClass}`}
+                className={`p-3 rounded-2xl border flex flex-col justify-between hover:bg-primary-50/60 transition-all duration-300 ${eq.colorClass}`}
                 style={{ borderColor: `${surface.border}40`, background: `${surface.base}30` }}
               >
                 <div className="flex items-center justify-between mb-2">

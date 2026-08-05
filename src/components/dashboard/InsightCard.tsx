@@ -90,10 +90,10 @@ export const InsightCard: React.FC<InsightCardProps> = ({ results, answers }) =>
   const [activeInsight, setActiveInsight] = useState(0);
 
   return (
-    <div className="glass-eco p-6 rounded-3xl hover:border-white/15 transition-all duration-300 h-full flex flex-col justify-between">
+    <div className="glass-eco p-6 rounded-3xl hover:border-primary-200 transition-all duration-300 h-full flex flex-col justify-between">
       <div>
         <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="w-5 h-5 animate-pulse" style={{ color: emerald[400] }} />
+          <Sparkles className="w-5 h-5 animate-pulse" style={{ color: emerald[600] }} />
           <h3 className="text-sm font-semibold" style={{ color: surface.textPrimary }}>AI Carbon Insights</h3>
         </div>
         
@@ -113,7 +113,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ results, answers }) =>
                   borderRadius: '1rem',
                   border: `1px solid ${isActive ? `${emerald[500]}30` : `${surface.border}40`}`,
                   background: isActive ? `${emerald[500]}10` : `${surface.base}30`,
-                  color: isActive ? emerald[300] : surface.textSecondary,
+                  color: isActive ? emerald[700] : surface.textSecondary,
                   boxShadow: isActive ? `0 10px 15px -3px ${emerald[500]}10` : 'none',
                   transition: 'all 0.3s ease',
                   cursor: 'pointer',
@@ -133,8 +133,8 @@ export const InsightCard: React.FC<InsightCardProps> = ({ results, answers }) =>
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
-                    background: isActive ? `${emerald[500]}10` : 'rgba(255,255,255,0.05)',
-                    color: isActive ? emerald[400] : surface.textSecondary,
+                    background: isActive ? `${emerald[500]}10` : 'rgba(15,23,42,0.04)',
+                    color: isActive ? emerald[600] : surface.textSecondary,
                     transition: 'all 0.3s ease',
                   }}
                 >

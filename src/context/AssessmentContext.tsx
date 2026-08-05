@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { AssessmentAnswers, CalculationResult, calculateEmissions } from '../utils/calculationEngine';
-import { AssessmentDocument } from '../types/rbac';
 import { FlightTripEntry } from '../components/calculator/FlightPlanner';
 import { ApplianceUsage } from '../components/calculator/ApplianceSelector';
 
@@ -61,6 +60,68 @@ export const initialAssessmentAnswers: AssessmentAnswers = {
 export type AssessmentMode = 'quick' | 'detailed';
 export type AssessmentStep = 'location' | 'transport' | 'energy' | 'food' | 'waste' | 'shopping' | 'review';
 
+const DRAFT_STORAGE_KEY = 'ecotrack_assessment_draft_v2';
+
+interface AssessmentDraft {
+  answers: AssessmentAnswers;
+  currentStep: AssessmentStep;
+  mode: AssessmentMode;
+  timestamp: number;
+}
+
+function loadDraft(): AssessmentDraft | null {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || !parsed.answers) return null;
+    return parsed as AssessmentDraft;
+  } catch {
+    return null;
+  }
+}
+
+function saveDraft(draft: Omit<AssessmentDraft, 'timestamp'>) {
+  try {
+    sessionStorage.setItem(
+      DRAFT_STORAGE_KEY,
+      JSON.stringify({ ...draft, timestamp: Date.now() })
+    );
+  } catch {
+    // Ignore quota or serialization errors
+  }
+}
+
+function clearDraft() {
+  try {
+    sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function mapFlightDetailsToEntries(flightDetails?: AssessmentAnswers['flightDetails']): FlightTripEntry[] {
+  if (!Array.isArray(flightDetails)) return [];
+  return flightDetails.map((f, i) => ({
+    id: `flight_restored_${i}_${Date.now()}`,
+    depIata: f.depIata || 'DEL',
+    arrIata: f.arrIata || 'BOM',
+    cabinClass: (f.cabinClass as FlightTripEntry['cabinClass']) || 'ECONOMY',
+    isRoundTrip: f.isRoundTrip !== false,
+    tripsPerYear: f.tripsPerYear || 1
+  }));
+}
+
+function mapAppliancesToUsage(appliances?: AssessmentAnswers['appliances']): ApplianceUsage[] {
+  if (!Array.isArray(appliances)) return [];
+  return appliances.map((a, i) => ({
+    id: `app_restored_${i}_${Date.now()}`,
+    applianceId: a.applianceId,
+    stars: a.stars,
+    dailyHours: a.dailyHours
+  }));
+}
+
 interface AssessmentContextType {
   answers: AssessmentAnswers;
   updateAnswers: (updates: Partial<AssessmentAnswers>) => void;
@@ -87,60 +148,105 @@ interface AssessmentContextType {
 const AssessmentContext = createContext<AssessmentContextType | undefined>(undefined);
 
 export const AssessmentProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [answers, setAnswers] = useState<AssessmentAnswers>({ ...initialAssessmentAnswers });
+  const initialDraft = loadDraft();
+
+  const [answers, setAnswers] = useState<AssessmentAnswers>(
+    initialDraft?.answers || { ...initialAssessmentAnswers }
+  );
   const [result, setResult] = useState<CalculationResult | null>(null);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
-  const [mode, setMode] = useState<AssessmentMode>('quick');
-  const [currentStep, setCurrentStep] = useState<AssessmentStep>('location');
+  const [mode, setModeState] = useState<AssessmentMode>(
+    initialDraft?.mode || 'quick'
+  );
+  const [currentStep, setCurrentStepState] = useState<AssessmentStep>(
+    initialDraft?.currentStep || 'location'
+  );
 
   // Flight entries (mapped into answers.flightDetails)
-  const [flights, setFlightsState] = useState<FlightTripEntry[]>([]);
+  const [flights, setFlightsState] = useState<FlightTripEntry[]>(() =>
+    mapFlightDetailsToEntries(initialDraft?.answers?.flightDetails)
+  );
+
   const setFlights = useCallback((newFlights: FlightTripEntry[]) => {
     setFlightsState(newFlights);
-    setAnswers(prev => ({
-      ...prev,
-      flightDetails: newFlights.map(f => ({
-        depIata: f.depIata,
-        arrIata: f.arrIata,
-        cabinClass: f.cabinClass,
-        isRoundTrip: f.isRoundTrip,
-        tripsPerYear: f.tripsPerYear
-      }))
-    }));
-  }, []);
+    setAnswers(prev => {
+      const next = {
+        ...prev,
+        flightDetails: newFlights.map(f => ({
+          depIata: f.depIata,
+          arrIata: f.arrIata,
+          cabinClass: f.cabinClass,
+          isRoundTrip: f.isRoundTrip,
+          tripsPerYear: f.tripsPerYear
+        }))
+      };
+      saveDraft({ answers: next, currentStep, mode });
+      return next;
+    });
+  }, [currentStep, mode]);
 
   // Appliance entries (mapped into answers.appliances)
-  const [appliances, setAppliancesState] = useState<ApplianceUsage[]>([]);
+  const [appliancesState, setAppliancesState] = useState<ApplianceUsage[]>(() =>
+    mapAppliancesToUsage(initialDraft?.answers?.appliances)
+  );
+
   const setAppliances = useCallback((newAppliances: ApplianceUsage[]) => {
     setAppliancesState(newAppliances);
-    setAnswers(prev => ({
-      ...prev,
-      appliances: newAppliances.map(a => ({
-        applianceId: a.applianceId,
-        stars: a.stars,
-        dailyHours: a.dailyHours
-      }))
-    }));
-  }, []);
+    setAnswers(prev => {
+      const next = {
+        ...prev,
+        appliances: newAppliances.map(a => ({
+          applianceId: a.applianceId,
+          stars: a.stars,
+          dailyHours: a.dailyHours
+        }))
+      };
+      saveDraft({ answers: next, currentStep, mode });
+      return next;
+    });
+  }, [currentStep, mode]);
 
   const updateAnswers = useCallback((updates: Partial<AssessmentAnswers>) => {
-    setAnswers(prev => ({ ...prev, ...updates }));
-  }, []);
+    setAnswers(prev => {
+      const next = { ...prev, ...updates };
+      saveDraft({ answers: next, currentStep, mode });
+      return next;
+    });
+  }, [currentStep, mode]);
+
+  const setMode = useCallback((newMode: AssessmentMode) => {
+    setModeState(newMode);
+    setAnswers(prev => {
+      saveDraft({ answers: prev, currentStep, mode: newMode });
+      return prev;
+    });
+  }, [currentStep]);
+
+  const setCurrentStep = useCallback((step: AssessmentStep) => {
+    setCurrentStepState(step);
+    setAnswers(prev => {
+      saveDraft({ answers: prev, currentStep: step, mode });
+      return prev;
+    });
+  }, [mode]);
 
   const runCalculation = useCallback(() => {
     const computedResult = calculateEmissions(answers);
     setResult(computedResult);
+    // Clear draft once calculation succeeds — a completed assessment is no longer a "draft"
+    clearDraft();
     return computedResult;
   }, [answers]);
 
   const resetAssessment = useCallback(() => {
+    clearDraft();
     setAnswers({ ...initialAssessmentAnswers });
     setResult(null);
     setAssessmentId(null);
     setFlightsState([]);
     setAppliancesState([]);
-    setCurrentStep('location');
-    setMode('quick');
+    setCurrentStepState('location');
+    setModeState('quick');
   }, []);
 
   return (
@@ -160,7 +266,7 @@ export const AssessmentProvider: React.FC<{ children: ReactNode }> = ({ children
         resetAssessment,
         flights,
         setFlights,
-        appliances,
+        appliances: appliancesState,
         setAppliances
       }}
     >

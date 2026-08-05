@@ -49,8 +49,14 @@ export function useCommunityStats(): UseCommunityStatsReturn {
     let unsubLeaderboard: (() => void) | undefined;
 
     try {
-      unsubStats = subscribeToCommunityStats(handleStats);
-      unsubLeaderboard = subscribeToLeaderboard(handleLeaderboard);
+      unsubStats = subscribeToCommunityStats(handleStats, (msg) => {
+        setError(msg);
+        setLoadingStats(false);
+      });
+      unsubLeaderboard = subscribeToLeaderboard(handleLeaderboard, (msg) => {
+        setError(msg);
+        setLoadingLeaderboard(false);
+      });
     } catch (err) {
       setError('Failed to connect to community data. Please try again later.');
       setLoadingStats(false);

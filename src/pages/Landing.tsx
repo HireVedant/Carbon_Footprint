@@ -11,66 +11,14 @@ import {
 import { subscribeToCommunityStats } from '../services/communityAnalyticsService';
 import type { CommunityStats } from '../types/community';
 
-// ─── Design Tokens ────────────────────────────────────────────────
-const TOKENS = {
-  bg: {
-    void: 'var(--bg-void)',
-    primary: 'var(--bg-primary)',
-    secondary: 'var(--bg-secondary)',
-    card: 'var(--bg-card)',
-    elevated: 'var(--bg-elevated)',
-  },
-  text: {
-    primary: 'var(--text-primary)',
-    secondary: 'var(--text-secondary)',
-    tertiary: 'var(--text-tertiary)',
-    muted: 'var(--text-muted)',
-  },
-  border: {
-    subtle: 'var(--border-subtle)',
-    default: 'var(--border-default)',
-    strong: 'var(--border-strong)',
-    accent: 'var(--border-accent)',
-  },
-  color: {
-    primary: 'var(--color-primary)',
-    secondary: 'var(--color-secondary)',
-    accent: 'var(--color-accent)',
-    danger: 'var(--color-danger)',
-    warning: 'var(--color-warning)',
-    success: 'var(--color-success)',
-    info: 'var(--color-info)',
-  },
-  ease: {
-    out: 'var(--ease-out)',
-    spring: 'var(--ease-spring)',
-    smooth: 'var(--ease-smooth)',
-  },
-  radius: {
-    sm: 'var(--radius-sm)',
-    md: 'var(--radius-md)',
-    lg: 'var(--radius-lg)',
-    xl: 'var(--radius-xl)',
-    '2xl': 'var(--radius-2xl)',
-    pill: 'var(--radius-pill)',
-  },
-};
-
+import { Hero } from './landing/components/Hero';
+import { Simulator } from './landing/components/Simulator';
+import { TOKENS, fadeInUp, staggerContainer, scaleIn } from '../utils/design';
+import { cn } from '../utils/cn';
 // ─── Animation Variants ────────────────────────────────────────────
-const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } }
-};
+// Note: Animation variants and design tokens are imported from src/utils/design.ts
 
-const staggerContainer = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } }
-};
-
-const scaleIn = {
-  hidden: { opacity: 0, scale: 0.85 },
-  visible: { opacity: 1, scale: 1, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } }
-};
+// Animation variants moved to src/utils/design.ts
 
 // ─── Types ─────────────────────────────────────────────────────────
 interface SliderConfig {
@@ -122,17 +70,17 @@ const SectionHeading: React.FC<{
     viewport={{ once: true, margin: "-60px" }}
     className="text-center max-w-3xl mx-auto mb-16"
   >
-    <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium mb-5">
+    <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-medium mb-5">
       <Sparkles className="w-3.5 h-3.5" />
       {badge}
     </motion.div>
-    <motion.h2 variants={fadeInUp} className="text-3xl sm:text-4xl md:text-[2.75rem] font-bold text-white leading-tight mb-5">
+    <motion.h2 variants={fadeInUp} className="text-3xl sm:text-4xl md:text-[2.75rem] font-bold leading-tight mb-5" style={{ color: 'var(--text-primary)' }}>
       {title}{' '}
       <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">
         {highlight}
       </span>
     </motion.h2>
-    <motion.p variants={fadeInUp} className="text-gray-400 text-lg leading-relaxed">
+    <motion.p variants={fadeInUp} className="text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
       {description}
     </motion.p>
   </motion.div>
@@ -300,157 +248,13 @@ const Landing: React.FC = () => {
 
       <div className="relative z-10">
         {/* ═══ HERO SECTION ═══ */}
-        <section id="home" className="relative min-h-[90vh] flex items-center pt-24 pb-16">
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-20 left-10 w-2 h-2 rounded-full opacity-40 animate-bounce"
-              style={{ background: TOKENS.color.primary, animationDelay: '0s', animationDuration: '3s' }} />
-            <div className="absolute top-40 right-20 w-1.5 h-1.5 rounded-full opacity-30 animate-bounce"
-              style={{ background: TOKENS.color.info, animationDelay: '1s', animationDuration: '4s' }} />
-            <div className="absolute bottom-32 left-1/4 w-1 h-1 rounded-full opacity-50 animate-bounce"
-              style={{ background: TOKENS.color.secondary, animationDelay: '2s', animationDuration: '2.5s' }} />
-          </div>
-
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-              {/* Left: Text Content */}
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={staggerContainer}
-                className="text-center lg:text-left"
-              >
-                <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium mb-6">
-                  <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: TOKENS.color.primary }} />
-                  Open-source carbon intelligence
-                </motion.div>
-
-                <motion.h1 variants={fadeInUp} className="text-4xl sm:text-5xl md:text-6xl lg:text-[4rem] font-bold leading-[1.1] mb-6 tracking-tight"
-                  style={{ fontFamily: 'var(--font-display)', color: TOKENS.text.primary }}>
-                  <span>Carbon Insight</span>
-                  <br />
-                  <span className="gradient-text">
-                    Emissions Tracking
-                  </span>
-                </motion.h1>
-
-                <motion.p variants={fadeInUp} className="text-lg md:text-xl leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0"
-                  style={{ color: TOKENS.text.secondary }}>
-                  Track your carbon footprint with{' '}
-                  <span style={{ color: TOKENS.color.primary }} className="font-medium">real-time simulation</span>,{' '}
-                  <span style={{ color: TOKENS.color.info }} className="font-medium">scientific accuracy</span>, and{' '}
-                  <span style={{ color: TOKENS.color.secondary }} className="font-medium">gamified progress</span>.{' '}
-                  Make data-driven decisions for a sustainable future.
-                </motion.p>
-
-                <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <button
-                    onClick={() => navigate('/dashboard')}
-                    className="btn-primary group"
-                  >
-                    <span className="relative z-10 flex items-center justify-center gap-2">
-                      Start Tracking
-                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => document.getElementById('simulator')?.scrollIntoView({ behavior: 'smooth' })}
-                    className="btn-ghost group"
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <Play className="w-5 h-5" style={{ color: TOKENS.color.primary }} />
-                      Try Simulator
-                    </span>
-                  </button>
-                </motion.div>
-
-                {/* Trust Badges — Assessment style */}
-                <motion.div variants={fadeInUp} className="mt-10 flex items-center gap-6 justify-center lg:justify-start text-sm"
-                  style={{ color: TOKENS.text.tertiary }}>
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4" style={{ color: TOKENS.color.primary }} />
-                    <span>GHG Protocol</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4" style={{ color: TOKENS.color.info }} />
-                    <span>Open Source</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" style={{ color: TOKENS.color.secondary }} />
-                    <span>Privacy First</span>
-                  </div>
-                </motion.div>
-              </motion.div>
-
-              {/* Right: Interactive Carbon Score Card — glass-eco */}
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                variants={scaleIn}
-                className="relative"
-              >
-                <div className="glass-eco rounded-3xl p-8 overflow-hidden relative">
-                  <div className="absolute inset-0 rounded-3xl pointer-events-none"
-                    style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.08) 0%, transparent 50%, rgba(13,202,140,0.05) 100%)' }} />
-
-                  <div className="relative z-10">
-                    <div className="text-center mb-8">
-                      <p className="t-label-lg mb-2" style={{ color: TOKENS.text.tertiary }}>Estimated Annual Footprint</p>
-                      <div className="flex items-end justify-center gap-2">
-                        <span className="text-6xl font-bold gradient-text" style={{ fontFamily: 'var(--font-display)' }}>
-                          {carbonScore.toLocaleString()}
-                        </span>
-                        <span className="text-lg mb-2" style={{ color: TOKENS.text.secondary }}>kg CO₂e</span>
-                      </div>
-                      <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full border"
-                        style={{
-                          background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(13,202,140,0.08) 100%)',
-                          borderColor: 'rgba(16,185,129,0.25)',
-                        }}>
-                        <span className="text-2xl font-bold" style={{ color: TOKENS.color.primary }}>{carbonRating}</span>
-                        <span className="text-xs" style={{ color: TOKENS.text.secondary }}>Rating</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {sliders.slice(0, 3).map((slider) => (
-                        <div key={slider.id} className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br ${slider.color} text-white shrink-0`}>
-                            {slider.icon}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span style={{ color: TOKENS.text.secondary }}>{slider.label}</span>
-                              <span className="font-medium" style={{ color: TOKENS.text.primary }}>{slider.value} {slider.unit.split('/')[0]}</span>
-                            </div>
-                            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                              <motion.div
-                                className={`h-full rounded-full bg-gradient-to-r ${slider.color}`}
-                                initial={{ width: 0 }}
-                                animate={{ width: `${(slider.value / slider.max) * 100}%` }}
-                                transition={{ duration: 0.3 }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-6 text-center">
-                      <button
-                        onClick={() => navigate('/dashboard')}
-                        className="text-sm font-medium flex items-center gap-1 mx-auto transition-colors"
-                        style={{ color: TOKENS.color.primary }}
-                      >
-                        Open Full Dashboard <ArrowRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </div>
-        </section>
+        <Hero 
+          carbonScore={carbonScore}
+          carbonRating={carbonRating}
+          sliders={sliders}
+          onNavigate={navigate}
+          onScrollToSimulator={() => document.getElementById('simulator')?.scrollIntoView({ behavior: 'smooth' })}
+        />
 
         {/* ═══ DASHBOARD PREVIEW SECTION ═══ */}
         <Section id="dashboard">
@@ -595,7 +399,7 @@ const Landing: React.FC = () => {
                   variants={scaleIn}
                   className="relative group"
                 >
-                  <div className="glass-eco p-6 text-center hover:border-white/15 transition-all duration-500 rounded-2xl relative overflow-hidden">
+                  <div className="glass-eco p-6 text-center hover:border-primary-200 transition-all duration-500 rounded-2xl relative overflow-hidden">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 bg-gradient-to-br ${stat.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                       {stat.icon}
                     </div>
@@ -641,112 +445,14 @@ const Landing: React.FC = () => {
               whileInView="visible"
               viewport={{ once: true, margin: "-60px" }}
               variants={staggerContainer}
-              className="grid lg:grid-cols-3 gap-8 items-start"
             >
-              <div className="lg:col-span-2 space-y-5">
-                {sliders.map((slider) => (
-                  <motion.div
-                    key={slider.id}
-                    variants={fadeInUp}
-                    className="glass-eco rounded-2xl p-5 hover:border-white/15 transition-all duration-300"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-gradient-to-br shrink-0 ${slider.color} text-white shadow-lg`}>
-                        {slider.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-semibold" style={{ color: TOKENS.text.primary }}>{slider.label}</span>
-                          <span className="text-sm font-medium" style={{ color: TOKENS.color.primary }}>
-                            {slider.value} {slider.unit}
-                          </span>
-                        </div>
-                        <p className="text-xs mb-3" style={{ color: TOKENS.text.muted }}>{slider.description}</p>
-                        <div className="relative">
-                          <input
-                            type="range"
-                            min={slider.min}
-                            max={slider.max}
-                            step={slider.step}
-                            value={slider.value}
-                            onChange={(e) => handleSliderChange(slider.id, parseFloat(e.target.value))}
-                            className="eco-range-slider w-full"
-                          />
-                          <div className="flex justify-between text-[10px] mt-1" style={{ color: TOKENS.text.muted }}>
-                            <span>{slider.min}</span>
-                            <span>{slider.max}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-
-              <motion.div variants={fadeInUp} className="lg:sticky lg:top-28">
-                <div className="glass-eco rounded-3xl p-8 text-center">
-                  <p className="t-label-lg mb-3" style={{ color: TOKENS.text.tertiary }}>Your Annual Estimate</p>
-
-                  <div className="relative w-40 h-40 mx-auto mb-6">
-                    <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-                      <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="8" />
-                      <circle
-                        cx="60" cy="60" r="52" fill="none"
-                        stroke="url(#scoreGradient2)" strokeWidth="8"
-                        strokeLinecap="round"
-                        strokeDasharray={`${Math.min((carbonScore / 25000) * 327, 327)} 327`}
-                      />
-                      <defs>
-                        <linearGradient id="scoreGradient2" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#10b981" />
-                          <stop offset="100%" stopColor="#06b6d4" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-3xl font-bold" style={{ color: TOKENS.text.primary }}>{carbonScore.toLocaleString()}</span>
-                      <span className="text-xs" style={{ color: TOKENS.text.secondary }}>kg CO₂e</span>
-                    </div>
-                  </div>
-
-                  <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border mb-6"
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(13,202,140,0.08) 100%)',
-                      borderColor: 'rgba(16,185,129,0.25)',
-                    }}>
-                    <span className="text-3xl font-bold" style={{ color: TOKENS.color.primary }}>{carbonRating}</span>
-                    <span className="text-xs text-left" style={{ color: TOKENS.text.secondary }}>Carbon<br/>Rating</span>
-                  </div>
-
-                  <div className="space-y-3 text-left">
-                    {sliders.map((s) => (
-                      <div key={s.id}>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span className="flex items-center gap-1.5" style={{ color: TOKENS.text.secondary }}>
-                            {s.icon}
-                            {s.label}
-                          </span>
-                          <span style={{ color: TOKENS.text.primary }}>{Math.round(s.value * s.weight * 52).toLocaleString()} kg</span>
-                        </div>
-                        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
-                          <motion.div
-                            className={`h-full rounded-full bg-gradient-to-r ${s.color}`}
-                            animate={{ width: `${(s.value / s.max) * 100}%` }}
-                            transition={{ duration: 0.3 }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-                    onClick={() => navigate('/dashboard')}
-                    className="w-full mt-6 btn-primary"
-                  >
-                    Get Full Assessment
-                  </button>
-                </div>
-              </motion.div>
+              <Simulator
+                carbonScore={carbonScore}
+                carbonRating={carbonRating}
+                sliders={sliders}
+                onSliderChange={handleSliderChange}
+                onNavigate={navigate}
+              />
             </motion.div>
           </div>
         </Section>
@@ -772,7 +478,7 @@ const Landing: React.FC = () => {
                 <motion.div
                   key={feature.title}
                   variants={fadeInUp}
-                  className="group glass-eco rounded-2xl p-7 hover:border-white/15 transition-all duration-500"
+                  className="group glass-eco rounded-2xl p-7 hover:border-primary-200 transition-all duration-500"
                 >
                   <div className="flex items-start gap-5">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br shrink-0 ${feature.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
@@ -811,7 +517,7 @@ const Landing: React.FC = () => {
                 <motion.div
                   key={item.title}
                   variants={fadeInUp}
-                  className="group glass-eco rounded-2xl p-7 hover:border-white/15 transition-all duration-500"
+                  className="group glass-eco rounded-2xl p-7 hover:border-primary-200 transition-all duration-500"
                 >
                   <div className="flex items-start gap-5 mb-5">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br shrink-0 ${item.color} text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
@@ -857,7 +563,7 @@ const Landing: React.FC = () => {
                 <motion.div
                   key={i}
                   variants={fadeInUp}
-                  className="glass-eco overflow-hidden hover:border-white/15 transition-all duration-300 rounded-2xl"
+                  className="glass-eco overflow-hidden hover:border-primary-200 transition-all duration-300 rounded-2xl"
                 >
                   <button
                     onClick={() => setOpenFAQ(openFAQ === i ? null : i)}
@@ -991,9 +697,9 @@ const Landing: React.FC = () => {
                 &copy; 2025 EcoTrack. Built for the planet.
               </p>
               <div className="flex gap-6 text-xs" style={{ color: TOKENS.text.muted }}>
-                <a href="#" className="hover:text-emerald-400 transition-colors">Privacy</a>
-                <a href="#" className="hover:text-emerald-400 transition-colors">Terms</a>
-                <a href="#" className="hover:text-emerald-400 transition-colors">Open Source</a>
+                <a href="#" className="hover:text-primary-600 transition-colors">Privacy</a>
+                <a href="#" className="hover:text-primary-600 transition-colors">Terms</a>
+                <a href="#" className="hover:text-primary-600 transition-colors">Open Source</a>
               </div>
             </div>
           </div>

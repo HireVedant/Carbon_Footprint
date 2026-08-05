@@ -86,15 +86,15 @@ export const CalculatorProvider: React.FC<{ children: ReactNode }> = ({ children
             let ecoColor = '';
 
             if (latest.ecoScore >= 85) {
-              ecoColor = 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
+              ecoColor = 'text-emerald-700 border-emerald-500/30 bg-emerald-500/10';
             } else if (latest.ecoScore >= 70) {
-              ecoColor = 'text-green-400 border-green-500/30 bg-green-500/10';
+              ecoColor = 'text-green-700 border-green-500/30 bg-green-500/10';
             } else if (latest.ecoScore >= 50) {
-              ecoColor = 'text-amber-400 border-amber-500/30 bg-amber-500/10';
+              ecoColor = 'text-amber-700 border-amber-500/30 bg-amber-500/10';
             } else if (latest.ecoScore >= 30) {
-              ecoColor = 'text-orange-400 border-orange-500/30 bg-orange-500/10';
+              ecoColor = 'text-orange-700 border-orange-500/30 bg-orange-500/10';
             } else {
-              ecoColor = 'text-red-400 border-red-500/30 bg-red-500/10';
+              ecoColor = 'text-red-700 border-red-500/30 bg-red-500/10';
             }
 
             setResults({

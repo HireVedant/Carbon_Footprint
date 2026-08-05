@@ -301,29 +301,29 @@ export default function AdminDashboard() {
   const StatCard: React.FC<{ label: string; value: string | number; icon: React.ElementType; color: string }> = ({
     label, value, icon: Icon, color
   }) => (
-    <div className={`bg-gray-900/60 border border-white/10 rounded-2xl p-5 flex items-center gap-4`}>
+    <div className={`surface-matte rounded-2xl p-5 flex items-center gap-4`}>
       <div className={`p-3 rounded-xl ${color}`}>
         <Icon className="w-5 h-5" />
       </div>
       <div>
-        <p className="text-2xl font-bold text-white">{value}</p>
-        <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+        <p className="text-2xl font-bold text-text-primary">{value}</p>
+        <p className="text-xs text-dark-500 mt-0.5">{label}</p>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-950 flex">
+    <div className="min-h-screen bg-surface flex">
       {/* Sidebar */}
-      <aside className="w-64 shrink-0 bg-gray-900/80 border-r border-white/10 flex flex-col">
-        <div className="p-6 border-b border-white/10">
+      <aside className="w-64 shrink-0 bg-panel border-r border-border flex flex-col">
+        <div className="p-6 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-emerald-500/10 rounded-xl">
-              <Shield className="w-4 h-4 text-emerald-400" />
+            <div className="p-2 bg-primary-50 rounded-xl">
+              <Shield className="w-4 h-4 text-primary-600" />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">Admin Console</p>
-              <p className="text-[10px] text-gray-500 truncate">{user?.email}</p>
+              <p className="text-sm font-bold text-text-primary">Admin Console</p>
+              <p className="text-[10px] text-dark-500 truncate">{user?.email}</p>
             </div>
           </div>
         </div>
@@ -337,8 +337,8 @@ export default function AdminDashboard() {
                 onClick={() => setSection(item.key)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
                   section === item.key
-                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-primary-50 text-primary-700 border border-primary-200'
+                    : 'text-dark-500 hover:text-text-primary hover:bg-panel'
                 }`}
               >
                 <Icon className="w-4 h-4" />
@@ -349,10 +349,10 @@ export default function AdminDashboard() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t border-border">
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all"
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
           >
             <LogOut className="w-4 h-4" />
             Sign Out
@@ -375,36 +375,36 @@ export default function AdminDashboard() {
             {section === 'dashboard' && (
               <>
                 <div className="flex items-center justify-between">
-                  <h1 className="text-2xl font-bold text-white">Operations Dashboard</h1>
-                  <button onClick={loadStats} className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+                  <h1 className="text-2xl font-bold text-text-primary">Operations Dashboard</h1>
+                  <button onClick={loadStats} className="flex items-center gap-2 text-sm text-dark-500 hover:text-text-primary transition-colors">
                     <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                     Refresh
                   </button>
                 </div>
 
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-                  <StatCard label="Total Users" value={stats.totalUsers} icon={Users} color="bg-cyan-500/10 text-cyan-400" />
-                  <StatCard label="Pending Reviews" value={stats.pendingReviews} icon={AlertTriangle} color="bg-amber-500/10 text-amber-400" />
-                  <StatCard label="Newsletter Subscribers" value={stats.newsletterSubscribers} icon={Mail} color="bg-violet-500/10 text-violet-400" />
-                  <StatCard label="Registered Datasets" value={stats.datasetCount} icon={Database} color="bg-emerald-500/10 text-emerald-400" />
-                  <StatCard label="Calculator Version" value={stats.calcVersion} icon={TrendingUp} color="bg-indigo-500/10 text-indigo-400" />
-                  <StatCard label="Grid Factors Loaded" value="36 States/UTs" icon={Star} color="bg-rose-500/10 text-rose-400" />
+                  <StatCard label="Total Users" value={stats.totalUsers} icon={Users} color="bg-cyan-50 text-cyan-700" />
+                  <StatCard label="Pending Reviews" value={stats.pendingReviews} icon={AlertTriangle} color="bg-amber-50 text-amber-700" />
+                  <StatCard label="Newsletter Subscribers" value={stats.newsletterSubscribers} icon={Mail} color="bg-violet-50 text-violet-700" />
+                  <StatCard label="Registered Datasets" value={stats.datasetCount} icon={Database} color="bg-emerald-50 text-emerald-700" />
+                  <StatCard label="Calculator Version" value={stats.calcVersion} icon={TrendingUp} color="bg-indigo-50 text-indigo-700" />
+                  <StatCard label="Grid Factors Loaded" value="36 States/UTs" icon={Star} color="bg-rose-50 text-rose-700" />
                 </div>
 
                 {/* Active Registry Summary */}
-                <div className="bg-gray-900/60 border border-white/10 rounded-2xl p-6">
-                  <h2 className="text-base font-semibold text-white mb-4">Active Scientific Dataset Registry</h2>
+                <div className="surface-matte rounded-2xl p-6">
+                  <h2 className="text-base font-semibold text-text-primary mb-4">Active Scientific Dataset Registry</h2>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {registry.getAll().map(ds => (
-                      <div key={ds.id} className="bg-gray-800/60 rounded-xl p-3 border border-gray-700/50">
+                      <div key={ds.id} className="bg-panel rounded-xl p-3 border border-border">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-white truncate">{ds.displayName}</p>
+                          <p className="text-sm font-medium text-text-primary truncate">{ds.displayName}</p>
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                            ds.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                            ds.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                           }`}>{ds.status}</span>
                         </div>
-                        <p className="text-[10px] text-emerald-400 mt-1">{ds.version}</p>
-                        <p className="text-[10px] text-gray-500 truncate mt-0.5">{ds.source}</p>
+                        <p className="text-[10px] text-emerald-700 mt-1">{ds.version}</p>
+                        <p className="text-[10px] text-dark-500 truncate mt-0.5">{ds.source}</p>
                       </div>
                     ))}
                   </div>
@@ -416,54 +416,54 @@ export default function AdminDashboard() {
             {section === 'users' && (
               <>
                 <div className="flex items-center justify-between">
-                  <h1 className="text-2xl font-bold text-white">User Management</h1>
+                  <h1 className="text-2xl font-bold text-text-primary">User Management</h1>
                   <div className="flex gap-3">
-                    <button onClick={handleCreateTestAccount} className="flex items-center gap-2 px-4 py-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-xl text-sm hover:bg-indigo-500/20 transition-all">
+                    <button onClick={handleCreateTestAccount} className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-xl text-sm hover:bg-indigo-100 transition-all">
                       <Shield className="w-4 h-4" /> Create Test Account
                     </button>
-                    <button onClick={loadUsers} className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-gray-400 rounded-xl text-sm hover:text-white transition-all">
+                    <button onClick={loadUsers} className="flex items-center gap-2 px-4 py-2 bg-surface text-dark-500 border border-border rounded-xl text-sm hover:text-text-primary transition-all">
                       <RefreshCw className={`w-4 h-4 ${usersLoading ? 'animate-spin' : ''}`} />
                     </button>
                   </div>
                 </div>
 
                 <div className="relative">
-                  <Search className="w-4 h-4 absolute left-4 top-3.5 text-gray-500" />
+                  <Search className="w-4 h-4 absolute left-4 top-3.5 text-dark-500" />
                   <input
                     type="text"
                     placeholder="Search users by name or email..."
                     value={userSearch}
                     onChange={e => setUserSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-900/60 border border-gray-700 focus:border-emerald-500 rounded-xl text-white text-sm outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-3 bg-surface border border-border focus:border-primary-500 rounded-xl text-text-primary text-sm outline-none transition-all"
                   />
                 </div>
 
                 <div className="space-y-3">
                   {usersLoading ? (
-                    <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-emerald-400" /></div>
+                    <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary-600" /></div>
                   ) : filteredUsers.map(u => (
-                    <div key={u.id} className={`bg-gray-900/60 border border-white/10 rounded-xl p-4 ${u.isDeleted ? 'opacity-50' : ''}`}>
+                    <div key={u.id} className={`surface-matte rounded-xl p-4 ${u.isDeleted ? 'opacity-50' : ''}`}>
                       <div className="flex items-center justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-sm font-medium text-white truncate">{u.name || u.displayName || 'Unknown'}</p>
-                            {u.isTestAccount && <span className="text-[10px] px-2 py-0.5 bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 rounded-full font-bold">TEST ACCOUNT</span>}
-                            {u.isSuspended && <span className="text-[10px] px-2 py-0.5 bg-red-500/20 text-red-400 rounded-full">SUSPENDED</span>}
-                            {u.isDeleted && <span className="text-[10px] px-2 py-0.5 bg-gray-700 text-gray-400 rounded-full">SOFT DELETED</span>}
+                            <p className="text-sm font-medium text-text-primary truncate">{u.name || u.displayName || 'Unknown'}</p>
+                            {u.isTestAccount && <span className="text-[10px] px-2 py-0.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full font-bold">TEST ACCOUNT</span>}
+                            {u.isSuspended && <span className="text-[10px] px-2 py-0.5 bg-red-50 text-red-700 rounded-full">SUSPENDED</span>}
+                            {u.isDeleted && <span className="text-[10px] px-2 py-0.5 bg-panel text-dark-500 rounded-full">SOFT DELETED</span>}
                             <span className={`text-[10px] px-2 py-0.5 rounded-full ${
-                              u.role === 'owner' ? 'bg-amber-500/20 text-amber-400' :
-                              u.role === 'admin' ? 'bg-emerald-500/20 text-emerald-400' :
-                              u.role === 'moderator' ? 'bg-cyan-500/20 text-cyan-400' :
-                              'bg-gray-800 text-gray-400'
+                              u.role === 'owner' ? 'bg-amber-50 text-amber-700' :
+                              u.role === 'admin' ? 'bg-emerald-50 text-emerald-700' :
+                              u.role === 'moderator' ? 'bg-cyan-50 text-cyan-700' :
+                              'bg-panel text-dark-500'
                             }`}>{u.role || 'user'}</span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-0.5 truncate">{u.email}</p>
+                          <p className="text-xs text-dark-500 mt-0.5 truncate">{u.email}</p>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           <select
                             defaultValue={u.role || 'user'}
                             onChange={e => handleChangeRole(u.id, u.name || u.email, e.target.value)}
-                            className="text-xs bg-gray-800 border border-gray-600 rounded-lg px-2 py-1.5 text-white outline-none"
+                            className="text-xs bg-surface border border-border rounded-lg px-2 py-1.5 text-text-primary outline-none"
                           >
                             <option value="user">User</option>
                             <option value="moderator">Moderator</option>
@@ -473,15 +473,15 @@ export default function AdminDashboard() {
                           <button
                             onClick={() => handleSuspendUser(u.id, u.name || u.email, !u.isSuspended)}
                             className={`p-2 rounded-lg transition-all ${u.isSuspended
-                              ? 'text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20'
-                              : 'text-amber-400 bg-amber-500/10 hover:bg-amber-500/20'}`}
+                              ? 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100'
+                              : 'text-amber-700 bg-amber-50 hover:bg-amber-100'}`}
                             title={u.isSuspended ? 'Restore' : 'Suspend'}
                           >
                             {u.isSuspended ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
                           </button>
                           <button
                             onClick={() => handleResetPreferences(u.id, u.name || u.email)}
-                            className="p-2 text-gray-400 bg-gray-800 hover:text-white rounded-lg transition-all"
+                            className="p-2 text-dark-500 bg-surface border border-border hover:text-text-primary rounded-lg transition-all"
                             title="Reset Preferences"
                           >
                             <RotateCcw className="w-4 h-4" />
@@ -489,7 +489,7 @@ export default function AdminDashboard() {
                           {!u.isDeleted && (
                             <button
                               onClick={() => handleSoftDeleteUser(u.id, u.name || u.email)}
-                              className="p-2 text-red-400 bg-red-500/10 hover:bg-red-500/20 rounded-lg transition-all"
+                              className="p-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-all"
                               title="Soft Delete"
                             >
                               <XCircle className="w-4 h-4" />
@@ -507,27 +507,27 @@ export default function AdminDashboard() {
             {section === 'assessments' && (
               <>
                 <div className="flex items-center justify-between">
-                  <h1 className="text-2xl font-bold text-white">Assessment Moderation</h1>
-                  <button onClick={loadFlaggedAssessments} className="text-gray-400 hover:text-white">
+                  <h1 className="text-2xl font-bold text-text-primary">Assessment Moderation</h1>
+                  <button onClick={loadFlaggedAssessments} className="text-dark-500 hover:text-text-primary">
                     <RefreshCw className={`w-4 h-4 ${assessmentsLoading ? 'animate-spin' : ''}`} />
                   </button>
                 </div>
 
                 {assessmentsLoading ? (
-                  <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-emerald-400" /></div>
+                  <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary-600" /></div>
                 ) : flaggedAssessments.length === 0 ? (
-                  <div className="text-center py-16 text-gray-500">
+                  <div className="text-center py-16 text-dark-500">
                     <CheckCircle className="w-12 h-12 mx-auto mb-3 opacity-30" />
                     <p>No assessments pending review.</p>
                   </div>
                 ) : flaggedAssessments.map(a => (
-                  <div key={a.id} className="bg-gray-900/60 border border-white/10 rounded-xl p-5 space-y-3">
+                  <div key={a.id} className="surface-matte rounded-xl p-5 space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-white">Assessment ID: <code className="text-emerald-400 text-xs">{a.id}</code></p>
-                        <p className="text-xs text-gray-500">User: {a.userId} · Status: <span className="text-amber-400">{a.status}</span></p>
+                        <p className="text-sm font-medium text-text-primary">Assessment ID: <code className="text-primary-700 text-xs">{a.id}</code></p>
+                        <p className="text-xs text-dark-500">User: {a.userId} · Status: <span className="text-amber-700">{a.status}</span></p>
                       </div>
-                      <p className="text-lg font-bold text-white">{a.emissions?.totalKgCO2PerYear?.toLocaleString() || '—'} <span className="text-xs text-gray-400">kg CO₂</span></p>
+                      <p className="text-lg font-bold text-text-primary">{a.emissions?.totalKgCO2PerYear?.toLocaleString() || '—'} <span className="text-xs text-dark-500">kg CO₂</span></p>
                     </div>
 
                     <input
@@ -535,17 +535,17 @@ export default function AdminDashboard() {
                       placeholder="Add moderator note..."
                       value={modNote[a.id] || ''}
                       onChange={e => setModNote(prev => ({ ...prev, [a.id]: e.target.value }))}
-                      className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white outline-none"
+                      className="w-full bg-surface border border-border rounded-lg px-3 py-1.5 text-xs text-text-primary outline-none"
                     />
 
                     <div className="flex gap-2">
-                      <button onClick={() => moderateAssessment(a.id, 'approved', 'Approved by moderator')} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs hover:bg-emerald-500/20 transition-all">
+                      <button onClick={() => moderateAssessment(a.id, 'approved', 'Approved by moderator')} className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs hover:bg-emerald-100 transition-all">
                         <CheckCircle className="w-3.5 h-3.5" /> Approve
                       </button>
-                      <button onClick={() => moderateAssessment(a.id, 'flagged', 'Flagged for anomaly')} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg text-xs hover:bg-amber-500/20 transition-all">
+                      <button onClick={() => moderateAssessment(a.id, 'flagged', 'Flagged for anomaly')} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs hover:bg-amber-100 transition-all">
                         <Flag className="w-3.5 h-3.5" /> Flag
                       </button>
-                      <button onClick={() => moderateAssessment(a.id, 'rejected', 'Flagged as unrealistic values')} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg text-xs hover:bg-red-500/20 transition-all">
+                      <button onClick={() => moderateAssessment(a.id, 'rejected', 'Flagged as unrealistic values')} className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-lg text-xs hover:bg-red-100 transition-all">
                         <XCircle className="w-3.5 h-3.5" /> Reject
                       </button>
                     </div>
@@ -558,17 +558,17 @@ export default function AdminDashboard() {
             {section === 'ai' && (
               <>
                 <div className="flex items-center justify-between">
-                  <h1 className="text-2xl font-bold text-white">AI Operations Monitor</h1>
-                  <button onClick={loadAiMetrics} className="text-gray-400 hover:text-white flex items-center gap-2 text-sm">
+                  <h1 className="text-2xl font-bold text-text-primary">AI Operations Monitor</h1>
+                  <button onClick={loadAiMetrics} className="text-dark-500 hover:text-text-primary flex items-center gap-2 text-sm">
                     <RefreshCw className={`w-4 h-4 ${aiLogsLoading ? 'animate-spin' : ''}`} /> Refresh
                   </button>
                 </div>
 
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                  <StatCard label="Total Requests" value={aiMetrics.totalCalls} icon={Activity} color="bg-indigo-500/10 text-indigo-400" />
-                  <StatCard label="Cache Hit Rate" value={`${aiMetrics.cacheHitRate}%`} icon={CheckCircle} color="bg-emerald-500/10 text-emerald-400" />
-                  <StatCard label="Avg API Latency" value={`${aiMetrics.avgLatencyMs} ms`} icon={Brain} color="bg-cyan-500/10 text-cyan-400" />
-                  <StatCard label="Est. Cost" value={aiMetrics.estCost} icon={DollarSign} color="bg-amber-500/10 text-amber-400" />
+                  <StatCard label="Total Requests" value={aiMetrics.totalCalls} icon={Activity} color="bg-indigo-50 text-indigo-700" />
+                  <StatCard label="Cache Hit Rate" value={`${aiMetrics.cacheHitRate}%`} icon={CheckCircle} color="bg-emerald-50 text-emerald-700" />
+                  <StatCard label="Avg API Latency" value={`${aiMetrics.avgLatencyMs} ms`} icon={Brain} color="bg-cyan-50 text-cyan-700" />
+                  <StatCard label="Est. Cost" value={aiMetrics.estCost} icon={DollarSign} color="bg-amber-50 text-amber-700" />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -580,9 +580,9 @@ export default function AdminDashboard() {
                     { label: 'Fallback Mode', value: 'Deterministic rule-based recommendations' },
                     { label: 'Temperature', value: '0.4 (low hallucination, high precision)' },
                   ].map(item => (
-                    <div key={item.label} className="bg-gray-900/60 border border-white/10 rounded-xl p-4">
-                      <p className="text-xs text-gray-500 mb-1">{item.label}</p>
-                      <p className="text-sm font-medium text-white">{item.value}</p>
+                    <div key={item.label} className="surface-matte rounded-xl p-4">
+                      <p className="text-xs text-dark-500 mb-1">{item.label}</p>
+                      <p className="text-sm font-medium text-text-primary">{item.value}</p>
                     </div>
                   ))}
                 </div>
@@ -594,46 +594,46 @@ export default function AdminDashboard() {
               <>
                 <div className="flex items-center justify-between">
                   <div>
-                    <h1 className="text-2xl font-bold text-white">Scientific Dataset Manager</h1>
-                    <p className="text-xs text-gray-400 mt-1">Live inspection and governance via DatasetRegistry singleton.</p>
+                    <h1 className="text-2xl font-bold text-text-primary">Scientific Dataset Manager</h1>
+                    <p className="text-xs text-dark-500 mt-1">Live inspection and governance via DatasetRegistry singleton.</p>
                   </div>
-                  <button onClick={refreshRegistry} className="text-gray-400 hover:text-white p-2">
+                  <button onClick={refreshRegistry} className="text-dark-500 hover:text-text-primary p-2">
                     <RefreshCw className="w-4 h-4" />
                   </button>
                 </div>
 
-                <div className="bg-gray-900/60 border border-white/10 rounded-2xl p-6 space-y-4">
-                  <div className="flex items-center justify-between border-b border-gray-800 pb-4">
+                <div className="surface-matte rounded-2xl p-6 space-y-4">
+                  <div className="flex items-center justify-between border-b border-border pb-4">
                     <div className="flex gap-4">
-                      <span className="text-xs text-gray-400">Total: <strong className="text-white">{registry.getSummary().totalDatasets}</strong></span>
-                      <span className="text-xs text-emerald-400">Active: <strong>{registry.getSummary().activeCount}</strong></span>
-                      <span className="text-xs text-amber-400">Deprecated: <strong>{registry.getSummary().deprecatedCount}</strong></span>
-                      <span className="text-xs text-red-400">Pending: <strong>{registry.getSummary().pendingCount}</strong></span>
+                      <span className="text-xs text-dark-500">Total: <strong className="text-text-primary">{registry.getSummary().totalDatasets}</strong></span>
+                      <span className="text-xs text-emerald-700">Active: <strong>{registry.getSummary().activeCount}</strong></span>
+                      <span className="text-xs text-amber-700">Deprecated: <strong>{registry.getSummary().deprecatedCount}</strong></span>
+                      <span className="text-xs text-red-700">Pending: <strong>{registry.getSummary().pendingCount}</strong></span>
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     {registryDatasets.map(ds => (
-                      <div key={ds.id} className="bg-gray-800/60 border border-gray-700/50 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div key={ds.id} className="bg-panel border border-border rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-bold text-white">{ds.displayName}</h3>
+                            <h3 className="text-sm font-bold text-text-primary">{ds.displayName}</h3>
                             <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                              ds.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' :
-                              ds.status === 'deprecated' ? 'bg-amber-500/20 text-amber-400' :
-                              ds.status === 'rollback' ? 'bg-indigo-500/20 text-indigo-400' :
-                              'bg-red-500/20 text-red-400'
+                              ds.status === 'active' ? 'bg-emerald-50 text-emerald-700' :
+                              ds.status === 'deprecated' ? 'bg-amber-50 text-amber-700' :
+                              ds.status === 'rollback' ? 'bg-indigo-50 text-indigo-700' :
+                              'bg-red-50 text-red-700'
                             }`}>{ds.status}</span>
-                            <span className="text-[10px] px-1.5 py-0.5 bg-gray-700 text-gray-300 rounded font-mono">{ds.category}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 bg-panel text-dark-500 rounded font-mono">{ds.category}</span>
                           </div>
-                          <p className="text-xs text-gray-400 mt-1">{ds.source}</p>
-                          <p className="text-[10px] text-gray-500 mt-0.5">Version: <code className="text-emerald-400">{ds.version}</code> · Units: {ds.units} · Updated: {ds.updateDate}</p>
+                          <p className="text-xs text-dark-500 mt-1">{ds.source}</p>
+                          <p className="text-[10px] text-dark-500 mt-0.5">Version: <code className="text-emerald-700">{ds.version}</code> · Units: {ds.units} · Updated: {ds.updateDate}</p>
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             onClick={() => handleValidateDataset(ds.id)}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg text-xs hover:bg-emerald-500/20 transition-all"
+                            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg text-xs hover:bg-emerald-100 transition-all"
                             title="Validate dataset structure"
                           >
                             <FileCheck className="w-3.5 h-3.5" /> Validate
@@ -641,7 +641,7 @@ export default function AdminDashboard() {
                           {ds.previousVersion && (
                             <button
                               onClick={() => handleRollbackDataset(ds.id)}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-lg text-xs hover:bg-indigo-500/20 transition-all"
+                              className="flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-xs hover:bg-indigo-100 transition-all"
                               title="Rollback to previous version"
                             >
                               <RotateCcw className="w-3.5 h-3.5" /> Rollback
@@ -650,7 +650,7 @@ export default function AdminDashboard() {
                           {ds.status === 'active' && (
                             <button
                               onClick={() => handleDeprecateDataset(ds.id)}
-                              className="flex items-center gap-1 px-3 py-1.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg text-xs hover:bg-amber-500/20 transition-all"
+                              className="flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-lg text-xs hover:bg-amber-100 transition-all"
                               title="Deprecate dataset"
                             >
                               <AlertCircle className="w-3.5 h-3.5" /> Deprecate
@@ -668,32 +668,32 @@ export default function AdminDashboard() {
             {section === 'newsletter' && (
               <>
                 <div className="flex items-center justify-between">
-                  <h1 className="text-2xl font-bold text-white">Newsletter Studio</h1>
+                  <h1 className="text-2xl font-bold text-text-primary">Newsletter Studio</h1>
                   <div className="flex gap-2">
-                    <button onClick={exportSubscribers} className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl text-sm hover:bg-emerald-500/20 transition-all">
+                    <button onClick={exportSubscribers} className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl text-sm hover:bg-emerald-100 transition-all">
                       <Download className="w-4 h-4" /> Export CSV
                     </button>
-                    <button onClick={loadSubscribers} className="text-gray-400 hover:text-white p-2">
+                    <button onClick={loadSubscribers} className="text-dark-500 hover:text-text-primary p-2">
                       <RefreshCw className={`w-4 h-4 ${newsletterLoading ? 'animate-spin' : ''}`} />
                     </button>
                   </div>
                 </div>
 
-                <div className="bg-gray-900/60 border border-white/10 rounded-2xl p-5">
-                  <p className="text-sm text-gray-400 mb-4">
-                    Active verified subscribers: <span className="text-white font-bold">{subscribers.length}</span>
+                <div className="surface-matte rounded-2xl p-5">
+                  <p className="text-sm text-dark-500 mb-4">
+                    Active verified subscribers: <span className="text-text-primary font-bold">{subscribers.length}</span>
                   </p>
                   <div className="space-y-2 max-h-80 overflow-y-auto">
                     {newsletterLoading ? (
-                      <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-emerald-400" /></div>
+                      <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-primary-600" /></div>
                     ) : subscribers.map(s => (
-                      <div key={s.id} className="flex items-center justify-between bg-gray-800/50 rounded-lg px-4 py-2.5">
-                        <span className="text-sm text-gray-300">{s.email}</span>
-                        <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">Active</span>
+                      <div key={s.id} className="flex items-center justify-between bg-panel rounded-lg px-4 py-2.5">
+                        <span className="text-sm text-text-primary">{s.email}</span>
+                        <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">Active</span>
                       </div>
                     ))}
                     {!newsletterLoading && subscribers.length === 0 && (
-                      <p className="text-center text-gray-500 text-sm py-6">No active subscribers yet.</p>
+                      <p className="text-center text-dark-500 text-sm py-6">No active subscribers yet.</p>
                     )}
                   </div>
                 </div>
@@ -704,30 +704,30 @@ export default function AdminDashboard() {
             {section === 'audit' && (
               <>
                 <div className="flex items-center justify-between">
-                  <h1 className="text-2xl font-bold text-white">Audit Logs</h1>
-                  <button onClick={loadAuditLogs} className="text-gray-400 hover:text-white p-2">
+                  <h1 className="text-2xl font-bold text-text-primary">Audit Logs</h1>
+                  <button onClick={loadAuditLogs} className="text-dark-500 hover:text-text-primary p-2">
                     <RefreshCw className={`w-4 h-4 ${auditLoading ? 'animate-spin' : ''}`} />
                   </button>
                 </div>
 
                 <div className="space-y-2">
                   {auditLoading ? (
-                    <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-emerald-400" /></div>
+                    <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary-600" /></div>
                   ) : auditLogs.length === 0 ? (
-                    <div className="text-center py-16 text-gray-500">
+                    <div className="text-center py-16 text-dark-500">
                       <ScrollText className="w-12 h-12 mx-auto mb-3 opacity-30" />
                       <p>No audit events recorded yet.</p>
                     </div>
                   ) : auditLogs.map(log => (
-                    <div key={log.id} className="bg-gray-900/60 border border-white/10 rounded-xl px-5 py-3 flex items-center gap-4">
+                    <div key={log.id} className="surface-matte rounded-xl px-5 py-3 flex items-center gap-4">
                       <div className="shrink-0">
-                        <span className="text-[10px] font-mono bg-gray-800 text-emerald-400 px-2 py-1 rounded">{log.action}</span>
+                        <span className="text-[10px] font-mono bg-primary-50 text-primary-700 px-2 py-1 rounded">{log.action}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-white truncate">Target: <code className="text-gray-400 text-xs">{log.target}</code></p>
-                        <p className="text-xs text-gray-500">by {log.adminEmail}</p>
+                        <p className="text-sm text-text-primary truncate">Target: <code className="text-dark-500 text-xs">{log.target}</code></p>
+                        <p className="text-xs text-dark-500">by {log.adminEmail}</p>
                       </div>
-                      <p className="text-xs text-gray-600 shrink-0">{new Date(log.timestamp).toLocaleString('en-IN')}</p>
+                      <p className="text-xs text-dark-500 shrink-0">{new Date(log.timestamp).toLocaleString('en-IN')}</p>
                     </div>
                   ))}
                 </div>

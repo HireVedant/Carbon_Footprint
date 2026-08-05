@@ -41,7 +41,7 @@ export const PremiumDoughnut: React.FC<PremiumDoughnutProps> = ({
             legend: {
               position: 'bottom',
               labels: {
-                color: '#94a3b8',
+                color: '#475569',
                 font: { size: 10, family: 'Inter, sans-serif' },
                 boxWidth: 10,
                 padding: 10,
@@ -78,8 +78,8 @@ export const PremiumDoughnut: React.FC<PremiumDoughnutProps> = ({
       {centerValue && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ marginTop: -30 }}>
           <div className="text-center">
-            <p className="text-2xl font-extrabold text-white">{centerValue}</p>
-            {centerLabel && <p className="text-[9px] text-dark-400 uppercase tracking-wider">{centerLabel}</p>}
+            <p className="text-2xl font-extrabold text-text-primary">{centerValue}</p>
+            {centerLabel && <p className="text-[9px] text-dark-500 uppercase tracking-wider">{centerLabel}</p>}
           </div>
         </div>
       )}

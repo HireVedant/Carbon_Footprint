@@ -1,130 +1,135 @@
 /**
  * EcoTrack AI — Brand Color System
- * 
- * Every color communicates meaning.
- * Semantic tokens at the bottom map these to UI usage.
+ *
+ * Premium Climate Intelligence Platform for India.
+ * Editorial, data-first, scientific. Restrained color.
+ * Every value is a semantic token consumed via CSS variables or direct import.
  */
 
-// ─── Primary Brand: Forest ─────────────────────────────────────────────────
+// ─── Primary Brand: Deep Forest Green ───────────────────────────────────────
 export const forest = {
-  50: '#f0fdf4',
-  100: '#dcfce7',
-  200: '#bbf7d0',
-  300: '#86efac',
-  400: '#4ade80',
-  500: '#22c55e',
-  600: '#16a34a',
-  700: '#166534',
-  800: '#14532d',
-  900: '#052e16',
-  950: '#022c17',
+  50: '#F6FAF7',
+  100: '#E8F1EB',
+  200: '#C9DCCD',
+  300: '#A7C0AF',
+  400: '#779C84',
+  500: '#2F6B4F',
+  600: '#24563F',
+  700: '#1F4937',
+  800: '#183A2B',
+  900: '#11281D',
+  950: '#0C1A14',
 } as const;
 
-// ─── Secondary Brand: Emerald ──────────────────────────────────────────────
+// ─── Secondary Brand: Sage / Bio ────────────────────────────────────────────
 export const emerald = {
-  50: '#ecfdf5',
-  100: '#d1fae5',
-  200: '#a7f3d0',
-  300: '#6ee7b7',
-  400: '#34d399',
-  500: '#10b981',
-  600: '#059669',
-  700: '#047857',
-  800: '#065f46',
-  900: '#064e3b',
-  950: '#022c22',
+  50: '#F4F6F3',
+  100: '#E7EAE4',
+  200: '#D1D7D0',
+  300: '#B8C0B8',
+  400: '#99A89D',
+  500: '#5F7B6A',
+  600: '#4E6758',
+  700: '#3E5147',
+  800: '#2E3C36',
+  900: '#1B2520',
+  950: '#0F1713',
 } as const;
 
-// ─── Leaf ──────────────────────────────────────────────────────────────────
-export const leaf = '#4ADE80';
-export const mint = '#BBF7D0';
+// ─── Halo / Accent ─────────────────────────────────────────────────────────
+export const leaf = '#2F6B4F';
+export const mint = '#6C8E78';
 
 // ─── Water Palette ─────────────────────────────────────────────────────────
 export const water = {
-  river: '#0EA5E9',
-  lake: '#38BDF8',
-  sky: '#7DD3FC',
-  mist: '#E0F2FE',
+  river: '#2F6FED',
+  lake: '#5B8DEF',
+  sky: '#DCE8F7',
+  mist: '#F5F4EF',
 } as const;
 
 // ─── Earth Palette ─────────────────────────────────────────────────────────
 export const earth = {
-  soil: '#78350F',
-  clay: '#92400E',
-  sand: '#D6B370',
-  stone: '#57534E',
+  soil: '#A66F40',
+  clay: '#C39263',
+  sand: '#F2EEDC',
+  stone: '#D7D9D4',
 } as const;
 
 // ─── Solar Palette ─────────────────────────────────────────────────────────
 export const solar = {
-  yellow: '#FACC15',
-  sunlight: '#FDE047',
-  amber: '#F59E0B',
-  orange: '#FB923C',
+  yellow: '#D68C2F',
+  sunlight: '#F2D7A7',
+  amber: '#C85A32',
+  orange: '#D68C2F',
 } as const;
 
 // ─── Carbon Palette ────────────────────────────────────────────────────────
 export const carbon = {
-  smoke: '#64748B',
-  ash: '#475569',
-  dark: '#334155',
-  danger: '#DC2626',
-  critical: '#991B1B',
+  smoke: '#6A736D',
+  ash: '#75827A',
+  dark: '#121C16',
+  danger: '#C85A32',
+  critical: '#A8482A',
 } as const;
 
-// ─── Neutral / Dark Surface Palette ────────────────────────────────────────
+// ─── Light Surface Palette (Premium Climate Intelligence) ──────────────────
+// Every key kept for backward compatibility — values now map to the light system.
 export const surface = {
-  night: '#020617',
-  base: '#0F172A',
-  panel: '#1E293B',
-  border: '#334155',
-  textSecondary: '#94A3B8',
-  textPrimary: '#F8FAFC',
+  night: '#FFFFFF',
+  base: '#FCFBF7',
+  panel: '#FFFFFF',
+  elevated: '#F5F4EF',
+  hover: '#F1F0EA',
+  border: '#E7E4DD',
+  textPrimary: '#121C16',
+  textSecondary: '#465148',
+  textTertiary: '#687268',
 } as const;
 
 // ─── Category Colors (for charts) ─────────────────────────────────────────
 export const categoryColors = {
-  transport: '#166534',  // Forest
-  energy: '#FACC15',     // Solar Yellow
-  food: '#4ADE80',       // Leaf
-  shopping: '#0EA5E9',   // River
-  waste: '#FB923C',      // Orange
-  flights: '#DC2626',    // Carbon Red
-  home: '#92400E',       // Clay
-  neutral: '#64748B',    // Slate Grey
+  transport: '#2F6FED',
+  energy: '#D68C2F',
+  food: '#2F6B4F',
+  shopping: '#5F7B6A',
+  waste: '#C85A32',
+  flights: '#A8482A',
+  home: '#A66F40',
+  neutral: '#6A736D',
 } as const;
 
 // ─── Eco Score Colors ─────────────────────────────────────────────────────
 export const ecoScore = {
-  excellent: '#047857',   // 90-100 Deep Emerald
-  great: '#4ade80',       // 75-89 Leaf Green
-  good: '#a3e635',        // 60-74 Yellow Green
-  amber: '#f59e0b',       // 45-59 Amber
-  high: '#fb923c',        // 25-44 Orange
-  critical: '#dc2626',    // 0-24 Red
+  excellent: '#2F6B4F',
+  great: '#4E6758',
+  good: '#6C8E78',
+  amber: '#D68C2F',
+  high: '#C85A32',
+  critical: '#A8482A',
 } as const;
 
 // ─── Carbon Severity Scale ─────────────────────────────────────────────────
 export const severity = {
-  excellent: '#BBF7D0',  // Mint
-  low: '#4ADE80',        // Leaf
-  moderate: '#22C55E',   // Emerald
-  elevated: '#FACC15',   // Solar Yellow
-  high: '#F59E0B',       // Amber
-  veryHigh: '#FB923C',   // Orange
-  critical: '#DC2626',   // Carbon Red
+  excellent: '#2F6B4F',
+  low: '#4E6758',
+  moderate: '#6C8E78',
+  elevated: '#D68C2F',
+  high: '#C85A32',
+  veryHigh: '#A8482A',
+  critical: '#7C3420',
 } as const;
 
 // ─── Semantic Color Tokens ─────────────────────────────────────────────────
 export const semantic = {
-  success: '#22C55E',
-  info: '#0EA5E9',
-  warning: '#F59E0B',
-  danger: '#DC2626',
-  energy: '#FACC15',
-  transport: '#166534',
-  food: '#4ADE80',
-  waste: '#FB923C',
-  shopping: '#0EA5E9',
-  home: '#92400E',
+  success: '#2F6B4F',
+  info: '#2F6FED',
+  warning: '#D68C2F',
+  danger: '#C85A32',
+  energy: '#D68C2F',
+  transport: '#2F6FED',
+  food: '#2F6B4F',
+  waste: '#C85A32',
+  shopping: '#5F7B6A',
+  home: '#A66F40',
 } as const;

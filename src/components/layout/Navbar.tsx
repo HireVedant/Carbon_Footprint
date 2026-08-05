@@ -59,11 +59,11 @@ export default function Navbar() {
     <nav
       className="sticky top-0 z-50 transition-all duration-300"
       style={{
-        background: scrolled ? 'rgba(7,17,14,0.85)' : 'rgba(7,17,14,0.4)',
+        background: scrolled ? 'rgba(255,255,255,0.88)' : 'rgba(255,255,255,0.72)',
         WebkitBackdropFilter: 'blur(16px)',
         backdropFilter: 'blur(16px)',
-        borderBottom: scrolled ? '1px solid rgba(52,211,153,0.12)' : '1px solid var(--border-subtle)',
-        boxShadow: scrolled ? '0 4px 24px rgba(0,0,0,0.3)' : 'none',
+        borderBottom: '1px solid var(--border-subtle)',
+        boxShadow: scrolled ? '0 4px 24px rgba(18, 28, 22, 0.06)' : 'none',
       }}
     >
       <AnimatePresence>
@@ -121,7 +121,7 @@ export default function Navbar() {
               <Link
                 to="/assessment"
                 className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-300"
-                style={{ background: 'rgba(52,211,153,0.06)', border: '1px solid rgba(52,211,153,0.15)', color: 'var(--color-primary)' }}
+                style={{ background: 'rgba(47, 107, 79, 0.08)', border: '1px solid rgba(47, 107, 79, 0.18)', color: 'var(--color-primary)' }}
               >
                 <Calculator className="w-3.5 h-3.5" /> Quick Calc
               </Link>

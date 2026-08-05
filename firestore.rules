@@ -12,7 +12,7 @@ service cloud.firestore {
     }
     
     function isOwner() {
-      return isAuthenticated() && (request.auth.token.email == 'jeevansagale9@gmail.com' || (getUserData() != null && getUserData().role == 'owner'));
+      return isAuthenticated() && (request.auth.token.admin == true || (getUserData() != null && getUserData().role == 'owner'));
     }
     
     function isAdmin() {
@@ -47,7 +47,7 @@ service cloud.firestore {
       // Update logic:
       allow update: if (isSelf(userId) && (
         isUnmodified('role') || 
-        (request.resource.data.role == 'owner' && request.auth.token.email.lower() == 'jeevansagale9@gmail.com')
+        (request.resource.data.role == 'owner' && request.auth.token.admin == true)
       )) || isAdmin();
       
       allow delete: if isAdmin();
@@ -115,9 +115,8 @@ service cloud.firestore {
     // --- Community Collections ---
     match /communityStats/{docId} {
       allow read: if true;
-      // Note: In production, stats updates should ideally be in Cloud Functions.
-      // Allowing authenticated users here for backward compatibility with client transactions.
-      allow write: if isAuthenticated();
+      // Write access restricted to Cloud Functions only for security.
+      allow write: if false;
     }
     
     match /communityLeaderboard/{docId} {
@@ -127,7 +126,8 @@ service cloud.firestore {
 
     match /communityReports/{docId} {
       allow read: if true;
-      allow write: if isAuthenticated();
+      // Write access restricted to Cloud Functions only for security.
+      allow write: if false;
     }
   }
 }

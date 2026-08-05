@@ -126,7 +126,7 @@ function CitySelector({ value, state, onChange }: { value: string; state: string
 
   return (
     <div className="relative">
-      <label className="block text-xs font-medium text-gray-300 mb-1.5">City / Town</label>
+      <label className="block text-xs font-medium text-text-secondary mb-1.5">City / Town</label>
       <div className="relative">
         <input
           ref={inputRef}
@@ -143,7 +143,7 @@ function CitySelector({ value, state, onChange }: { value: string; state: string
             setSearch(value || '');
           }}
           placeholder="Search for a city..."
-          className="w-full bg-gray-800/90 border border-gray-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 pr-10 text-white text-sm outline-none transition-all placeholder:text-gray-500"
+          className="w-full bg-surface border border-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500 rounded-xl px-4 py-3 pr-10 text-text-primary text-sm outline-none transition-all placeholder:text-dark-400"
           role="combobox"
           aria-expanded={isOpen}
           aria-autocomplete="list"
@@ -151,7 +151,7 @@ function CitySelector({ value, state, onChange }: { value: string; state: string
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-text-primary"
         >
           <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </button>
@@ -160,7 +160,7 @@ function CitySelector({ value, state, onChange }: { value: string; state: string
       {isOpen && filteredCities.length > 0 && (
         <div
           ref={listRef}
-          className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-xl bg-gray-800 border border-gray-700 shadow-xl"
+          className="absolute z-50 mt-1 w-full max-h-48 overflow-y-auto rounded-xl bg-surface border border-border shadow-lg"
           role="listbox"
         >
           {filteredCities.map((city, idx) => (
@@ -173,10 +173,10 @@ function CitySelector({ value, state, onChange }: { value: string; state: string
               onMouseEnter={() => setHighlightIndex(idx)}
               className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${
                 city === value
-                  ? 'bg-emerald-500/20 text-emerald-300'
+                  ? 'bg-primary-50 text-primary-700'
                   : idx === highlightIndex
-                  ? 'bg-gray-700 text-white'
-                  : 'text-gray-300 hover:bg-gray-700'
+                  ? 'bg-panel text-text-primary'
+                  : 'text-text-secondary hover:bg-panel'
               }`}
             >
               {city}
@@ -186,15 +186,15 @@ function CitySelector({ value, state, onChange }: { value: string; state: string
       )}
 
       {isOpen && search && filteredCities.length === 0 && (
-        <div className="absolute z-50 mt-1 w-full rounded-xl bg-gray-800 border border-gray-700 shadow-xl p-4 text-center">
-          <p className="text-xs text-gray-400">No cities found. You can type a custom name.</p>
+        <div className="absolute z-50 mt-1 w-full rounded-xl bg-surface border border-border shadow-lg p-4 text-center">
+          <p className="text-xs text-dark-500">No cities found. You can type a custom name.</p>
           <button
             type="button"
             onClick={() => {
               onChange(search);
               setIsOpen(false);
             }}
-            className="mt-2 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-medium border border-emerald-500/30 hover:bg-emerald-500/20"
+            className="mt-2 px-3 py-1.5 rounded-lg bg-primary-50 text-primary-700 text-xs font-medium border border-primary-200 hover:bg-primary-100"
           >
             Use "{search}" as entered
           </button>
@@ -208,26 +208,26 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ location, on
   const currentStateObj = INDIAN_STATES_AND_UTS.find(s => s.state === location.state) || INDIAN_STATES_AND_UTS[0];
 
   return (
-    <div className="space-y-6 bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl">
-      <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-        <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-400">
+    <div className="surface-matte space-y-6 p-6 rounded-2xl">
+      <div className="flex items-center gap-3 pb-4 border-b border-border">
+        <div className="p-2.5 bg-primary-50 rounded-xl text-primary-600">
           <MapPin className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold text-white">Location & Household Context</h3>
-          <p className="text-xs text-gray-400">Calculations adjust based on state electricity grid factors & climate.</p>
+          <h3 className="text-lg font-semibold text-text-primary">Location & Household Context</h3>
+          <p className="text-xs text-dark-500">Calculations adjust based on state electricity grid factors & climate.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Country Badge (Fixed to India) */}
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1.5">Country</label>
-          <div className="w-full bg-gray-800/80 border border-emerald-500/30 rounded-xl px-4 py-3 text-white text-sm font-medium flex items-center justify-between">
+          <label className="block text-xs font-medium text-dark-500 mb-1.5">Country</label>
+          <div className="w-full bg-surface border border-primary-200 rounded-xl px-4 py-3 text-text-primary text-sm font-medium flex items-center justify-between">
             <span className="flex items-center gap-2">
               <span className="text-base">🇮🇳</span> India (Fixed Regional Engine)
             </span>
-            <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+            <span className="text-[10px] bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
               India-First
             </span>
           </div>
@@ -235,7 +235,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ location, on
 
         {/* State / UT Selector */}
         <div>
-          <label className="block text-xs font-medium text-gray-300 mb-1.5">State / Union Territory *</label>
+          <label className="block text-xs font-medium text-text-secondary mb-1.5">State / Union Territory *</label>
           <select
             value={location.state}
             onChange={(e) => {
@@ -247,7 +247,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ location, on
                 city: newStateObj?.majorCities[0] || ''
               });
             }}
-            className="w-full bg-gray-800/90 border border-gray-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+            className="w-full bg-surface border border-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
           >
             {INDIAN_STATES_AND_UTS.map((st) => (
               <option key={st.state} value={st.state}>
@@ -259,11 +259,11 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ location, on
 
         {/* District Selector */}
         <div>
-          <label className="block text-xs font-medium text-gray-300 mb-1.5">District</label>
+          <label className="block text-xs font-medium text-text-secondary mb-1.5">District</label>
           <select
             value={location.district}
             onChange={(e) => onChange({ district: e.target.value })}
-            className="w-full bg-gray-800/90 border border-gray-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+            className="w-full bg-surface border border-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
           >
             {currentStateObj.districts.map((dist) => (
               <option key={dist} value={dist}>
@@ -284,15 +284,15 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ location, on
       {/* Urban vs Rural Toggle */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
         <div>
-          <label className="block text-xs font-medium text-gray-300 mb-2">Area Type</label>
-          <div className="grid grid-cols-2 gap-3 p-1 bg-gray-800/80 rounded-xl border border-gray-700/80">
+          <label className="block text-xs font-medium text-text-secondary mb-2">Area Type</label>
+          <div className="grid grid-cols-2 gap-3 p-1 bg-panel rounded-xl border border-border">
             <button
               type="button"
               onClick={() => onChange({ isUrban: true })}
               className={`py-2.5 px-3 rounded-lg text-xs font-medium transition-all ${
                 location.isUrban
-                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/15'
+                  : 'text-dark-500 hover:text-text-primary'
               }`}
             >
               Urban / Metro
@@ -302,8 +302,8 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ location, on
               onClick={() => onChange({ isUrban: false })}
               className={`py-2.5 px-3 rounded-lg text-xs font-medium transition-all ${
                 !location.isUrban
-                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                  : 'text-gray-400 hover:text-white'
+                  ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/15'
+                  : 'text-dark-500 hover:text-text-primary'
               }`}
             >
               Rural / Town
@@ -313,11 +313,11 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({ location, on
 
         {/* Housing Dwelling Type */}
         <div>
-          <label className="block text-xs font-medium text-gray-300 mb-2">Housing Dwelling Type</label>
+          <label className="block text-xs font-medium text-text-secondary mb-2">Housing Dwelling Type</label>
           <select
             value={location.dwelling}
             onChange={(e) => onChange({ dwelling: e.target.value as any })}
-            className="w-full bg-gray-800/90 border border-gray-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+            className="w-full bg-surface border border-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
           >
             {HOUSING_TYPES.map((h) => (
               <option key={h.id} value={h.id}>

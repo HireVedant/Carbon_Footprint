@@ -53,7 +53,7 @@ export const UserMenu: React.FC = () => {
   if (loading) {
     return (
       <div
-        className="w-10 h-10 rounded-full border border-white/10 bg-white/5 animate-pulse"
+        className="w-10 h-10 rounded-full border border-[var(--border)] bg-[var(--surface-secondary)] animate-pulse"
         aria-label="Loading profile"
       />
     );
@@ -73,7 +73,7 @@ export const UserMenu: React.FC = () => {
 
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-center gap-2 focus:outline-none group p-1 rounded-full border border-white/5 bg-white/5 hover:border-white/10 transition-all duration-300 w-10 h-10"
+        className="flex items-center justify-center gap-2 focus:outline-none group p-1 rounded-full border border-[var(--border)] bg-[var(--surface-secondary)] hover:border-[var(--border-strong)] transition-all duration-300 w-10 h-10"
         aria-label="Open profile menu"
       >
         {displayProfile.photo ? (
@@ -103,12 +103,12 @@ export const UserMenu: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-56 rounded-2xl bg-dark-900 border border-white/10 p-2 shadow-2xl text-left backdrop-blur-xl"
+            className="absolute right-0 mt-2 w-56 rounded-2xl bg-[var(--surface)] border border-[var(--border)] p-2 shadow-[0_12px_40px_rgba(18,28,22,0.06)] text-left"
           >
-            <div className="px-3 py-2 border-b border-white/5 mb-2">
-              <p className="text-xs font-semibold text-white truncate">{displayProfile.name}</p>
-              <p className="text-[10px] text-dark-400 truncate">{displayProfile.email}</p>
-              <span className="inline-block mt-1 text-[8px] font-extrabold uppercase bg-primary-500/10 text-primary-400 border border-primary-500/20 px-1.5 py-0.5 rounded">
+            <div className="px-3 py-2 border-b border-[var(--border)] mb-2">
+              <p className="text-xs font-semibold text-[var(--text-primary)] truncate">{displayProfile.name}</p>
+              <p className="text-[10px] text-[var(--text-muted)] truncate">{displayProfile.email}</p>
+              <span className="inline-block mt-1 text-[8px] font-extrabold uppercase border px-1.5 py-0.5 rounded" style={{ background: 'rgba(47, 107, 79, 0.08)', color: 'var(--primary)', borderColor: 'rgba(47, 107, 79, 0.18)' }}>
                 {displayProfile.userType}
               </span>
             </div>
@@ -117,14 +117,14 @@ export const UserMenu: React.FC = () => {
               <Link
                 to="/dashboard"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-dark-300 hover:text-white hover:bg-white/5 transition-all"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] transition-all"
               >
-                <BarChart3 className="w-4 h-4 text-dark-400" />
+                <BarChart3 className="w-4 h-4 text-[var(--text-muted)]" />
                 Console Dashboard
               </Link>
             </div>
 
-            <div className="border-t border-white/5 mt-2 pt-1.5">
+            <div className="border-t border-[var(--border)] mt-2 pt-1.5">
               <button
                 onClick={() => {
                   if (isLoggingOut) return;
@@ -132,7 +132,7 @@ export const UserMenu: React.FC = () => {
                   handleLogout();
                 }}
                 disabled={isLoggingOut}
-                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all text-left disabled:opacity-50"
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-[var(--danger)] hover:bg-[rgba(200,90,50,0.08)] transition-all text-left disabled:opacity-50"
               >
                 <LogOut className="w-4 h-4" />
                 {isLoggingOut ? 'Logging out...' : 'Logout'}

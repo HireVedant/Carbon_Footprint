@@ -31,18 +31,18 @@ export default function SectionHeading({
     >
       {badge && (
         <span
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-500/10 border border-primary-500/20 text-primary-400 text-xs font-semibold uppercase tracking-wider mb-4"
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-50 border border-primary-200 text-primary-700 text-xs font-semibold uppercase tracking-wider mb-4"
           aria-hidden="true"
         >
           {badge}
         </span>
       )}
-      <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-white text-balance leading-tight ${align === 'center' ? 'max-w-3xl' : ''}`}>
+      <h2 className={`text-3xl sm:text-4xl lg:text-5xl font-display font-bold text-text-primary text-balance leading-tight ${align === 'center' ? 'max-w-3xl' : ''}`}>
         {title}{' '}
         {highlight && <span className="gradient-text">{highlight}</span>}
       </h2>
       {description && (
-        <p className={`mt-4 text-base sm:text-lg text-dark-400 leading-relaxed ${align === 'center' ? 'max-w-2xl' : 'max-w-xl'}`}>
+        <p className={`mt-4 text-base sm:text-lg text-dark-500 leading-relaxed ${align === 'center' ? 'max-w-2xl' : 'max-w-xl'}`}>
           {description}
         </p>
       )}

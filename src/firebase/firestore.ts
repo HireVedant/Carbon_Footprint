@@ -18,6 +18,7 @@ import {
 import { CalculationResult as LegacyCalculationResult } from '../utils/carbonCalculator';
 import { CalculationResult as V2CalculationResult } from '../utils/calculationEngine';
 import { AssessmentAnswers } from '../utils/calculationEngine';
+import { calculateEcoScore } from '../core/calculation/ecoScore';
 import { removeCommunityEntry } from '../services/communityAnalyticsService';
 import { normalizeAssessmentDocument, NormalizedAssessmentDocument } from '../utils/firestoreMigration';
 
@@ -52,6 +53,7 @@ export interface SavedCalculation {
 
 /** Creates or merges a user profile document (never overwrites existing data). */
 export async function createUserDocument(uid: string, profile: Partial<UserProfile>): Promise<void> {
+  if (!uid) return;
   const userRef = doc(db, 'users', uid);
   const docSnap = await getDoc(userRef);
 
@@ -77,6 +79,7 @@ export async function createUserDocument(uid: string, profile: Partial<UserProfi
 
 /** Gets a user profile document. */
 export async function getUserDocument(uid: string): Promise<UserProfile | null> {
+  if (!uid) return null;
   const userRef = doc(db, 'users', uid);
   const docSnap = await getDoc(userRef);
   return docSnap.exists() ? (docSnap.data() as UserProfile) : null;
@@ -84,13 +87,14 @@ export async function getUserDocument(uid: string): Promise<UserProfile | null> 
 
 /** Updates a user profile document (partial update only). */
 export async function updateUserDocument(uid: string, updates: Partial<UserProfile>): Promise<void> {
+  if (!uid) return;
   const userRef = doc(db, 'users', uid);
   await updateDoc(userRef, updates);
 }
 
 /** Secure owner bootstrap routine: promotes jeevansagale9@gmail.com to 'owner' if no owner exists yet. */
 export async function bootstrapOwnerAccount(currentUid: string, email: string): Promise<void> {
-  if (!email || email.toLowerCase() !== 'jeevansagale9@gmail.com') return;
+  if (!currentUid || !email || email.toLowerCase() !== 'jeevansagale9@gmail.com') return;
 
   try {
     const usersCol = collection(db, 'users');
@@ -110,6 +114,7 @@ export async function bootstrapOwnerAccount(currentUid: string, email: string): 
 
 /** Saves a legacy v1 carbon footprint calculation. */
 export async function saveCalculation(userId: string, results: LegacyCalculationResult): Promise<string> {
+  if (!userId) throw new Error('User ID is required to save calculation.');
   const calculationsRef = collection(db, 'calculations');
   const docRef = await addDoc(calculationsRef, {
     userId,
@@ -131,6 +136,7 @@ export async function saveCalculation(userId: string, results: LegacyCalculation
 
 /** Retrieves legacy calculation history sorted by newest first. */
 export async function getUserCalculations(userId: string): Promise<SavedCalculation[]> {
+  if (!userId) return [];
   try {
     const calculationsRef = collection(db, 'calculations');
     const q = query(
@@ -140,13 +146,15 @@ export async function getUserCalculations(userId: string): Promise<SavedCalculat
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ calculationId: d.id, ...d.data() } as SavedCalculation));
-  } catch {
+  } catch (err) {
+    console.error('Error fetching legacy user calculations:', err);
     return [];
   }
 }
 
 /** Soft-deletes a legacy calculation (removes from community stats but keeps audit trail if needed). */
 export async function deleteCalculation(calculationId: string, userId: string): Promise<void> {
+  if (!calculationId || !userId) return;
   const calcRef = doc(db, 'calculations', calculationId);
   const snap = await getDoc(calcRef);
   if (!snap.exists()) return;
@@ -184,6 +192,7 @@ export async function saveV2Assessment(
   result: V2CalculationResult,
   mode: 'quick' | 'detailed' = 'quick'
 ): Promise<string> {
+  if (!userId) throw new Error('User ID is required to save assessment.');
   const assessmentsRef = collection(db, 'users', userId, 'assessments');
   const docRef = await addDoc(assessmentsRef, {
     userId,
@@ -219,24 +228,28 @@ export async function saveV2Assessment(
 
 /** Retrieves all v2 assessments for a user, normalized for backward compatibility. */
 export async function getUserAssessments(userId: string): Promise<NormalizedAssessmentDocument[]> {
+  if (!userId) return [];
   try {
     const assessmentsRef = collection(db, 'users', userId, 'assessments');
     const q = query(assessmentsRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => normalizeAssessmentDocument({ id: d.id, ...d.data() }, d.id));
-  } catch {
+  } catch (err) {
+    console.error('Error fetching v2 user assessments:', err);
     return [];
   }
 }
 
 /** Caches AI advice onto an existing assessment document (never creates a new one). */
 export async function cacheAiAdvice(userId: string, assessmentId: string, aiAdvice: any[]): Promise<void> {
+  if (!userId || !assessmentId) return;
   const assessmentRef = doc(db, 'users', userId, 'assessments', assessmentId);
   await updateDoc(assessmentRef, { aiAdvice, aiAdviceCachedAt: serverTimestamp() });
 }
 
 /** Soft-deletes a v2 assessment (sets status to 'deleted' — never permanent delete). */
 export async function softDeleteAssessment(userId: string, assessmentId: string): Promise<void> {
+  if (!userId || !assessmentId) return;
   const assessmentRef = doc(db, 'users', userId, 'assessments', assessmentId);
   await updateDoc(assessmentRef, { status: 'deleted', deletedAt: serverTimestamp() });
 }
@@ -264,6 +277,7 @@ export interface UnifiedHistoryItem {
 
 /** Fetches both v1 calculations and v2 assessments, producing a unified chronological history. */
 export async function getUnifiedUserHistory(userId: string): Promise<UnifiedHistoryItem[]> {
+  if (!userId) return [];
   try {
     const [v1List, v2List] = await Promise.all([
       getUserCalculations(userId),
@@ -282,8 +296,7 @@ export async function getUnifiedUserHistory(userId: string): Promise<UnifiedHist
         year: 'numeric', month: 'short', day: 'numeric'
       });
 
-      // Calculate EcoScore (100 = 0 kg, 0 = 10,000+ kg)
-      const ecoScore = Math.max(0, Math.min(100, Math.round(100 - (totalKg / 100))));
+      const ecoScore = calculateEcoScore(totalTonnes).score;
 
       items.push({
         id: doc.id,
@@ -341,4 +354,3 @@ export async function getUnifiedUserHistory(userId: string): Promise<UnifiedHist
     return [];
   }
 }
-

@@ -23,18 +23,22 @@ export async function signUpWithEmail(email: string, password: string, name: str
     displayName: name,
   });
 
-  // Sync to Firestore user profile collection
-  await createUserDocument(user.uid, {
-    name,
-    email,
-    photo: '',
-  });
+  // Sync to Firestore user profile collection (non-critical)
+  try {
+    await createUserDocument(user.uid, {
+      name,
+      email,
+      photo: '',
+    });
+  } catch (error) {
+    console.warn('[EcoTrack] Non-fatal: Failed to create user document during signup.', error);
+  }
 
-  // Optional: Send verification email
+  // Optional: Send verification email (non-critical)
   try {
     await sendEmailVerification(user);
   } catch (error) {
-    // Ignore verification email errors
+    console.warn('[EcoTrack] Non-fatal: Failed to send verification email.', error);
   }
 
   return user;
@@ -47,12 +51,16 @@ export async function loginWithEmail(email: string, password: string) {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
   const user = userCredential.user;
 
-  // Update last login timestamp in Firestore
-  await createUserDocument(user.uid, {
-    name: user.displayName || 'Eco User',
-    email: user.email || '',
-    photo: user.photoURL || '',
-  });
+  // Update last login timestamp in Firestore (non-critical)
+  try {
+    await createUserDocument(user.uid, {
+      name: user.displayName || 'Eco User',
+      email: user.email || '',
+      photo: user.photoURL || '',
+    });
+  } catch (error) {
+    console.warn('[EcoTrack] Non-fatal: Failed to sync user document on login.', error);
+  }
 
   return user;
 }

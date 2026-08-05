@@ -37,18 +37,18 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="min-h-[400px] flex items-center justify-center p-6">
-          <div className="max-w-md w-full bg-dark-900 border border-dark-800 rounded-2xl p-8 text-center space-y-4">
-            <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto">
-              <AlertTriangle className="w-8 h-8 text-red-500" />
+          <div className="max-w-md w-full bg-panel border border-border rounded-2xl p-8 text-center space-y-4">
+            <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-8 h-8 text-red-700" />
             </div>
-            <h3 className="text-xl font-bold text-white">Something went wrong</h3>
-            <p className="text-gray-400 text-sm">
+            <h3 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Something went wrong</h3>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               We encountered an unexpected error. Please try refreshing the page or navigating back.
             </p>
             <div className="pt-4 flex items-center justify-center space-x-4">
               <button
                 onClick={this.handleReset}
-                className="inline-flex items-center space-x-2 px-4 py-2 bg-dark-800 hover:bg-dark-700 text-white rounded-lg transition-colors"
+                className="inline-flex items-center space-x-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>Try Again</span>

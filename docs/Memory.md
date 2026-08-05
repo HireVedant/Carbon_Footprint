@@ -7,6 +7,49 @@ This document records every major architectural change, feature addition, schema
 
 ## Change History Log
 
+### Entry 005 — Epic 3: Assessment System Stabilization (Epics 3.1 → 3.2.2)
+- **Date**: 2026-08-04
+- **Status**: Completed ✅ Closed
+- **Scope**: Assessment pipeline reliability — no architecture changes, no schema changes, no calculation formula changes.
+- **Changes**:
+  - **EcoScore unified** (`Dashboard.tsx`): Replaced isolated `100 - totalTonnes * 5.5` formula with canonical `calculateEcoScore(totalTonnes).score` from `src/core/calculation/ecoScore.ts`. All views (Dashboard, Assessment, History, Cloud Function) now use one source of truth.
+  - **Draft persistence added** (`AssessmentContext.tsx`): Implemented `sessionStorage` auto-save on every state mutation. Key: `ecotrack_assessment_draft_v2`. Stores `answers`, `currentStep`, and `mode`. Restores on mount with safe `JSON.parse` error handling. Cleared automatically on `runCalculation()` success or `resetAssessment()`.
+  - **Flight state restoration fixed** (`AssessmentContext.tsx`): Added `mapFlightDetailsToEntries()` helper. `flights` state now initializes from `loadDraft()?.answers.flightDetails` so FlightPlanner UI matches calculation state after a browser refresh.
+  - **Appliance state restoration fixed** (`AssessmentContext.tsx`): Added `mapAppliancesToUsage()` helper. `appliancesState` now initializes from `loadDraft()?.answers.appliances`. Includes `id` field generation to satisfy strict `ApplianceUsage` TypeScript interface.
+  - **Input validation hardened** (`Assessment.tsx`): Added `INPUT_CEILINGS` map and `parseNumClamped()` function. Applied to all numeric fields. Updated limits to Indian household norms: `electricityKWh: 2,000`, `apparelItemsMonthly: 20`.
+  - **Assessment re-render optimized** (`Assessment.tsx`): `visibleSteps` and `currentVisibleIndex` wrapped in `useMemo` hooks.
+  - **Save failure handling added** (`Assessment.tsx`): Dismissible amber warning banner shown if `saveV2Assessment()` throws, ensuring users know their result wasn't persisted.
+- **Files Modified**: `src/pages/Dashboard.tsx`, `src/context/AssessmentContext.tsx`, `src/pages/Assessment.tsx`
+- **Files NOT Modified**: All Firestore service files, all `src/core/calculation/` engine files, all dataset files, DatasetRegistry, all test files.
+- **Backward Compatibility**: Full. V1 `calculations/{id}` and V2 `users/{uid}/assessments/{id}` documents remain readable and compatible.
+- **Build Verification**: `npm run build` → Exit Code 0, 2604 modules, 0 TypeScript errors.
+- **Reason**: Eliminate user-facing data loss on refresh, resolve score inconsistency between views, and prevent NaN/Infinity emissions from extreme inputs.
+- **Rollback Instructions**: Revert the three file changes listed above. No Firestore migration needed.
+
+---
+
+### Entry 006 — Epic 4.4: Production Stabilization
+- **Date**: 2026-08-04
+- **Status**: Completed ✅
+- **Scope**: Data correctness, calculation consistency, Dashboard functional architecture.
+- **Changes**:
+  - **EcoScore formula unified (Assessment.tsx)**: Removed the final remaining legacy inline formula (`100 - totalKg/100`) from `Assessment.tsx:135`. Replaced with `calculateEcoScore(computedResult.totalTonnesCO2PerYear).score`. All EcoScore computation now flows through one canonical function: `src/core/calculation/ecoScore.ts`. This affects Assessment, Dashboard, History, and the Community leaderboard pipeline.
+  - **Dashboard tab architecture implemented (Dashboard.tsx)**: Added `activeTab` state (`'overview' | 'emissions' | 'goals'`). Added accessible ARIA tab bar with `role="tablist"` / `role="tab"` / `role="tabpanel"`. All pre-computed values (totalKg, ecoScore, breakdown, sparkData, radarData, etc.) are derived once in `Dashboard.tsx` and passed as props to tabs — no duplication.
+  - **Missing `answers` field fixed (Dashboard.tsx)**: Firestore hydration `useEffect` previously omitted `answers` from the reconstructed `activeResult` object. InsightCard and ImprovementPreview received `undefined` answers when loading from history. Fixed by adding `answers: latest.answers ?? {}` to the hydrated state.
+  - **OverviewTab extracted**: KPI widgets (4), Sustainability Score gauges (Eco Score, Confidence, vs India Avg), InsightCard, EquivalentCard.
+  - **EmissionsTab extracted**: PremiumRadarChart, PremiumDoughnut, Category contribution bars, TrendChart (stacked bar). `h-full` replaced with `minHeight: '360px'` on chart containers to prevent grid height collapse.
+  - **GoalsTab extracted**: ImprovementPreview (AI coach), WhatIfSimulator, CategoryCard (action plan), ActionButtons (history/report).
+- **Files Created**: `src/components/dashboard/tabs/OverviewTab.tsx`, `src/components/dashboard/tabs/EmissionsTab.tsx`, `src/components/dashboard/tabs/GoalsTab.tsx`
+- **Files Modified**: `src/pages/Dashboard.tsx` (rewritten), `src/pages/Assessment.tsx` (ecoScore formula + import)
+- **Files NOT Modified**: All Firestore service files, all `src/core/calculation/` engine files, all dataset files, `AssessmentContext.tsx`, `firestore.rules`.
+- **Backward Compatibility**: Full. No schema changes. V1/V2 data compatibility preserved.
+- **Build Verification**: `npm run build` → Exit Code 0, 2607 modules (+3 new tab files), 0 TypeScript errors.
+- **Known Remaining Risk**: Community `communityStats/global` and `communityLeaderboard` collections depend on the Cloud Function `onAssessmentCreated` being deployed to Firebase project `eco-track-2833a`. Client-side aggregation is a deliberate no-op stub. If the function is not deployed, community data will not populate. **Must verify via Firebase Console before launch.**- **Root Cause**: Two separate legacy formulas were still present in the persistence/history path (`100 - totalKg/100`) and the Cloud Function fallback path. These diverged from the canonical `calculateEcoScore(totalTonnes)` implementation and led to inconsistent A+/dashboard reporting across refresh and community rehydration.- **Rollback Instructions**: Delete the 3 tab files. Revert `Dashboard.tsx` and `Assessment.tsx` to their previous versions via git. No Firestore migration needed.
+
+---
+
+
+
 ### Entry 004 — Phase 8: UX Consolidation, Data Integrity & Production Polish
 - **Date**: July 25, 2026
 - **Status**: Completed

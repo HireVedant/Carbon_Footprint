@@ -30,30 +30,30 @@ export const VehicleSelector: React.FC<VehicleSelectorProps> = ({
     : 0;
 
   return (
-    <div className="space-y-5 bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl">
-      <div className="flex items-center justify-between pb-4 border-b border-white/10">
+    <div className="surface-matte space-y-5 p-6 rounded-2xl">
+      <div className="flex items-center justify-between pb-4 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-cyan-500/10 rounded-xl text-cyan-400">
+          <div className="p-2.5 bg-primary-50 rounded-xl text-primary-600">
             <Car className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Personal Vehicle</h3>
-            <p className="text-xs text-gray-400">ARAI emission benchmarks applied per vehicle class.</p>
+            <h3 className="text-lg font-semibold text-text-primary">Personal Vehicle</h3>
+            <p className="text-xs text-dark-500">ARAI emission benchmarks applied per vehicle class.</p>
           </div>
         </div>
       </div>
 
       {/* Ownership toggle */}
       <div>
-        <label className="block text-xs font-medium text-gray-300 mb-2">Do you own or regularly use a personal vehicle?</label>
-        <div className="grid grid-cols-2 gap-3 p-1 bg-gray-800/80 rounded-xl border border-gray-700/80">
+        <label className="block text-xs font-medium text-text-secondary mb-2">Do you own or regularly use a personal vehicle?</label>
+        <div className="grid grid-cols-2 gap-3 p-1 bg-panel rounded-xl border border-border">
           <button
             type="button"
             onClick={() => onOwnershipChange(true)}
             className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
               ownsVehicle
-                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/15'
+                : 'text-dark-500 hover:text-text-primary'
             }`}
           >Yes, I own a vehicle</button>
           <button
@@ -61,8 +61,8 @@ export const VehicleSelector: React.FC<VehicleSelectorProps> = ({
             onClick={() => onOwnershipChange(false)}
             className={`py-2.5 px-3 rounded-lg text-sm font-medium transition-all ${
               !ownsVehicle
-                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/15'
+                : 'text-dark-500 hover:text-text-primary'
             }`}
           >No personal vehicle</button>
         </div>
@@ -73,10 +73,10 @@ export const VehicleSelector: React.FC<VehicleSelectorProps> = ({
         <div className="space-y-5 animate-in fade-in duration-300">
           {/* Vehicle Category Selector */}
           <div>
-            <label className="block text-xs font-medium text-gray-300 mb-2">Vehicle Class & Fuel Type</label>
+            <label className="block text-xs font-medium text-text-secondary mb-2">Vehicle Class & Fuel Type</label>
 
             {/* Cars */}
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5 flex items-center gap-1.5">
+            <p className="text-[10px] uppercase tracking-wider text-dark-500 font-semibold mb-1.5 flex items-center gap-1.5">
               <Car className="w-3 h-3" /> Cars
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
@@ -87,18 +87,18 @@ export const VehicleSelector: React.FC<VehicleSelectorProps> = ({
                   onClick={() => onChange({ vehicleCategoryKey: key })}
                   className={`text-left p-3 rounded-xl border transition-all text-sm ${
                     vehicleCategoryKey === key
-                      ? 'border-emerald-500 bg-emerald-500/10 text-white'
-                      : 'border-gray-700/60 bg-gray-800/50 text-gray-300 hover:border-gray-600'
+                      ? 'border-primary-500 bg-primary-50 text-primary-700'
+                      : 'border-border bg-surface text-text-secondary hover:border-dark-200'
                   }`}
                 >
                   <span className="font-medium block">{cat.className}</span>
-                  <span className="text-[10px] text-gray-500 block mt-0.5">{cat.examples.slice(0, 3).join(', ')}</span>
+                  <span className="text-[10px] text-dark-500 block mt-0.5">{cat.examples.slice(0, 3).join(', ')}</span>
                 </button>
               ))}
             </div>
 
             {/* Two-Wheelers */}
-            <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5 flex items-center gap-1.5">
+            <p className="text-[10px] uppercase tracking-wider text-dark-500 font-semibold mb-1.5 flex items-center gap-1.5">
               <Bike className="w-3 h-3" /> Two-Wheelers
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -109,12 +109,12 @@ export const VehicleSelector: React.FC<VehicleSelectorProps> = ({
                   onClick={() => onChange({ vehicleCategoryKey: key })}
                   className={`text-left p-3 rounded-xl border transition-all text-sm ${
                     vehicleCategoryKey === key
-                      ? 'border-emerald-500 bg-emerald-500/10 text-white'
-                      : 'border-gray-700/60 bg-gray-800/50 text-gray-300 hover:border-gray-600'
+                      ? 'border-primary-500 bg-primary-50 text-primary-700'
+                      : 'border-border bg-surface text-text-secondary hover:border-dark-200'
                   }`}
                 >
                   <span className="font-medium block">{cat.className}</span>
-                  <span className="text-[10px] text-gray-500 block mt-0.5">{cat.examples.slice(0, 3).join(', ')}</span>
+                  <span className="text-[10px] text-dark-500 block mt-0.5">{cat.examples.slice(0, 3).join(', ')}</span>
                 </button>
               ))}
             </div>
@@ -123,36 +123,36 @@ export const VehicleSelector: React.FC<VehicleSelectorProps> = ({
           {/* Distance & Occupancy */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className="block text-xs font-medium text-gray-300 mb-1.5">Average daily distance (km)</label>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">Average daily distance (km)</label>
               <input
                 type="number"
                 min={1}
                 max={500}
                 value={dailyVehicleKm}
                 onChange={(e) => onChange({ dailyVehicleKm: Math.max(1, parseInt(e.target.value) || 25) })}
-                className="w-full bg-gray-800/90 border border-gray-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+                className="w-full bg-surface border border-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-300 mb-1.5">Average occupancy (people in car)</label>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">Average occupancy (people in car)</label>
               <input
                 type="number"
                 min={1}
                 max={8}
                 value={vehicleOccupancy}
                 onChange={(e) => onChange({ vehicleOccupancy: Math.max(1, parseInt(e.target.value) || 1) })}
-                className="w-full bg-gray-800/90 border border-gray-700 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded-xl px-4 py-3 text-white text-sm outline-none transition-all"
+                className="w-full bg-surface border border-border focus:border-primary-500 focus:ring-1 focus:ring-primary-500 rounded-xl px-4 py-3 text-text-primary text-sm outline-none transition-all"
               />
             </div>
           </div>
 
           {/* Emission preview */}
           {selectedCategory && (
-            <div className="flex items-center justify-between bg-gray-800/40 rounded-xl px-4 py-3 border border-gray-700/40">
-              <div className="text-xs text-gray-400">
-                <span className="font-medium text-white">{selectedCategory.className}</span> · {selectedCategory.emissionFactorKgCO2PerKm} kg CO₂/km · {dailyVehicleKm} km/day
+            <div className="flex items-center justify-between bg-panel rounded-xl px-4 py-3 border border-border">
+              <div className="text-xs text-dark-500">
+                <span className="font-medium text-text-primary">{selectedCategory.className}</span> · {selectedCategory.emissionFactorKgCO2PerKm} kg CO₂/km · {dailyVehicleKm} km/day
               </div>
-              <span className="text-sm font-bold text-cyan-400">~{annualEmission.toLocaleString()} kg CO₂/yr</span>
+              <span className="text-sm font-bold text-primary-600">~{annualEmission.toLocaleString()} kg CO₂/yr</span>
             </div>
           )}
         </div>

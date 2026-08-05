@@ -20,13 +20,12 @@ export default function Card({
   title,
   description,
   icon,
-  iconColor = 'from-emerald-500 to-teal-400',
+  iconColor = 'var(--color-primary)',
   variant = 'default',
   className = '',
   children,
   onClick,
 }: CardProps) {
-  // Resolve string icon names to LucideIcon components
   let IconComponent: LucideIcon | null = null;
   if (icon) {
     if (typeof icon === 'string') {
@@ -37,9 +36,7 @@ export default function Card({
     }
   }
 
-  const baseClasses = variant === 'dashboard'
-    ? 'p-5'
-    : 'p-6 sm:p-8';
+  const paddingClass = variant === 'dashboard' ? 'p-5' : 'p-6 sm:p-8';
 
   return (
     <motion.div
@@ -49,22 +46,25 @@ export default function Card({
       whileTap="tap"
       viewport={viewport}
       onClick={onClick}
-      className={`glass-eco glass-eco-hover flex flex-col h-full ${onClick ? 'cursor-pointer' : ''} ${className}`}
-      style={{ borderRadius: radius.lg, ...baseClasses.split(' ').reduce((acc, cls) => ({ ...acc, [cls.startsWith('p-') ? 'padding' : '']: cls.replace('p-', '') }), {}) }}
+      className={`surface-elevated flex flex-col h-full ${paddingClass} ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      style={{ borderRadius: radius.lg }}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } } : undefined}
     >
       {IconComponent && (
-        <div className={`w-14 h-14 flex items-center justify-center mb-5 shadow-lg bg-gradient-to-br ${iconColor}`} style={{ borderRadius: radius.md }}>
-          <IconComponent className="w-7 h-7 text-white" aria-hidden="true" />
+        <div
+          className="w-12 h-12 flex items-center justify-center mb-5"
+          style={{ borderRadius: radius.md, background: `${iconColor}18`, color: iconColor, border: `1px solid ${iconColor}30` }}
+        >
+          <IconComponent className="w-5 h-5" aria-hidden="true" />
         </div>
       )}
       {title && (
-        <h3 className="font-display text-xl font-bold text-white mb-3">{title}</h3>
+        <h3 className="font-display text-xl font-bold text-[var(--text-primary)] mb-3">{title}</h3>
       )}
       {description && (
-        <p className="text-[15px] text-slate-300 leading-relaxed flex-1">{description}</p>
+        <p className="text-[15px] text-[var(--text-secondary)] leading-relaxed flex-1">{description}</p>
       )}
       {children}
     </motion.div>

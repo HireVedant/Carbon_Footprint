@@ -18,23 +18,23 @@ export const ConfidenceBadge: React.FC<ConfidenceBadgeProps> = ({
 }) => {
   const config = {
     HIGH: {
-      bgColor: 'bg-emerald-500/10',
-      borderColor: 'border-emerald-500/30',
-      textColor: 'text-emerald-400',
+      bgColor: 'bg-emerald-50',
+      borderColor: 'border-emerald-200',
+      textColor: 'text-emerald-700',
       icon: ShieldCheck,
       label: 'High Accuracy'
     },
     MEDIUM: {
-      bgColor: 'bg-amber-500/10',
-      borderColor: 'border-amber-500/30',
-      textColor: 'text-amber-400',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200',
+      textColor: 'text-amber-700',
       icon: AlertTriangle,
       label: 'Moderate Accuracy'
     },
     ESTIMATE: {
-      bgColor: 'bg-blue-500/10',
-      borderColor: 'border-blue-500/30',
-      textColor: 'text-blue-400',
+      bgColor: 'bg-sky-50',
+      borderColor: 'border-sky-200',
+      textColor: 'text-sky-700',
       icon: Info,
       label: 'Estimated'
     }
@@ -89,15 +89,15 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
   ];
 
   return (
-    <div className="bg-gray-900/60 backdrop-blur-xl border border-white/10 p-6 rounded-2xl shadow-xl space-y-5">
-      <div className="flex items-center justify-between pb-4 border-b border-white/10">
+    <div className="surface-matte p-6 rounded-2xl space-y-5">
+      <div className="flex items-center justify-between pb-4 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-400">
+          <div className="p-2.5 bg-primary-50 rounded-xl text-primary-600">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Calculation Confidence</h3>
-            <p className="text-xs text-gray-400">Higher confidence = more specific data provided.</p>
+            <h3 className="text-lg font-semibold text-text-primary">Calculation Confidence</h3>
+            <p className="text-xs text-dark-500">Higher confidence = more specific data provided.</p>
           </div>
         </div>
         <ConfidenceBadge score={confidence.overallScore} rating={confidence.overallRating} label="Overall" size="md" />
@@ -109,17 +109,17 @@ export const ConfidenceBreakdownCard: React.FC<ConfidenceBreakdownCardProps> = (
           return (
             <div key={cat.key} className="space-y-1.5">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-300 font-medium">{cat.label}</span>
+                <span className="text-text-primary font-medium">{cat.label}</span>
                 <ConfidenceBadge score={cat.data.score} rating={cat.data.rating} size="sm" />
               </div>
-              <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden">
+              <div className="w-full h-1.5 bg-panel rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-700 ${cat.color}`}
                   style={{ width: `${cat.data.score}%` }}
                 />
               </div>
               {cat.data.rationales && cat.data.rationales.length > 0 && (
-                <p className="text-[10px] text-gray-500 pl-1">{cat.data.rationales[0]}</p>
+                <p className="text-[10px] text-dark-500 pl-1">{cat.data.rationales[0]}</p>
               )}
             </div>
           );

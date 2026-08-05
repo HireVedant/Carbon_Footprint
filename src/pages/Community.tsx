@@ -58,10 +58,10 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tool
 
 // ── Shared chart options ──────────────────────────────────────────────────────
 const darkTooltip = {
-  backgroundColor: '#111C19',
-  titleColor: '#E8F0EC',
-  bodyColor: '#8A9C94',
-  borderColor: 'rgba(255,255,255,0.07)',
+  backgroundColor: '#FFFFFF',
+  titleColor: '#1F2937',
+  bodyColor: '#4B5563',
+  borderColor: 'rgba(15,23,42,0.08)',
   borderWidth: 1,
   padding: 10,
   cornerRadius: 8,
@@ -69,8 +69,8 @@ const darkTooltip = {
   usePointStyle: true,
 };
 
-const darkTicks = { color: '#5A6E64', font: { family: 'Inter', size: 10 } };
-const darkGrid  = { color: 'rgba(255,255,255,0.03)' };
+const darkTicks = { color: '#6B7280', font: { family: 'Inter', size: 10 } };
+const darkGrid  = { color: 'rgba(15,23,42,0.04)' };
 
 const doughnutOptions = {
   responsive: true,
@@ -79,7 +79,7 @@ const doughnutOptions = {
     legend: {
       display: true,
       position: 'bottom' as const,
-      labels: { color: '#8A9C94', font: { family: 'Inter', size: 11 }, padding: 14, usePointStyle: true },
+      labels: { color: '#4B5563', font: { family: 'Inter', size: 11 }, padding: 14, usePointStyle: true },
     },
     tooltip: darkTooltip,
   },
@@ -106,11 +106,11 @@ const stagger = { animate: { transition: { staggerChildren: 0.08 } } };
 
 // ── Eco Score colour helper (matches existing design system) ─────────────────
 function ecoScoreColor(score: number): string {
-  if (score >= 85) return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
-  if (score >= 70) return 'text-green-400 bg-green-500/10 border-green-500/30';
-  if (score >= 50) return 'text-amber-400 bg-amber-500/10 border-amber-500/30';
-  if (score >= 30) return 'text-orange-400 bg-orange-500/10 border-orange-500/30';
-  return 'text-red-400 bg-red-500/10 border-red-500/30';
+  if (score >= 85) return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+  if (score >= 70) return 'text-green-700 bg-green-50 border-green-200';
+  if (score >= 50) return 'text-amber-700 bg-amber-50 border-amber-200';
+  if (score >= 30) return 'text-orange-700 bg-orange-50 border-orange-200';
+  return 'text-red-700 bg-red-50 border-red-200';
 }
 
 function categoryIcon(cat: string) {
@@ -170,7 +170,7 @@ const MemoizedLeaderboardEntry = React.memo(({ entry, index, isCurrentUser, isCo
       animate={!isContributionCard ? { opacity: 1, x: 0 } : undefined}
       transition={!isContributionCard ? { delay: (index % 5) * 0.05 } : undefined}
       className={`flex items-center gap-3 p-3 rounded-xl transition-colors duration-200`}
-      style={isCurrentUser ? { background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)' } : {}}
+      style={isCurrentUser ? { background: 'rgba(5,150,105,0.08)', border: '1px solid rgba(5,150,105,0.25)' } : {}}
     >
       <RankBadge rank={index + 1} />
       <div className="flex-1 min-w-0">
@@ -186,7 +186,7 @@ const MemoizedLeaderboardEntry = React.memo(({ entry, index, isCurrentUser, isCo
           {entry.ecoLabel}
         </span>
       </div>
-      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, rgba(52,211,153,0.15), rgba(45,212,191,0.08))', border: '1px solid rgba(52,211,153,0.15)' }}>
+      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, rgba(5,150,105,0.12), rgba(13,148,136,0.06))', border: '1px solid rgba(5,150,105,0.15)' }}>
         <span className="text-sm font-bold gradient-text" style={{ fontFamily: 'var(--font-display)' }}>{entry.ecoScore}</span>
       </div>
     </motion.div>
@@ -325,9 +325,9 @@ export default function Community() {
           transition={{ duration: 0.6 }}
           className="text-center max-w-3xl mx-auto pt-4"
         >
-          <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full" style={{ background: `${emerald[500]}14`, border: `1px solid ${emerald[500]}33` }}>
-            <Globe2 className="w-4 h-4" style={{ color: emerald[500] }} />
-            <span className="text-sm font-medium" style={{ color: emerald[500] }}>Global Community Analytics</span>
+          <div className="inline-flex items-center gap-2 mb-6 px-4 py-2 rounded-full" style={{ background: `${emerald[600]}12`, border: `1px solid ${emerald[600]}30` }}>
+            <Globe2 className="w-4 h-4" style={{ color: emerald[600] }} />
+            <span className="text-sm font-medium" style={{ color: emerald[600] }}>Global Community Analytics</span>
           </div>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight mb-6" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>
             Our Collective <span className="gradient-text">Carbon Impact</span>
@@ -345,7 +345,7 @@ export default function Community() {
           className="space-y-6"
         >
           <div className="flex items-center gap-3 mb-2">
-            <Globe2 className="w-5 h-5" style={{ color: emerald[500] }} />
+            <Globe2 className="w-5 h-5" style={{ color: emerald[600] }} />
             <h2 className="text-xl font-bold" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>India Carbon Intelligence Map</h2>
           </div>
           <p className="text-sm max-w-2xl -mt-4" style={{ color: surface.textSecondary }}>
@@ -359,7 +359,7 @@ export default function Community() {
               <div className="rounded-2xl p-5" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
                 <Suspense fallback={
                   <div className="flex items-center justify-center h-[400px]">
-                    <Loader2 className="w-8 h-8 animate-spin" style={{ color: emerald[500] }} />
+                    <Loader2 className="w-8 h-8 animate-spin" style={{ color: emerald[600] }} />
                     <span className="ml-3 text-sm" style={{ color: surface.textSecondary }}>Loading India map...</span>
                   </div>
                 }>
@@ -376,8 +376,8 @@ export default function Community() {
             {selectedState && (
               <div className="lg:col-span-1">
                 <Suspense fallback={
-                  <div className="glass-strong rounded-2xl p-5 flex items-center justify-center h-[300px]">
-                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: emerald[500] }} />
+                  <div className="rounded-2xl p-5 flex items-center justify-center h-[300px]" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
+                    <Loader2 className="w-6 h-6 animate-spin" style={{ color: emerald[600] }} />
                   </div>
                 }>
                   <StateInsightPanel
@@ -392,21 +392,21 @@ export default function Community() {
           {/* Data Sources */}
           <div className="flex flex-wrap items-center gap-3 text-[10px]" style={{ color: surface.textSecondary }}>
             <span className="font-semibold" style={{ color: surface.textPrimary }}>Sources:</span>
-            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[500]}0D`, border: `1px solid ${emerald[500]}1A` }}>CEA Baseline DB v20.0</span>
-            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[500]}0D`, border: `1px solid ${emerald[500]}1A` }}>Census 2011 / MoSPI</span>
-            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[500]}0D`, border: `1px solid ${emerald[500]}1A` }}>Ember/IEEFA SET 2026</span>
-            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[500]}0D`, border: `1px solid ${emerald[500]}1A` }}>NITI Aayog GHG Platform</span>
-            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[500]}0D`, border: `1px solid ${emerald[500]}1A` }}>EcoTrack Community (Live)</span>
+            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[600]}0D`, border: `1px solid ${emerald[600]}26` }}>CEA Baseline DB v20.0</span>
+            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[600]}0D`, border: `1px solid ${emerald[600]}26` }}>Census 2011 / MoSPI</span>
+            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[600]}0D`, border: `1px solid ${emerald[600]}26` }}>Ember/IEEFA SET 2026</span>
+            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[600]}0D`, border: `1px solid ${emerald[600]}26` }}>NITI Aayog GHG Platform</span>
+            <span className="px-2 py-0.5 rounded-full" style={{ background: `${emerald[600]}0D`, border: `1px solid ${emerald[600]}26` }}>EcoTrack Community (Live)</span>
           </div>
         </motion.section>
 
         {/* ═══ LIVE OVERVIEW CARDS ═════════════════════════════════════════════ */}
         <section id="community-overview">
           <div className="flex items-center gap-3 mb-6">
-            <Activity className="w-5 h-5" style={{ color: emerald[500] }} />
+            <Activity className="w-5 h-5" style={{ color: emerald[600] }} />
             <h2 className="text-xl font-bold" style={{ fontFamily: fontFamily.display, color: surface.textPrimary }}>Live Platform Analytics</h2>
-            <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full" style={{ color: emerald[400], background: `${emerald[500]}1A`, border: `1px solid ${emerald[500]}33` }}>
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: emerald[400] }} />
+            <span className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full" style={{ color: emerald[700], background: `${emerald[600]}12`, border: `1px solid ${emerald[600]}30` }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: emerald[600] }} />
               Real-time
             </span>
           </div>
@@ -456,7 +456,7 @@ export default function Community() {
                 {/* Total CO₂ Tracked */}
                 <motion.div variants={fadeUp} className="p-5 rounded-2xl transition-all duration-300" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${emerald[500]}1A`, color: emerald[500] }}>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${emerald[600]}12`, color: emerald[600] }}>
                       <Wind className="w-4 h-4" />
                     </div>
                     <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: surface.textSecondary }}>CO₂ Tracked</span>
@@ -492,7 +492,7 @@ export default function Community() {
                 {/* Average Eco Score */}
                 <motion.div variants={fadeUp} className="p-5 rounded-2xl transition-all duration-300" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${emerald[500]}1A`, color: emerald[400] }}>
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${emerald[600]}12`, color: emerald[600] }}>
                       <Leaf className="w-4 h-4" />
                     </div>
                     <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: surface.textSecondary }}>Eco Score</span>
@@ -513,18 +513,18 @@ export default function Community() {
 
         {/* ═══ SEI HISTORICAL SURVEY SECTION ══════════════════════════════════ */}
         <section id="sei-survey">
-          <div className="glass-strong p-6 sm:p-8 rounded-3xl">
+          <div className="p-6 sm:p-8 rounded-3xl" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500/20 to-accent-500/10 border border-primary-500/20 flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-primary-400" />
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-50 to-accent-500/10 border border-primary-200 flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-primary-600" />
                 </div>
                 <div>
                   <h2 className="t-display-md">SEI Community Survey Dataset</h2>
-                  <p className="text-xs text-dark-400">50+ participants · 10 detailed case studies · Internal Community Research</p>
+                  <p className="text-xs text-dark-500">50+ participants · 10 detailed case studies · Internal Community Research</p>
                 </div>
               </div>
-              <span className="ml-auto text-xs text-primary-400 bg-primary-500/10 border border-primary-500/20 px-3 py-1 rounded-full whitespace-nowrap">
+              <span className="ml-auto text-xs text-primary-600 bg-primary-50 border border-primary-200 px-3 py-1 rounded-full whitespace-nowrap">
                 Historical Data
               </span>
             </div>
@@ -532,16 +532,16 @@ export default function Community() {
             {/* SEI Key Survey Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
               {[
-                { label: 'Petrol Users', value: `${seiSurvey.petrolUsers}%`, color: 'text-red-400' },
-                { label: 'No Waste Segregation', value: `${seiSurvey.noWasteSegregation}%`, color: 'text-orange-400' },
-                { label: 'Low CO₂ Awareness', value: `${seiSurvey.lowCarbonAwareness}%`, color: 'text-amber-400' },
-                { label: 'Would Use EcoTrack', value: `${seiSurvey.willingToUseEcoTrack}%`, color: 'text-primary-400' },
-                { label: 'Non-Vegetarian', value: `${seiSurvey.nonVegetarian}%`, color: 'text-emerald-400' },
-                { label: 'No Composting', value: `${seiSurvey.noComposting}%`, color: 'text-violet-400' },
+                { label: 'Petrol Users', value: `${seiSurvey.petrolUsers}%`, color: 'text-red-600' },
+                { label: 'No Waste Segregation', value: `${seiSurvey.noWasteSegregation}%`, color: 'text-orange-600' },
+                { label: 'Low CO₂ Awareness', value: `${seiSurvey.lowCarbonAwareness}%`, color: 'text-amber-600' },
+                { label: 'Would Use EcoTrack', value: `${seiSurvey.willingToUseEcoTrack}%`, color: 'text-primary-600' },
+                { label: 'Non-Vegetarian', value: `${seiSurvey.nonVegetarian}%`, color: 'text-emerald-600' },
+                { label: 'No Composting', value: `${seiSurvey.noComposting}%`, color: 'text-violet-600' },
               ].map((s) => (
-                <div key={s.label} className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
+                <div key={s.label} className="bg-surface border border-border rounded-xl p-3 text-center">
                   <p className={`text-xl font-display font-bold ${s.color}`}>{s.value}</p>
-                  <p className="text-[10px] text-dark-400 mt-1 leading-tight">{s.label}</p>
+                  <p className="text-[10px] text-dark-500 mt-1 leading-tight">{s.label}</p>
                 </div>
               ))}
             </div>
@@ -554,9 +554,9 @@ export default function Community() {
                 { label: 'Average Eco Score', value: `${seiMetrics.averageEcoScore}` },
                 { label: 'Best: Vegan Student', value: `${seiMetrics.highestEcoScore}/100` },
               ].map((m) => (
-                <div key={m.label} className="bg-white/5 border border-white/10 rounded-xl p-3">
+                <div key={m.label} className="bg-surface border border-border rounded-xl p-3">
                   <p className="text-xl font-display font-bold gradient-text">{m.value}</p>
-                  <p className="text-[10px] text-dark-400 mt-1">{m.label}</p>
+                  <p className="text-[10px] text-dark-500 mt-1">{m.label}</p>
                 </div>
               ))}
             </div>
@@ -566,15 +566,15 @@ export default function Community() {
         {/* ═══ CHARTS ROW ══════════════════════════════════════════════════════ */}
         <section id="community-charts">
           <div className="flex items-center gap-3 mb-5">
-            <BarChart3 className="w-5 h-5 text-primary-400" />
+            <BarChart3 className="w-5 h-5 text-primary-600" />
             <h2 className="t-display-md">Emission Analytics</h2>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
 
             {/* SEI Emission Distribution Doughnut */}
-            <div className="chart-container flex flex-col h-[340px]">
+            <div className="p-5 flex flex-col h-[340px] rounded-2xl" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
               <div className="mb-3">
-                <h3 className="text-sm font-semibold text-white">SEI Emission Distribution</h3>
+                <h3 className="text-sm font-semibold text-text-primary">SEI Emission Distribution</h3>
                 <p className="text-[11px] text-dark-500 mt-0.5">Community survey emission share by category</p>
               </div>
               <div className="flex-1 relative min-h-0">
@@ -583,15 +583,15 @@ export default function Community() {
             </div>
 
             {/* Live Community Breakdown */}
-            <div className="glass p-5 flex flex-col h-[340px]">
+            <div className="p-5 flex flex-col h-[340px] rounded-2xl" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
               <div className="mb-3">
-                <h3 className="text-sm font-semibold text-white">Live Community Breakdown</h3>
+                <h3 className="text-sm font-semibold text-text-primary">Live Community Breakdown</h3>
                 <p className="text-[11px] text-dark-500 mt-0.5">Aggregated live footprint by category (kg CO₂)</p>
               </div>
               <div className="flex-1 relative min-h-0">
                 {loading ? (
                   <div className="flex items-center justify-center h-full">
-                    <Loader2 className="w-6 h-6 text-primary-400 animate-spin" />
+                    <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
                   </div>
                 ) : liveBreakdownData && (stats?.totalCO2Tracked ?? 0) > 0 ? (
                   <Doughnut data={liveBreakdownData} options={doughnutOptions} />
@@ -607,9 +607,9 @@ export default function Community() {
             </div>
 
             {/* SEI Case Studies Bar */}
-            <div className="glass p-5 flex flex-col h-[340px]">
+            <div className="p-5 flex flex-col h-[340px] rounded-2xl" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
               <div className="mb-3">
-                <h3 className="text-sm font-semibold text-white">SEI Case Studies</h3>
+                <h3 className="text-sm font-semibold text-text-primary">SEI Case Studies</h3>
                 <p className="text-[11px] text-dark-500 mt-0.5">Annual CO₂ per profile (tons/year)</p>
               </div>
               <div className="flex-1 relative min-h-0">
@@ -627,11 +627,11 @@ export default function Community() {
 
         {/* ═══ USER LEADERBOARD ════════════════════════════════════════════════ */}
         <section id="community-leaderboard">
-          <div className="glass p-5 sm:p-6 flex flex-col max-w-3xl mx-auto">
+          <div className="p-5 sm:p-6 flex flex-col max-w-3xl mx-auto rounded-2xl" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-amber-400" />
-                <h2 className="text-base font-display font-bold text-white">User Leaderboard</h2>
+                <Trophy className="w-5 h-5 text-amber-600" />
+                <h2 className="text-base font-display font-bold" style={{ color: surface.textPrimary }}>User Leaderboard</h2>
               </div>
               <span className="text-xs text-dark-500">Top eco scores</span>
             </div>
@@ -642,7 +642,7 @@ export default function Community() {
               </div>
             ) : leaderboard.length === 0 ? (
               <div className="flex flex-col items-center justify-center flex-1 py-10 gap-3">
-                <Trophy className="w-10 h-10 text-dark-600" />
+                <Trophy className="w-10 h-10 text-dark-500" />
                 <p className="text-sm text-dark-500 text-center">
                   Be the first EcoTrack user to generate a report and claim the top spot!
                 </p>
@@ -661,7 +661,7 @@ export default function Community() {
                   );
                 })}
                 {totalLeaderboardPages > 1 && (
-                  <div className="flex items-center justify-between border-t border-white/5 mt-3 pt-3">
+                  <div className="flex items-center justify-between border-t border-border mt-3 pt-3">
                     <span className="text-xs text-dark-500">
                       Page {leaderboardPage + 1} of {totalLeaderboardPages}
                     </span>
@@ -671,7 +671,7 @@ export default function Community() {
                         onClick={() => setLeaderboardPage((page) => Math.max(0, page - 1))}
                         disabled={leaderboardPage === 0}
                         title="Previous leaderboard page"
-                        className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-white/10 text-dark-300 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none transition-all"
+                        className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border text-dark-500 hover:text-text-primary hover:bg-surface disabled:opacity-40 disabled:pointer-events-none transition-all"
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </button>
@@ -680,7 +680,7 @@ export default function Community() {
                         onClick={() => setLeaderboardPage((page) => Math.min(totalLeaderboardPages - 1, page + 1))}
                         disabled={leaderboardPage >= totalLeaderboardPages - 1}
                         title="Next leaderboard page"
-                        className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-white/10 text-dark-300 hover:text-white hover:bg-white/5 disabled:opacity-40 disabled:pointer-events-none transition-all"
+                        className="w-8 h-8 inline-flex items-center justify-center rounded-lg border border-border text-dark-500 hover:text-text-primary hover:bg-surface disabled:opacity-40 disabled:pointer-events-none transition-all"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
@@ -692,8 +692,8 @@ export default function Community() {
 
             {/* My Contribution Card */}
             {userEntry && (
-              <div className="mt-6 pt-6 border-t border-white/5">
-                <h3 className="text-sm font-semibold text-white mb-4">My Contribution</h3>
+              <div className="mt-6 pt-6 border-t border-border">
+                <h3 className="text-sm font-semibold mb-4" style={{ color: surface.textPrimary }}>My Contribution</h3>
                 <MemoizedLeaderboardEntry 
                   entry={userEntry}
                   index={userRankIndex}
@@ -701,10 +701,10 @@ export default function Community() {
                   isContributionCard={true}
                 />
                 
-                <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white/5 p-4 rounded-xl">
+                <div className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-surface border border-border p-4 rounded-xl">
                   <div>
-                    <h4 className="text-sm font-medium text-white">Anonymous Ranking</h4>
-                    <p className="text-xs text-dark-400 mt-0.5">Hide your display name from the public leaderboard</p>
+                    <h4 className="text-sm font-medium" style={{ color: surface.textPrimary }}>Anonymous Ranking</h4>
+                    <p className="text-xs text-dark-500 mt-0.5">Hide your display name from the public leaderboard</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input 
@@ -713,7 +713,7 @@ export default function Community() {
                       checked={userEntry.isAnonymous}
                       onChange={(e) => handleToggleAnonymous(e.target.checked)}
                     />
-                    <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-500"></div>
+                    <div className="w-11 h-6 bg-dark-100 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
                   </label>
                 </div>
               </div>
@@ -724,7 +724,7 @@ export default function Community() {
         {/* ═══ COMMUNITY INSIGHTS ══════════════════════════════════════════════ */}
         <section id="community-insights">
           <div className="flex items-center gap-3 mb-5">
-            <Sparkles className="w-5 h-5 text-primary-400" />
+            <Sparkles className="w-5 h-5 text-primary-600" />
             <h2 className="t-display-md">Community Insights</h2>
           </div>
 
@@ -739,7 +739,8 @@ export default function Community() {
               <motion.div
                 key={insight.id}
                 variants={fadeUp}
-                className="glass p-5 group hover:bg-white/[0.07] hover:border-white/15 transition-all duration-300"
+                className="p-5 group rounded-2xl transition-all duration-300"
+                style={{ background: surface.panel, border: `1px solid ${surface.border}` }}
               >
                 <div className="flex items-start gap-3">
                   <span className="text-2xl flex-shrink-0 mt-0.5">{insight.icon}</span>
@@ -747,13 +748,13 @@ export default function Community() {
                     <div className="flex items-center gap-2 mb-2">
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                         insight.source === 'sei'
-                          ? 'text-primary-400 bg-primary-500/10 border border-primary-500/20'
-                          : 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
+                          ? 'text-primary-700 bg-primary-50 border border-primary-200'
+                          : 'text-emerald-700 bg-emerald-50 border border-emerald-200'
                       }`}>
                         {insight.source === 'sei' ? 'SEI Survey' : 'Live Data'}
                       </span>
                     </div>
-                    <p className="text-sm text-dark-300 leading-relaxed">{insight.text}</p>
+                    <p className="text-sm text-dark-700 leading-relaxed">{insight.text}</p>
                   </div>
                 </div>
               </motion.div>
@@ -761,13 +762,13 @@ export default function Community() {
 
             {/* Always-visible loading insight when live data isn't ready */}
             {loading && (
-              <motion.div variants={fadeUp} className="glass p-5 animate-pulse">
+              <motion.div variants={fadeUp} className="p-5 rounded-2xl animate-pulse" style={{ background: surface.panel, border: `1px solid ${surface.border}` }}>
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-white/10 rounded-lg flex-shrink-0" />
+                  <div className="w-8 h-8 bg-dark-100 rounded-lg flex-shrink-0" />
                   <div className="flex-1">
-                    <div className="h-2 bg-white/10 rounded w-1/3 mb-3" />
-                    <div className="h-3 bg-white/10 rounded w-full mb-2" />
-                    <div className="h-3 bg-white/10 rounded w-4/5" />
+                    <div className="h-2 bg-dark-100 rounded w-1/3 mb-3" />
+                    <div className="h-3 bg-dark-100 rounded w-full mb-2" />
+                    <div className="h-3 bg-dark-100 rounded w-4/5" />
                   </div>
                 </div>
               </motion.div>
@@ -777,7 +778,7 @@ export default function Community() {
 
         {/* ═══ FOOTER NOTE ═════════════════════════════════════════════════════ */}
         <div className="text-center pt-4 pb-2">
-          <p className="text-xs text-dark-600">
+          <p className="text-xs text-dark-500">
             Community analytics update in real-time via Firestore listeners.
             Historical data sourced from the EcoTrack SEI Survey (50+ participants, 2026).
             All leaderboard entries are privacy-safe — no emails or UIDs are ever displayed.
